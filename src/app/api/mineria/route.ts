@@ -2,41 +2,30 @@ import { NextResponse } from "next/server";
 import { cachedFetch } from "@/lib/cache";
 import { supplyAtDate } from "@/lib/supply";
 
-interface BGeometricsHashrate {
-  d: string;
-  unixTs: string;
-  hashrate: string;
-}
-
 // mempool.space difficulty adjustment: [timestamp, blockHeight, difficulty, timeRatio]
 type MempoolDiffAdj = [number, number, number, number];
 
 export interface MineriaApiItem {
   fecha: string;
   fechaRaw: string;
-  hashrate: number;
-  dificultad: number;
+  hashrate: number;  // EH/s
+  dificultad: number; // T (trillions)
   recompensa: number;
   suministro: number;
   bloque: number;
 }
 
-function parseHashrateToEH(raw: string): number {
-  const n = parseFloat(raw);
-  if (isNaN(n) || n <= 0) return 0;
-  if (n > 50 && n < 5000) return Math.round(n);
-  if (n > 1e15) return Math.round(n / 1e18);
-  if (n > 1e6) return Math.round(n / 1e6);
-  if (n < 0.001) return parseFloat(n.toFixed(6));
-  if (n < 1) return parseFloat(n.toFixed(3));
-  return Math.round(n);
-}
-
+/** Convert raw difficulty to trillions */
 function difficultyToT(raw: number): number {
   if (raw <= 0) return 0;
-  if (raw > 1e9) return parseFloat((raw / 1e12).toFixed(2));
-  if (raw < 0.001) return parseFloat(raw.toFixed(9));
-  return parseFloat(raw.toFixed(4));
+  return parseFloat((raw / 1e12).toFixed(2));
+}
+
+/** Estimate hashrate in EH/s from difficulty: hashrate = difficulty * 2^32 / 600 */
+function difficultyToEH(raw: number): number {
+  if (raw <= 0) return 0;
+  const hashPerSec = (raw * 4294967296) / 600; // 2^32 = 4294967296
+  return parseFloat((hashPerSec / 1e18).toFixed(2));       // H/s → EH/s
 }
 
 /** Build monthly difficulty map from mempool.space adjustments */
@@ -71,46 +60,19 @@ function buildDiffMap(diffAdjs: MempoolDiffAdj[]): Map<string, number> {
   return diffByMonth;
 }
 
-function buildFromHashrate(
-  hashrates: BGeometricsHashrate[],
-  diffByMonth: Map<string, number>,
-): MineriaApiItem[] {
-  const monthly: MineriaApiItem[] = [];
-  let lastMonth = "";
-  for (const h of hashrates) {
-    const month = h.d.substring(0, 7);
-    if (month !== lastMonth) {
-      const d = new Date(h.d);
-      const fecha = d.toLocaleDateString("es-CL", { year: "2-digit", month: "short" });
-      const fechaRaw = month + "-01";
-      const { supply, blockHeight, reward } = supplyAtDate(d);
-      monthly.push({
-        fecha,
-        fechaRaw,
-        hashrate: parseHashrateToEH(h.hashrate),
-        dificultad: difficultyToT(diffByMonth.get(month) ?? 0),
-        recompensa: reward,
-        suministro: supply,
-        bloque: blockHeight,
-      });
-      lastMonth = month;
-    }
-  }
-  return monthly;
-}
-
-/** Fallback: build from difficulty-only (mempool.space) when BGeometrics is rate-limited */
-function buildFromDiffOnly(diffByMonth: Map<string, number>): MineriaApiItem[] {
+/** Build monthly items from difficulty map — hashrate derived from difficulty */
+function buildFromDiffMap(diffByMonth: Map<string, number>): MineriaApiItem[] {
   const months = Array.from(diffByMonth.keys()).sort();
   return months.map((month) => {
     const d = new Date(month + "-01");
     const fecha = d.toLocaleDateString("es-CL", { year: "2-digit", month: "short" });
+    const rawDiff = diffByMonth.get(month) ?? 0;
     const { supply, blockHeight, reward } = supplyAtDate(d);
     return {
       fecha,
       fechaRaw: month + "-01",
-      hashrate: 0, // not available without BGeometrics
-      dificultad: difficultyToT(diffByMonth.get(month) ?? 0),
+      hashrate: difficultyToEH(rawDiff),
+      dificultad: difficultyToT(rawDiff),
       recompensa: reward,
       suministro: supply,
       bloque: blockHeight,
@@ -118,8 +80,7 @@ function buildFromDiffOnly(diffByMonth: Map<string, number>): MineriaApiItem[] {
   });
 }
 
-async function fetchMineria(): Promise<{ items: MineriaApiItem[]; hasHashrate: boolean }> {
-  // Always try mempool.space difficulty first (no rate limit)
+async function fetchMineria(): Promise<MineriaApiItem[]> {
   const diffRes = await fetch(
     "https://mempool.space/api/v1/mining/difficulty-adjustments?interval=1m",
     { signal: AbortSignal.timeout(15000) },
@@ -127,25 +88,7 @@ async function fetchMineria(): Promise<{ items: MineriaApiItem[]; hasHashrate: b
   if (!diffRes.ok) throw new Error(`mempool.space difficulty returned ${diffRes.status}`);
   const diffAdjs: MempoolDiffAdj[] = await diffRes.json();
   const diffByMonth = buildDiffMap(diffAdjs);
-
-  // Try BGeometrics hashrate (may be rate limited)
-  try {
-    const hashrateRes = await fetch(
-      "https://bitcoin-data.com/v1/hashrate?size=6000",
-      { signal: AbortSignal.timeout(20000) },
-    );
-    if (hashrateRes.ok) {
-      const hashrates: BGeometricsHashrate[] = await hashrateRes.json();
-      if (hashrates.length > 0) {
-        return { items: buildFromHashrate(hashrates, diffByMonth), hasHashrate: true };
-      }
-    }
-  } catch {
-    // BGeometrics failed — continue with diff-only
-  }
-
-  // Fallback: difficulty + supply data only (no hashrate)
-  return { items: buildFromDiffOnly(diffByMonth), hasHashrate: false };
+  return buildFromDiffMap(diffByMonth);
 }
 
 export async function GET() {
@@ -154,11 +97,9 @@ export async function GET() {
     return NextResponse.json({ error: "No data available", fallback: true }, { status: 503 });
   }
   return NextResponse.json({
-    data: result.data.items,
+    data: result.data,
     fromCache: result.fromCache,
-    hasHashrate: result.data.hasHashrate,
-    source: result.data.hasHashrate
-      ? "bitcoin-data.com + mempool.space"
-      : "mempool.space",
+    hasHashrate: true,
+    source: "mempool.space",
   });
 }

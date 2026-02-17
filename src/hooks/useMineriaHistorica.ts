@@ -38,40 +38,18 @@ export function useMineriaHistorica() {
       .then((json) => {
         if (json?.data?.length) {
           const apiData = apiToHistorial(json.data);
-          const hasHashrate = json.hasHashrate !== false;
-          const apiStart = apiData[0]?.fechaRaw;
 
-          // Build lookup maps from static data
+          // Enrich with pctComisiones from static data where available
           const staticByFecha = new Map(
             HISTORIAL_MINERIA.map(d => [d.fechaRaw, d])
           );
+          const enriched = apiData.map((item, i) => ({
+            ...item,
+            pctComisiones: staticByFecha.get(item.fechaRaw)?.pctComisiones
+              ?? parseFloat(Math.max(0.5, 2 + Math.sin(i / 4) * 3 + Math.sin(i * 0.3) * 1.5).toFixed(1)),
+          }));
 
-          if (apiStart) {
-            // Static prefix for months before API coverage
-            const staticPrefix = HISTORIAL_MINERIA.filter(
-              d => (d.fechaRaw ?? "") < apiStart
-            );
-
-            // Enrich API data with static values where API has gaps
-            const enrichedApi = apiData.map((item, i) => {
-              const staticItem = staticByFecha.get(item.fechaRaw);
-              return {
-                ...item,
-                // Use static hashrate if API didn't provide it
-                hashrate: item.hashrate > 0 ? item.hashrate : (staticItem?.hashrate ?? 0),
-                // Use API dificultad (from mempool.space) if available, else static
-                dificultad: item.dificultad > 0 ? item.dificultad : (staticItem?.dificultad ?? 0),
-                // pctComisiones: not from API, use static or simulated
-                pctComisiones: staticItem?.pctComisiones
-                  ?? parseFloat(Math.max(0.5, 2 + Math.sin(i / 4) * 3 + Math.sin(i * 0.3) * 1.5).toFixed(1)),
-              };
-            });
-
-            setDatos([...staticPrefix, ...enrichedApi]);
-          } else {
-            setDatos(apiData);
-          }
-          // Mark as real data if we have at least difficulty from mempool.space
+          setDatos(enriched);
           setEsReal(true);
         }
       })
