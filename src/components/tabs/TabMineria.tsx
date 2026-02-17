@@ -152,6 +152,10 @@ export default function TabMineria() {
         <strong style={{ color: "#e0e8f0" }}>Seguridad:</strong> El hashrate en máximos históricos significa que el costo de atacar la red nunca ha sido más alto. Un ataque del 51% requeriría controlar más de la mitad del poder computacional mundial dedicado a Bitcoin — inversión de miles de millones de dólares sin garantía de éxito.<br /><br />
         <strong style={{ color: "#e0e8f0" }}>Sustentabilidad:</strong> Post-halving 2024, la recompensa se redujo a 3,125 BTC por bloque, pero el hashrate sigue creciendo. Mineros más eficientes reemplazan a los ineficientes — selección natural económica. El incremento gradual de las comisiones valida que la red será sostenible cuando la recompensa por bloque sea marginal.<br /><br />
         <strong style={{ color: "#e0e8f0" }}>Datos en vivo:</strong> El hashrate, la dificultad, las comisiones y el último bloque se obtienen directamente de mempool.space, un explorador de código abierto de la red Bitcoin.
+        <br /><br />
+        <span style={{ color: "#667788", fontSize: 11 }}>
+          Este análisis es informativo y no constituye asesoría financiera de ningún tipo. Datos de minería provienen de mempool.space y bitcoin-data.com.
+        </span>
       </PanelEdu>
     </div>
   );

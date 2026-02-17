@@ -84,3 +84,24 @@ export interface Pestana {
 }
 
 export type BandaOndas = "<1m" | "1-3m" | "3-6m" | "6-12m" | "1-2a" | "2-3a" | "3-5a" | "5-7a" | "7-10a" | "10a+";
+
+export type CategoriaHolder = "treasury" | "minero" | "etf" | "exchange" | "gobierno" | "protocolo";
+
+export interface Holder {
+  nombre: string;
+  ticker?: string;
+  categoria: CategoriaHolder;
+  btc: number;
+  pais: string;
+  color: string;
+}
+
+export type CategoriaSupply = "no_minado" | "perdido" | "institucional" | "exchange" | "gobierno" | "soberano";
+
+export interface BloqueSupply {
+  nombre: string;
+  btc: number;
+  categoria: CategoriaSupply;
+  color: string;
+  descripcion: string;
+}

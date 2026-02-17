@@ -83,6 +83,10 @@ export default function TabOndas() {
         <strong style={{ color: "#ef4444" }}>Bandas calientes (rojo/naranja — menos de 6 meses):</strong> Se expanden en picos de mercado cuando nuevos compradores entran y tenedores antiguos distribuyen. Cuando se comprimen, el BTC recién comprado no se está vendiendo — señal de acumulación.<br /><br />
         <strong style={{ color: "#3b82f6" }}>Bandas frías (azul/morado — más de 3 años):</strong> Representan BTC que ha sobrevivido al menos un ciclo completo sin moverse. Su expansión constante es la evidencia más fuerte de convicción. El Bitcoin que entra en estas bandas rara vez sale.<br /><br />
         <strong style={{ color: "#f0b429" }}>Post-halving 2024:</strong> El patrón muestra compresión de bandas calientes y expansión de frías — consistente con acumulación institucional y minorista. Históricamente, los 12-18 meses después de cada halving han sido los períodos más explosivos en precio.
+        <br /><br />
+        <span style={{ color: "#667788", fontSize: 11 }}>
+          Este análisis es informativo y no constituye asesoría financiera de ningún tipo. Datos de antigüedad de UTXO provienen de fuentes públicas de la red Bitcoin.
+        </span>
       </PanelEdu>
     </div>
   );

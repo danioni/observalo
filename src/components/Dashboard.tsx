@@ -7,6 +7,8 @@ import TabDistribucion from "@/components/tabs/TabDistribucion";
 import TabOndas from "@/components/tabs/TabOndas";
 import TabFlujos from "@/components/tabs/TabFlujos";
 import TabMineria from "@/components/tabs/TabMineria";
+import TabHolders from "@/components/tabs/TabHolders";
+import TabSoberania from "@/components/tabs/TabSoberania";
 
 export default function Dashboard() {
   const [tab, setTab] = useState("distribucion");
@@ -21,9 +23,11 @@ export default function Dashboard() {
       <Header tab={tab} setTab={setTab} />
       <div style={{ padding: "24px", maxWidth: 1280, margin: "0 auto" }}>
         {tab === "distribucion" && <TabDistribucion />}
+        {tab === "soberania" && <TabSoberania />}
         {tab === "ondas" && <TabOndas />}
         {tab === "flujos" && <TabFlujos />}
         {tab === "mineria" && <TabMineria />}
+        {tab === "holders" && <TabHolders />}
       </div>
       <Footer />
     </div>

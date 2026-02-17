@@ -40,3 +40,8 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 .claude/
+
+# temp files
+tmp_*.json
+nul
+Usersfrancobservalotmp_*

@@ -171,6 +171,10 @@ export default function TabFlujos() {
         <strong style={{ color: "#22c55e" }}>2023 (Recuperación):</strong> Éxodo sostenido de exchanges. Custodia propia se normaliza. Acumulación silenciosa.{" "}
         <strong style={{ color: "#06b6d4" }}>2024 (Halving + ETF):</strong> ETF al contado aprobado en enero aceleró salidas institucionales. Halving en abril redujo emisión a 3,125 BTC por bloque.{" "}
         <strong style={{ color: "#a855f7" }}>2025-26:</strong> Reservas en mínimos de varios años. Escasez estructural de oferta en progreso.
+        <br /><br />
+        <span style={{ color: "#667788", fontSize: 11 }}>
+          Este análisis es informativo y no constituye asesoría financiera de ningún tipo. Datos de flujos provienen de fuentes públicas y pueden contener estimaciones.
+        </span>
       </PanelEdu>
     </div>
   );

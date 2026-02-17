@@ -29,7 +29,7 @@ export default function TabDistribucion() {
 
       <div style={{ display: "grid", gridTemplateColumns: "repeat(4,1fr)", gap: 12, marginBottom: 24 }}>
         <Metrica etiqueta="Total de direcciones" valor={fmt(totalDir)} sub="con saldo mayor a 0" />
-        <Metrica etiqueta="Supply rastreado" valor={fmt(totalBTC) + " BTC"} sub="de 19,82M en circulación" />
+        <Metrica etiqueta="Oferta rastreada" valor={fmt(totalBTC) + " BTC"} sub="de 19,82M en circulación" />
         <Metrica etiqueta="Concentración grandes" valor={concTop.toFixed(1) + "%"} sub="Ballena + Jorobada + Mega" acento="#f0b429" />
         <Metrica etiqueta="Participación minoristas" valor={partRetail.toFixed(1) + "%"} sub="Plancton + Camarón + Cangrejo" acento="#5a7a8a" />
       </div>
@@ -42,7 +42,7 @@ export default function TabDistribucion() {
 
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 20 }}>
         <div>
-          <div style={{ fontSize: 12, color: "#8899aa", marginBottom: 12, letterSpacing: "0.08em" }}>PORCENTAJE DEL SUPPLY POR COHORTE</div>
+          <div style={{ fontSize: 12, color: "#8899aa", marginBottom: 12, letterSpacing: "0.08em" }}>% DE LA OFERTA POR COHORTE</div>
           <ResponsiveContainer width="100%" height={340}>
             <BarChart data={DATOS_DISTRIBUCION} layout="vertical" margin={{ left: 75, right: 20 }}>
               <CartesianGrid strokeDasharray="3 3" stroke="#1a2332" horizontal={false} />
@@ -52,7 +52,7 @@ export default function TabDistribucion() {
                 <CustomTooltip active={active} payload={payload} render={(d) => (
                   <>
                     <div style={{ fontSize: 13, color: "#e0e8f0", fontWeight: 600 }}>{d?.cohorte} ({d?.rango})</div>
-                    <div style={{ fontSize: 12, color: "#8899aa", marginTop: 4 }}>{d?.pctSupply?.toFixed(2)}% del supply total</div>
+                    <div style={{ fontSize: 12, color: "#8899aa", marginTop: 4 }}>{d?.pctSupply?.toFixed(2)}% de la oferta total</div>
                     <div style={{ fontSize: 12, color: "#8899aa" }}>{d?.btcRetenido?.toLocaleString("es-CL")} BTC retenidos</div>
                   </>
                 )} />
@@ -64,7 +64,7 @@ export default function TabDistribucion() {
           </ResponsiveContainer>
         </div>
         <div>
-          <div style={{ fontSize: 12, color: "#8899aa", marginBottom: 12, letterSpacing: "0.08em" }}>DIRECCIONES POR COHORTE (ESCALA LOGARÍTMICA)</div>
+          <div style={{ fontSize: 12, color: "#8899aa", marginBottom: 12, letterSpacing: "0.08em" }}>DIRECCIONES POR COHORTE (ESCALA LOG)</div>
           <ResponsiveContainer width="100%" height={340}>
             <BarChart data={barras} layout="vertical" margin={{ left: 75, right: 20 }}>
               <CartesianGrid strokeDasharray="3 3" stroke="#1a2332" horizontal={false} />
@@ -93,7 +93,7 @@ export default function TabDistribucion() {
           <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 12 }}>
             <thead>
               <tr style={{ borderBottom: "1px solid #21262d" }}>
-                {["Cohorte", "Rango", "Direcciones", "% Dir.", "BTC retenido", "% del supply", "BTC/Dir."].map(h => (
+                {["Cohorte", "Rango", "Direcciones", "% Dir.", "BTC retenido", "% oferta", "BTC/Dir."].map(h => (
                   <th key={h} style={{ padding: "8px 12px", textAlign: "left", color: "#667788", fontWeight: 500, fontSize: 10, letterSpacing: "0.1em", textTransform: "uppercase" }}>{h}</th>
                 ))}
               </tr>
@@ -128,8 +128,12 @@ export default function TabDistribucion() {
       </div>
 
       <PanelEdu icono="◆" titulo="Cómo interpretar la distribución" color="#06b6d4">
-        Las cohortes con nombres de animales marinos son una convención de análisis de la cadena. El dato clave es la <strong style={{ color: "#e0e8f0" }}>concentración</strong>: si pocas direcciones controlan mucho del supply, existe riesgo de manipulación de precio.
+        Las cohortes con nombres de animales marinos son una convención de análisis de la cadena. El dato clave es la <strong style={{ color: "#e0e8f0" }}>concentración</strong>: si pocas direcciones controlan mucho de la oferta, existe riesgo de manipulación de precio.
         Históricamente, Bitcoin se ha ido descentralizando — las direcciones &quot;Mega&quot; (más de 10.000 BTC, que incluyen exchanges y fondos) han reducido su participación mientras crecen las cohortes medianas.
+        <br /><br />
+        <span style={{ color: "#667788", fontSize: 11 }}>
+          Este análisis es informativo y no constituye asesoría financiera de ningún tipo. Datos basados en información pública de la red Bitcoin.
+        </span>
       </PanelEdu>
     </div>
   );

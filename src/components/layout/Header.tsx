@@ -5,9 +5,11 @@ import { Pestana } from "@/types";
 
 const PESTANAS: Pestana[] = [
   { id: "distribucion", etiqueta: "DISTRIBUCIÓN", icono: "◆" },
+  { id: "soberania", etiqueta: "SOBERANÍA", icono: "⚡" },
   { id: "ondas", etiqueta: "ONDAS HODL", icono: "◈" },
   { id: "flujos", etiqueta: "FLUJOS EXCHANGES", icono: "⇄" },
   { id: "mineria", etiqueta: "MINERÍA", icono: "⛏" },
+  { id: "holders", etiqueta: "ACUMULADORES", icono: "⬡" },
 ];
 
 interface HeaderProps {
@@ -16,8 +18,9 @@ interface HeaderProps {
 }
 
 export default function Header({ tab, setTab }: HeaderProps) {
-  const [ahora, setAhora] = useState(new Date());
+  const [ahora, setAhora] = useState<Date | null>(null);
   useEffect(() => {
+    setAhora(new Date());
     const t = setInterval(() => setAhora(new Date()), 1000);
     return () => clearInterval(t);
   }, []);
@@ -42,8 +45,8 @@ export default function Header({ tab, setTab }: HeaderProps) {
           </div>
         </div>
         <div style={{ textAlign: "right" }}>
-          <div style={{ fontSize: 13, color: "#e0e8f0", fontFamily: "'JetBrains Mono',monospace", fontWeight: 500 }}>{ahora.toLocaleTimeString("es-CL")}</div>
-          <div style={{ fontSize: 10, color: "#667788" }}>{ahora.toLocaleDateString("es-CL", { weekday: "long", year: "numeric", month: "long", day: "numeric" })}</div>
+          <div style={{ fontSize: 13, color: "#e0e8f0", fontFamily: "'JetBrains Mono',monospace", fontWeight: 500 }}>{ahora ? ahora.toLocaleTimeString("es-CL") : "\u00A0"}</div>
+          <div style={{ fontSize: 10, color: "#667788" }}>{ahora ? ahora.toLocaleDateString("es-CL", { weekday: "long", year: "numeric", month: "long", day: "numeric" }) : "\u00A0"}</div>
         </div>
       </div>
       <div style={{ display: "flex", gap: 4 }}>
