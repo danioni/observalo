@@ -6,9 +6,9 @@ import { Pestana } from "@/types";
 const PESTANAS: Pestana[] = [
   { id: "soberania", etiqueta: "SOBERANÍA", icono: "⚡" },
   { id: "distribucion", etiqueta: "DISTRIBUCIÓN", icono: "◆" },
+  { id: "mineria", etiqueta: "MINERÍA", icono: "⛏" },
   { id: "ondas", etiqueta: "ONDAS HODL", icono: "◈" },
   { id: "flujos", etiqueta: "FLUJOS EXCHANGES", icono: "⇄" },
-  { id: "mineria", etiqueta: "MINERÍA", icono: "⛏" },
   { id: "holders", etiqueta: "ACUMULADORES", icono: "⬡" },
 ];
 
