@@ -25,13 +25,13 @@ export default function TabSoberania() {
     BLOQUES_SUPPLY.reduce((obj, b) => {
       obj[b.nombre] = b.btc;
       return obj;
-    }, { name: "Supply 21M" } as Record<string, number | string>),
+    }, { name: "Oferta 21M" } as Record<string, number | string>),
   ];
 
   return (
     <div>
       <Concepto titulo="El sistema monetario basado en reglas">
-        Bitcoin es el primer dinero de la historia con un supply fijo e inmutable: exactamente 21 millones de unidades, sin excepciones, sin rescates, sin impresión.
+        Bitcoin es el primer dinero de la historia con una oferta fija e inmutable: exactamente 21 millones de unidades, sin excepciones, sin rescates, sin impresión.
         Pero no todos están disponibles. De esos 21 millones, hay que descontar lo que se perdió para siempre, lo que aún no se minó, y lo que ya acumularon instituciones, gobiernos y exchanges.
         <br /><strong style={{ color: "#22c55e" }}>¿Cuánto queda para quienes eligen la soberanía financiera?</strong>
       </Concepto>
@@ -39,7 +39,7 @@ export default function TabSoberania() {
       {/* Métricas principales */}
       <div style={{ display: "grid", gridTemplateColumns: "repeat(4,1fr)", gap: 12, marginBottom: 24 }}>
         <Metrica
-          etiqueta="Supply soberano"
+          etiqueta="Oferta soberana"
           valor={fmt(BTC_SOBERANO) + " BTC"}
           sub={`${pct(BTC_SOBERANO)}% de los 21M`}
           acento="#22c55e"
@@ -65,7 +65,7 @@ export default function TabSoberania() {
 
       {/* Señales */}
       <div style={{ display: "flex", gap: 8, marginBottom: 24, flexWrap: "wrap" }}>
-        <Senal etiqueta="SUPPLY SOBERANO" estado={`${pct(BTC_SOBERANO)}% disponible para autocustodia`} color="#22c55e" />
+        <Senal etiqueta="OFERTA SOBERANA" estado={`${pct(BTC_SOBERANO)}% disponible para autocustodia`} color="#22c55e" />
         <Senal etiqueta="PRESIÓN INSTITUCIONAL" estado={`ETFs + treasuries: ${fmt(BTC_ETFS + BTC_TREASURIES)} BTC acumulados`} color="#818cf8" />
         <Senal etiqueta="ESCASEZ" estado={`Solo ${btcPorAdulto.toFixed(4)} BTC por adulto en el planeta`} color="#f0b429" />
       </div>
@@ -115,7 +115,7 @@ export default function TabSoberania() {
       {/* Embudo de escasez */}
       <div style={{ marginBottom: 32 }}>
         <div style={{ fontSize: 12, color: "#8899aa", marginBottom: 16, letterSpacing: "0.08em" }}>
-          EMBUDO DE ESCASEZ — DE 21M AL SUPPLY SOBERANO
+          EMBUDO DE ESCASEZ — DE 21M A LA OFERTA SOBERANA
         </div>
         <div style={{ display: "flex", flexDirection: "column", gap: 0 }}>
           {EMBUDO.map((paso, i) => {
@@ -166,7 +166,7 @@ export default function TabSoberania() {
                     fontWeight: esUltimo ? 700 : 400,
                     whiteSpace: "nowrap",
                   }}>
-                    {i === 0 ? "Cap máximo" : esUltimo ? "⚡ SUPPLY SOBERANO" : `${pct(paso.btc)}%`}
+                    {i === 0 ? "Cap máximo" : esUltimo ? "⚡ OFERTA SOBERANA" : `${pct(paso.btc)}%`}
                   </span>
                 </div>
               </div>
@@ -190,7 +190,7 @@ export default function TabSoberania() {
           <br /><br />
           Y cada día, las instituciones acumulan más. Los ETFs al contado ya controlan <strong style={{ color: "#818cf8" }}>{fmt(BTC_ETFS)} BTC</strong>.
           Las treasuries corporativas suman <strong style={{ color: "#f0b429" }}>{fmt(BTC_TREASURIES)} BTC</strong>.
-          El supply soberano se reduce con cada compra institucional.
+          La oferta soberana se reduce con cada compra institucional.
           <br /><br />
           <span style={{ color: "#22c55e", fontWeight: 600 }}>
             Acumular Bitcoin hoy es asegurarse un lugar en el sistema monetario del futuro.

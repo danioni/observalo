@@ -41,11 +41,11 @@ export const BTC_SOBERANO = BTC_CAP
  */
 export const BLOQUES_SUPPLY: BloqueSupply[] = [
   {
-    nombre: "Supply soberano",
+    nombre: "Oferta soberana",
     btc: BTC_SOBERANO,
     categoria: "soberano",
     color: "#22c55e",
-    descripcion: "BTC en autocustodia por individuos — el verdadero supply libre",
+    descripcion: "BTC en autocustodia por individuos — la verdadera oferta libre",
   },
   {
     nombre: "Exchanges",

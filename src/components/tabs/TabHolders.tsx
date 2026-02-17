@@ -165,9 +165,9 @@ export default function TabHolders() {
       </Concepto>
 
       <div style={{ display: "grid", gridTemplateColumns: "repeat(4,1fr)", gap: 12, marginBottom: 24 }}>
-        <Metrica etiqueta="BTC identificado" valor={fmt(totalBtc) + " BTC"} sub={`${pctSupply.toFixed(1)}% del supply`} acento="#f0b429" />
+        <Metrica etiqueta="BTC identificado" valor={fmt(totalBtc) + " BTC"} sub={`${pctSupply.toFixed(1)}% de la oferta`} acento="#f0b429" />
         <Metrica etiqueta="Entidades" valor={String(totalEntidades)} sub="holders identificados" />
-        <Metrica etiqueta="ETFs Spot US" valor={fmt(totalEtf) + " BTC"} sub={`${(totalEtf / BTC_SUPPLY * 100).toFixed(1)}% del supply`} acento="#818cf8" />
+        <Metrica etiqueta="ETFs Spot US" valor={fmt(totalEtf) + " BTC"} sub={`${(totalEtf / BTC_SUPPLY * 100).toFixed(1)}% de la oferta`} acento="#818cf8" />
         <Metrica etiqueta="Mayor holder" valor={mayor.nombre} sub={fmt(mayor.btc) + " BTC"} acento="#f0b429" />
       </div>
 
@@ -210,7 +210,7 @@ export default function TabHolders() {
                     <div style={{ fontSize: 14, color: "#e0e8f0", fontWeight: 600 }}>{d?.name}</div>
                     <div style={{ fontSize: 12, color: "#8899aa", marginTop: 4 }}>{d?.categoria}</div>
                     <div style={{ fontSize: 13, color: "#e0e8f0", marginTop: 2, fontFamily: "monospace" }}>{d?.btc?.toLocaleString("es-CL")} BTC</div>
-                    <div style={{ fontSize: 11, color: "#667788" }}>{d?.pct}% del supply</div>
+                    <div style={{ fontSize: 11, color: "#667788" }}>{d?.pct}% de la oferta</div>
                   </>
                 )} />
               )} />
@@ -232,7 +232,7 @@ export default function TabHolders() {
                 <>
                   <div style={{ fontSize: 13, color: "#e0e8f0", fontWeight: 600 }}>{d?.nombre}</div>
                   <div style={{ fontSize: 12, color: "#8899aa", marginTop: 4 }}>{d?.btc?.toLocaleString("es-CL")} BTC</div>
-                  <div style={{ fontSize: 11, color: "#667788" }}>{d?.pct?.toFixed(2)}% del supply</div>
+                  <div style={{ fontSize: 11, color: "#667788" }}>{d?.pct?.toFixed(2)}% de la oferta</div>
                 </>
               )} />
             )} />
@@ -265,7 +265,7 @@ export default function TabHolders() {
           <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 12 }}>
             <thead>
               <tr style={{ borderBottom: "1px solid #21262d" }}>
-                {["#", "Nombre", "Ticker", "Categoría", "País", "BTC", "% Supply"].map(h => (
+                {["#", "Nombre", "Ticker", "Categoría", "País", "BTC", "% Oferta"].map(h => (
                   <th key={h} style={{
                     padding: "8px 12px", textAlign: "left", color: "#667788", fontWeight: 500,
                     fontSize: 10, letterSpacing: "0.1em", textTransform: "uppercase",
@@ -318,7 +318,7 @@ export default function TabHolders() {
       </div>
 
       <PanelEdu icono="⬡" titulo="Concentración institucional de Bitcoin" color="#818cf8">
-        Los holders institucionales identificados controlan una fracción significativa del supply circulante.
+        Los holders institucionales identificados controlan una fracción significativa de la oferta circulante.
         Los <strong style={{ color: "#818cf8" }}>ETFs al contado</strong> aprobados en enero 2024 se convirtieron en uno de los mayores acumuladores, con BlackRock (IBIT) a la cabeza.
         Los <strong style={{ color: "#06b6d4" }}>exchanges</strong> custodian BTC de millones de usuarios — su saldo no implica propiedad propia.
         Las <strong style={{ color: "#f0b429" }}>treasuries corporativas</strong>, lideradas por Strategy (ex MicroStrategy), representan la adopción institucional directa.
