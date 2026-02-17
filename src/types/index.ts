@@ -51,10 +51,13 @@ export interface FlujosSemanales {
 
 export interface HistorialMineria {
   fecha: string;
+  fechaRaw?: string;
   hashrate: number;
   dificultad: number;
   pctComisiones: number;
   recompensa: number;
+  suministro?: number;
+  bloque?: number;
 }
 
 export interface DatosVivosMineria {

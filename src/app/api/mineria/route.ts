@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { cachedFetch } from "@/lib/cache";
+import { supplyAtDate } from "@/lib/supply";
 
 interface BGeometricsHashrate {
   d: string;
@@ -15,29 +16,39 @@ interface BGeometricsDifficulty {
 
 export interface MineriaApiItem {
   fecha: string;
+  fechaRaw: string;
   hashrate: number;
   dificultad: number;
   recompensa: number;
+  suministro: number;
+  bloque: number;
 }
 
 function parseHashrateToEH(raw: string): number {
   const n = parseFloat(raw);
+  if (isNaN(n) || n <= 0) return 0;
   // If already in EH/s range (100-2000), return as-is
   if (n > 50 && n < 5000) return Math.round(n);
   // If in H/s (very large number), convert to EH/s
   if (n > 1e15) return Math.round(n / 1e18);
   // If in TH/s range
   if (n > 1e6) return Math.round(n / 1e6);
+  // Very small values (early Bitcoin or GH/s)
+  if (n < 0.001) return parseFloat(n.toFixed(6));
+  if (n < 1) return parseFloat(n.toFixed(3));
   return Math.round(n);
 }
 
 function parseDifficultyToT(raw: string): number {
   const n = parseFloat(raw);
-  // If already in T range (10-200), return as-is
+  if (isNaN(n) || n <= 0) return 0;
+  // If already in T range (10-500), return as-is
   if (n > 5 && n < 500) return parseFloat(n.toFixed(1));
   // If raw difficulty value (very large), convert to T
   if (n > 1e9) return parseFloat((n / 1e12).toFixed(1));
-  return parseFloat(n.toFixed(1));
+  // Small values
+  if (n < 0.001) return parseFloat(n.toFixed(9));
+  return parseFloat(n.toFixed(4));
 }
 
 function buildMineria(hashrates: BGeometricsHashrate[], difficulties: BGeometricsDifficulty[]): MineriaApiItem[] {
@@ -55,13 +66,18 @@ function buildMineria(hashrates: BGeometricsHashrate[], difficulties: BGeometric
     const month = h.d.substring(0, 7);
     if (month !== lastMonth) {
       const d = new Date(h.d);
-      const halvingDate = new Date(2024, 3, 20);
       const fecha = d.toLocaleDateString("es-CL", { year: "2-digit", month: "short" });
+      const fechaRaw = month + "-01";
+      const { supply, blockHeight, reward } = supplyAtDate(d);
+
       monthly.push({
         fecha,
+        fechaRaw,
         hashrate: parseHashrateToEH(h.hashrate),
         dificultad: diffMap.get(month) ?? 0,
-        recompensa: d >= halvingDate ? 3.125 : 6.25,
+        recompensa: reward,
+        suministro: supply,
+        bloque: blockHeight,
       });
       lastMonth = month;
     }
@@ -71,9 +87,9 @@ function buildMineria(hashrates: BGeometricsHashrate[], difficulties: BGeometric
 }
 
 async function fetchMineria(): Promise<MineriaApiItem[]> {
-  // Fetch sequentially to avoid rate limit issues
+  // Fetch from 2014 onward — BGeometrics likely has reliable data from then
   const hashrateRes = await fetch(
-    "https://bitcoin-data.com/v1/hashrate?startday=2023-07-01&size=1000",
+    "https://bitcoin-data.com/v1/hashrate?startday=2014-01-01&size=5000",
     { signal: AbortSignal.timeout(15000) }
   );
   if (!hashrateRes.ok) throw new Error(`Hashrate API returned ${hashrateRes.status}`);
@@ -83,7 +99,7 @@ async function fetchMineria(): Promise<MineriaApiItem[]> {
   await new Promise(r => setTimeout(r, 500));
 
   const difficultyRes = await fetch(
-    "https://bitcoin-data.com/v1/difficulty?startday=2023-07-01&size=1000",
+    "https://bitcoin-data.com/v1/difficulty?startday=2014-01-01&size=5000",
     { signal: AbortSignal.timeout(15000) }
   );
   if (!difficultyRes.ok) throw new Error(`Difficulty API returned ${difficultyRes.status}`);
