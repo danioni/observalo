@@ -108,3 +108,24 @@ export interface BloqueSupply {
   color: string;
   descripcion: string;
 }
+
+// ── API response envelope ──
+export interface ApiEnvelope<T> {
+  data: T | null;
+  status: "ok" | "stale" | "unavailable";
+  stale: boolean;
+  lastSuccessAt: string | null;  // ISO 8601
+  source: string;
+  message?: string;              // human-readable error context
+}
+
+// ── Client-side data state (returned by hooks) ──
+export interface DatosConEstado<T> {
+  datos: T;
+  esReal: boolean;
+  cargando: boolean;
+  error: string | null;
+  stale: boolean;
+  lastSuccessAt: string | null;
+  reintentar: () => void;
+}

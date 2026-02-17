@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { cachedFetch } from "@/lib/cache";
+import type { ApiEnvelope } from "@/types";
 
 // --- CoinGlass types ---
 interface CoinGlassResponse {
@@ -167,11 +168,14 @@ export async function GET(request: Request) {
   const debug = url.searchParams.get("debug");
 
   const result = await cachedFetch("flujos", fetchFlujos);
+
   if (!result) {
-    return NextResponse.json(
-      { error: "No data available", fallback: true },
-      { status: 503 },
-    );
+    const envelope: ApiEnvelope<FlujosData> = {
+      data: null, status: "unavailable", stale: false,
+      lastSuccessAt: null, source: "bitcoin-data.com + coinglass.com",
+      message: "Sin datos de flujos disponibles.",
+    };
+    return NextResponse.json(envelope, { status: 503 });
   }
 
   if (debug) {
@@ -181,13 +185,13 @@ export async function GET(request: Request) {
       totalSemanales: d.semanales.length,
       firstDiario: d.diarios[0],
       lastDiarios: d.diarios.slice(-5),
-      fromCache: result.fromCache,
+      stale: result.stale,
     });
   }
 
-  return NextResponse.json({
-    data: result.data,
-    fromCache: result.fromCache,
-    source: "bitcoin-data.com + coinglass.com",
-  });
+  const envelope: ApiEnvelope<FlujosData> = {
+    data: result.data, status: result.status, stale: result.stale,
+    lastSuccessAt: result.lastSuccessAt, source: "bitcoin-data.com + coinglass.com",
+  };
+  return NextResponse.json(envelope);
 }

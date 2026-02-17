@@ -9,12 +9,40 @@ import { useMempoolData } from "@/hooks/useMempoolData";
 import { useMineriaHistorica } from "@/hooks/useMineriaHistorica";
 import { useBreakpoint } from "@/hooks/useBreakpoint";
 import { fmt } from "@/utils/format";
+import { horaUTC, rangoFechas } from "@/utils/fechas";
 import Metrica from "@/components/ui/Metrica";
 import Senal from "@/components/ui/Senal";
 import PanelEdu from "@/components/ui/PanelEdu";
 import Concepto from "@/components/ui/Concepto";
 import CustomTooltip from "@/components/ui/CustomTooltip";
 import { NARRATIVA } from "@/data/narrativa";
+import { RECOMPENSA_PROYECTADA } from "@/data/mineria";
+
+/* ── Inline badge for stale data ── */
+function BadgeDesactualizado({ lastSuccessAt }: { lastSuccessAt: string | null }) {
+  return (
+    <span style={{
+      display: "inline-flex", alignItems: "center", gap: 4,
+      padding: "2px 8px", borderRadius: 4, fontSize: 10, fontWeight: 600,
+      background: "rgba(234,179,8,0.15)", color: "#eab308",
+    }}>
+      desactualizado {lastSuccessAt && `· ${horaUTC(lastSuccessAt)}`}
+    </span>
+  );
+}
+
+/* ── Retry button ── */
+function BotonReintentar({ onClick, label }: { onClick: () => void; label?: string }) {
+  return (
+    <button onClick={onClick} style={{
+      padding: "6px 16px", borderRadius: 6, border: "1px solid var(--border-subtle)",
+      background: "var(--bg-surface)", color: "#f0b429", fontSize: 11, fontWeight: 600,
+      cursor: "pointer", transition: "all 0.15s ease",
+    }}>
+      {label ?? "Reintentar"}
+    </button>
+  );
+}
 
 /* ── Selector de rango ── */
 function Btn({ items, val, set, color }: {
@@ -24,11 +52,11 @@ function Btn({ items, val, set, color }: {
   color: string;
 }) {
   return (
-    <div style={{ display: "flex", gap: 0, background: "#0d1117", borderRadius: 6, border: "1px solid #21262d", overflow: "hidden" }}>
+    <div style={{ display: "flex", gap: 0, background: "var(--bg-surface)", borderRadius: 6, border: "1px solid var(--border-subtle)", overflow: "hidden" }}>
       {items.map(r => (
         <button key={r.id} onClick={() => set(r.id)} style={{
           padding: "6px 12px", border: "none", cursor: "pointer", fontSize: 10, fontWeight: 600, letterSpacing: "0.06em",
-          background: val === r.id ? `${color}22` : "transparent", color: val === r.id ? color : "#667788", transition: "all 0.15s ease",
+          background: val === r.id ? `${color}22` : "transparent", color: val === r.id ? color : "var(--text-muted)", transition: "all 0.15s ease",
         }}>{r.l}</button>
       ))}
     </div>
@@ -48,9 +76,18 @@ const HALVINGS = [
   { fecha: "2024-04", label: "4to Halving" },
 ];
 
+const HALVINGS_FULL = [
+  ...HALVINGS,
+  { fecha: "2028-04", label: "5to Halving" },
+  { fecha: "2032-04", label: "6to Halving" },
+  { fecha: "2036-04", label: "7mo Halving" },
+];
+
+const NO_DISPONIBLE = "No disponible (reintentando)";
+
 export default function TabMineria() {
-  const { vivo, cargando } = useMempoolData();
-  const { datos, esReal, cargando: cargandoHistorico } = useMineriaHistorica();
+  const { vivo, cargando, error: errorVivo, stale: staleVivo, lastSuccessAt: lastVivo, reintentar: reintentarVivo } = useMempoolData();
+  const { datos, esReal, cargando: cargandoHistorico, error: errorHist, stale: staleHist, lastSuccessAt: lastHist, reintentar: reintentarHist } = useMineriaHistorica();
   const [rango, setRango] = useState("todo");
   const { isMobile, isDesktop } = useBreakpoint();
 
@@ -70,8 +107,10 @@ export default function TabMineria() {
 
   const intTick = Math.max(1, Math.floor(filtrado.length / 18));
   const ult = datos[datos.length - 1];
-  const hashM = vivo?.hashrate || String(ult?.hashrate ?? "—");
-  const diffM = vivo?.dificultad || String(ult?.dificultad ?? "—");
+
+  // Explicit fallback — never show "—"
+  const hashM = vivo?.hashrate ?? (ult?.hashrate != null ? String(ult.hashrate) : null);
+  const diffM = vivo?.dificultad ?? (ult?.dificultad != null ? String(ult.dificultad) : null);
   const supplyActual = ult?.suministro ?? 19_820_000;
   const pctMinado = (supplyActual / 21_000_000 * 100).toFixed(1);
 
@@ -86,9 +125,23 @@ export default function TabMineria() {
     }).filter(Boolean) as { fecha: string; label: string; fechaLabel: string }[];
   }, [filtrado]);
 
-  /* ── Rango dinámico del header ── */
+  /* ── Halvings visibles en la proyección de recompensa ── */
+  const halvingsRecompensa = useMemo(() => {
+    const rp = RECOMPENSA_PROYECTADA;
+    if (rp.length === 0) return [];
+    const inicio = (rp[0]?.fechaRaw ?? "").slice(0, 7);
+    const fin = (rp[rp.length - 1]?.fechaRaw ?? "").slice(0, 7);
+    return HALVINGS_FULL.filter(h => h.fecha >= inicio && h.fecha <= fin).map(h => {
+      const match = rp.find(d => (d.fechaRaw ?? "").slice(0, 7) === h.fecha);
+      return match ? { ...h, fechaLabel: match.fecha } : null;
+    }).filter(Boolean) as { fecha: string; label: string; fechaLabel: string }[];
+  }, []);
+
+  const intTickRecompensa = Math.max(1, Math.floor(RECOMPENSA_PROYECTADA.length / 18));
+
+  /* ── Rango dinámico del header — unambiguous format ── */
   const rangoLabel = filtrado.length > 1
-    ? `${filtrado[0].fecha.toUpperCase()} — ${filtrado[filtrado.length - 1].fecha.toUpperCase()}`
+    ? rangoFechas(filtrado[0].fechaRaw ?? "", filtrado[filtrado.length - 1].fechaRaw ?? "")
     : "";
 
   return (
@@ -97,12 +150,37 @@ export default function TabMineria() {
         {NARRATIVA.tabs.mineria.concepto.cuerpo}
       </Concepto>
 
+      {/* ── Global timestamp ── */}
+      <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 12, flexWrap: "wrap" }}>
+        {lastVivo && (
+          <span style={{ fontSize: 10, color: "var(--text-muted)", fontFamily: "'JetBrains Mono',monospace" }}>
+            Actualizado: {horaUTC(lastVivo)}
+          </span>
+        )}
+        {staleVivo && <BadgeDesactualizado lastSuccessAt={lastVivo} />}
+        {staleHist && <BadgeDesactualizado lastSuccessAt={lastHist} />}
+      </div>
+
       {/* ── Métricas ── */}
       <div style={{ display: "grid", gridTemplateColumns: isMobile ? "repeat(2,1fr)" : "repeat(4,1fr)", gap: isMobile ? 8 : 12, marginBottom: 24 }}>
-        <Metrica etiqueta={vivo?.hashrate ? "Hashrate (EN VIVO)" : "Hashrate"} valor={hashM + " EH/s"} sub="Poder computacional de la red" acento="#f0b429" />
-        <Metrica etiqueta="Dificultad" valor={diffM + "T"} sub={vivo?.ajuste ? `Último ajuste: ${(vivo.ajuste.diffChange * 100).toFixed(2)}%` : "Ajuste automático cada ~2 semanas"} />
+        <Metrica
+          etiqueta={vivo?.hashrate ? "Hashrate (EN VIVO)" : "Hashrate"}
+          valor={hashM != null ? hashM + " EH/s" : NO_DISPONIBLE}
+          sub="Poder computacional de la red"
+          acento="#f0b429"
+        />
+        <Metrica
+          etiqueta="Dificultad"
+          valor={diffM != null ? diffM + "T" : NO_DISPONIBLE}
+          sub={vivo?.ajuste ? `Último ajuste: ${(vivo.ajuste.diffChange * 100).toFixed(2)}%` : "Ajuste automático cada ~2 semanas"}
+        />
         <Metrica etiqueta="Suministro emitido" valor={fmt(supplyActual) + " BTC"} sub={`${pctMinado}% de 21M minados`} acento="#f0b429" />
-        <Metrica etiqueta="Último bloque" valor={vivo?.bloque ? `#${vivo.bloque.height.toLocaleString("es-CL")}` : "—"} sub={vivo?.bloque ? `${vivo.bloque.tx_count} tx · ${(vivo.bloque.size / 1e6).toFixed(2)} MB` : "Datos de mempool.space"} acento="#a855f7" />
+        <Metrica
+          etiqueta="Último bloque"
+          valor={vivo?.bloque ? `#${vivo.bloque.height.toLocaleString("es-CL")}` : (cargando ? "Consultando..." : NO_DISPONIBLE)}
+          sub={vivo?.bloque ? `${vivo.bloque.tx_count} tx · ${(vivo.bloque.size / 1e6).toFixed(2)} MB` : "Datos de mempool.space"}
+          acento="#a855f7"
+        />
       </div>
 
       {/* ── Señales ── */}
@@ -111,15 +189,30 @@ export default function TabMineria() {
           <Senal key={i} etiqueta={s.etiqueta} estado={s.estado} color={["#22c55e", "#f0b429", "#06b6d4"][i]} />
         ))}
         <Senal etiqueta="SUMINISTRO" estado={`${pctMinado}% emitido de 21M — queda menos del 6% para los próximos 114 años`} color="#f0b429" />
-        {cargando && <Senal etiqueta="DATOS EN VIVO" estado="Cargando desde mempool.space..." color="#8899aa" />}
-        {cargandoHistorico && <Senal etiqueta="HISTÓRICO" estado="Cargando datos reales..." color="#8899aa" />}
-        {!cargandoHistorico && <Senal etiqueta="FUENTE" estado={esReal ? "bitcoin-data.com (datos reales)" : "Datos estimados (fallback)"} color={esReal ? "#f0b429" : "#667788"} />}
+
+        {/* Error states with retry */}
+        {errorVivo && !cargando && (
+          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+            <Senal etiqueta="DATOS EN VIVO" estado={errorVivo} color="#ef4444" />
+            <BotonReintentar onClick={reintentarVivo} />
+          </div>
+        )}
+        {cargando && <Senal etiqueta="DATOS EN VIVO" estado="Cargando desde mempool.space..." color="var(--text-secondary)" />}
+
+        {errorHist && !cargandoHistorico && (
+          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+            <Senal etiqueta="HISTÓRICO" estado={errorHist} color="#ef4444" />
+            <BotonReintentar onClick={reintentarHist} />
+          </div>
+        )}
+        {cargandoHistorico && <Senal etiqueta="HISTÓRICO" estado="Cargando datos reales..." color="var(--text-secondary)" />}
+        {!cargandoHistorico && !errorHist && <Senal etiqueta="FUENTE" estado={esReal ? "bitcoin-data.com (datos reales)" : "Datos estimados (fallback)"} color={esReal ? "#f0b429" : "var(--text-muted)"} />}
       </div>
 
       {/* ── Gráfico principal: SUMINISTRO ACUMULADO ── */}
       <div style={{ marginBottom: 24 }}>
         <div style={{ display: "flex", flexDirection: isMobile ? "column" : "row", alignItems: isMobile ? "flex-start" : "center", justifyContent: "space-between", marginBottom: 12, gap: isMobile ? 8 : 0 }}>
-          <div style={{ fontSize: 12, color: "#8899aa", letterSpacing: "0.08em" }}>
+          <div style={{ fontSize: 12, color: "var(--text-secondary)", letterSpacing: "0.08em" }}>
             SUMINISTRO ACUMULADO — BTC MINADOS {rangoLabel && `(${rangoLabel})`}
           </div>
           <Btn items={RANGOS} val={rango} set={setRango} color="#f0b429" />
@@ -132,24 +225,24 @@ export default function TabMineria() {
                 <stop offset="100%" stopColor="#f0b429" stopOpacity={0.02} />
               </linearGradient>
             </defs>
-            <CartesianGrid strokeDasharray="3 3" stroke="#1a2332" />
-            <XAxis dataKey="fecha" tick={{ fill: "#667788", fontSize: 9 }} interval={intTick} />
+            <CartesianGrid strokeDasharray="3 3" stroke="var(--border-grid)" />
+            <XAxis dataKey="fecha" tick={{ fill: "var(--text-muted)", fontSize: 9 }} interval={intTick} />
             <YAxis
-              tick={{ fill: "#667788", fontSize: 10 }}
+              tick={{ fill: "var(--text-muted)", fontSize: 10 }}
               tickFormatter={v => fmt(v)}
               domain={[0, 21_000_000]}
             />
             <Tooltip content={({ active, payload }) => (
               <CustomTooltip active={active} payload={payload} render={(d) => (
                 <>
-                  <div style={{ fontSize: 11, color: "#8b949e" }}>{d?.fecha}</div>
+                  <div style={{ fontSize: 11, color: "var(--text-tooltip)" }}>{d?.fecha}</div>
                   <div style={{ fontSize: 14, color: "#f0b429", fontFamily: "monospace", fontWeight: 700, marginTop: 4 }}>
                     {d?.suministro?.toLocaleString("es-CL")} BTC
                   </div>
-                  <div style={{ fontSize: 11, color: "#667788", marginTop: 2 }}>
+                  <div style={{ fontSize: 11, color: "var(--text-muted)", marginTop: 2 }}>
                     {(((d?.suministro ?? 0) / 21_000_000) * 100).toFixed(2)}% del máximo
                   </div>
-                  <div style={{ fontSize: 11, color: "#667788" }}>
+                  <div style={{ fontSize: 11, color: "var(--text-muted)" }}>
                     Bloque ≈ #{d?.bloque?.toLocaleString("es-CL")} · Recompensa: {d?.recompensa} BTC
                   </div>
                 </>
@@ -174,13 +267,13 @@ export default function TabMineria() {
           </AreaChart>
         </ResponsiveContainer>
         <div style={{ display: "flex", justifyContent: "center", gap: 20, marginTop: 8 }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 11, color: "#8899aa" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 11, color: "var(--text-secondary)" }}>
             <div style={{ width: 10, height: 10, borderRadius: 2, background: "#f0b429" }} /> BTC emitidos acumulados
           </div>
-          <div style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 11, color: "#8899aa" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 11, color: "var(--text-secondary)" }}>
             <div style={{ width: 10, height: 2, background: "#f0b42960", borderRadius: 1 }} /> Línea punteada = halving
           </div>
-          <div style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 11, color: "#8899aa" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 11, color: "var(--text-secondary)" }}>
             <div style={{ width: 10, height: 2, background: "#f0b42950", borderRadius: 1 }} /> Cap: 21.000.000 BTC
           </div>
         </div>
@@ -189,7 +282,7 @@ export default function TabMineria() {
       {/* ── Hashrate + Dificultad ── */}
       <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr", gap: 20, marginBottom: 24 }}>
         <div>
-          <div style={{ fontSize: 12, color: "#8899aa", marginBottom: 12, letterSpacing: "0.08em" }}>HASHRATE — EH/s</div>
+          <div style={{ fontSize: 12, color: "var(--text-secondary)", marginBottom: 12, letterSpacing: "0.08em" }}>HASHRATE — EH/s</div>
           <ResponsiveContainer width="100%" height={isMobile ? 220 : 260}>
             <AreaChart data={filtrado} margin={{ top: 10, right: 20, bottom: 10, left: isMobile ? 10 : 20 }}>
               <defs>
@@ -198,13 +291,13 @@ export default function TabMineria() {
                   <stop offset="100%" stopColor="#f0b429" stopOpacity={0.02} />
                 </linearGradient>
               </defs>
-              <CartesianGrid strokeDasharray="3 3" stroke="#1a2332" />
-              <XAxis dataKey="fecha" tick={{ fill: "#667788", fontSize: 9 }} interval={intTick} />
-              <YAxis tick={{ fill: "#667788", fontSize: 10 }} tickFormatter={v => fmt(v)} />
+              <CartesianGrid strokeDasharray="3 3" stroke="var(--border-grid)" />
+              <XAxis dataKey="fecha" tick={{ fill: "var(--text-muted)", fontSize: 9 }} interval={intTick} />
+              <YAxis tick={{ fill: "var(--text-muted)", fontSize: 10 }} tickFormatter={v => fmt(v)} />
               <Tooltip content={({ active, payload }) => (
                 <CustomTooltip active={active} payload={payload} render={(d) => (
                   <>
-                    <div style={{ fontSize: 11, color: "#8b949e" }}>{d?.fecha}</div>
+                    <div style={{ fontSize: 11, color: "var(--text-tooltip)" }}>{d?.fecha}</div>
                     <div style={{ fontSize: 13, color: "#f0b429", fontFamily: "monospace", fontWeight: 600, marginTop: 4 }}>{d?.hashrate} EH/s</div>
                   </>
                 )} />
@@ -217,7 +310,7 @@ export default function TabMineria() {
           </ResponsiveContainer>
         </div>
         <div>
-          <div style={{ fontSize: 12, color: "#8899aa", marginBottom: 12, letterSpacing: "0.08em" }}>DIFICULTAD — BILLONES</div>
+          <div style={{ fontSize: 12, color: "var(--text-secondary)", marginBottom: 12, letterSpacing: "0.08em" }}>DIFICULTAD — BILLONES</div>
           <ResponsiveContainer width="100%" height={isMobile ? 220 : 260}>
             <AreaChart data={filtrado} margin={{ top: 10, right: 20, bottom: 10, left: isMobile ? 10 : 20 }}>
               <defs>
@@ -226,13 +319,13 @@ export default function TabMineria() {
                   <stop offset="100%" stopColor="#06b6d4" stopOpacity={0.02} />
                 </linearGradient>
               </defs>
-              <CartesianGrid strokeDasharray="3 3" stroke="#1a2332" />
-              <XAxis dataKey="fecha" tick={{ fill: "#667788", fontSize: 9 }} interval={intTick} />
-              <YAxis tick={{ fill: "#667788", fontSize: 10 }} tickFormatter={v => fmt(v)} />
+              <CartesianGrid strokeDasharray="3 3" stroke="var(--border-grid)" />
+              <XAxis dataKey="fecha" tick={{ fill: "var(--text-muted)", fontSize: 9 }} interval={intTick} />
+              <YAxis tick={{ fill: "var(--text-muted)", fontSize: 10 }} tickFormatter={v => fmt(v)} />
               <Tooltip content={({ active, payload }) => (
                 <CustomTooltip active={active} payload={payload} render={(d) => (
                   <>
-                    <div style={{ fontSize: 11, color: "#8b949e" }}>{d?.fecha}</div>
+                    <div style={{ fontSize: 11, color: "var(--text-tooltip)" }}>{d?.fecha}</div>
                     <div style={{ fontSize: 13, color: "#06b6d4", fontFamily: "monospace", fontWeight: 600, marginTop: 4 }}>{d?.dificultad}T</div>
                   </>
                 )} />
@@ -249,19 +342,33 @@ export default function TabMineria() {
       {/* ── Comisiones + Recompensa ── */}
       <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr", gap: 20 }}>
         <div>
-          <div style={{ fontSize: 12, color: "#8899aa", marginBottom: 12, letterSpacing: "0.08em" }}>COMISIONES — % DEL INGRESO MINERO</div>
+          <div style={{ fontSize: 12, color: "var(--text-secondary)", marginBottom: 4, letterSpacing: "0.08em" }}>COMISIONES — % DEL INGRESO DEL MINERO</div>
+          <div style={{ fontSize: 10, color: "var(--text-muted)", marginBottom: 12, lineHeight: 1.4 }}>
+            Qué porcentaje de lo que gana un minero viene de comisiones (vs. la recompensa del bloque)
+          </div>
           <ResponsiveContainer width="100%" height={isMobile ? 180 : 220}>
             <ComposedChart data={filtrado} margin={{ top: 10, right: 20, bottom: 10, left: isMobile ? 10 : 20 }}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#1a2332" />
-              <XAxis dataKey="fecha" tick={{ fill: "#667788", fontSize: 9 }} interval={intTick} />
-              <YAxis tick={{ fill: "#667788", fontSize: 10 }} tickFormatter={v => v + "%"} />
+              <CartesianGrid strokeDasharray="3 3" stroke="var(--border-grid)" />
+              <XAxis dataKey="fecha" tick={{ fill: "var(--text-muted)", fontSize: 9 }} interval={intTick} />
+              <YAxis tick={{ fill: "var(--text-muted)", fontSize: 10 }} tickFormatter={v => v + "%"} />
               <Tooltip content={({ active, payload }) => (
-                <CustomTooltip active={active} payload={payload} render={(d) => (
-                  <>
-                    <div style={{ fontSize: 11, color: "#8b949e" }}>{d?.fecha}</div>
-                    <div style={{ fontSize: 13, color: "#a855f7", fontFamily: "monospace", fontWeight: 600, marginTop: 4 }}>{d?.pctComisiones}% del ingreso</div>
-                  </>
-                )} />
+                <CustomTooltip active={active} payload={payload} render={(d) => {
+                  const pct = d?.pctComisiones ?? 0;
+                  const rew = d?.recompensa ?? 0;
+                  const feeBtc = rew > 0 ? (pct / 100 * rew / (1 - pct / 100)).toFixed(3) : "—";
+                  return (
+                    <>
+                      <div style={{ fontSize: 11, color: "var(--text-tooltip)" }}>{d?.fecha}</div>
+                      <div style={{ fontSize: 13, color: "#a855f7", fontFamily: "monospace", fontWeight: 600, marginTop: 4 }}>{pct}% del ingreso en comisiones</div>
+                      <div style={{ fontSize: 10, color: "var(--text-muted)", marginTop: 2 }}>
+                        Recompensa: {rew} BTC · Comisiones ≈ {feeBtc} BTC
+                      </div>
+                      <div style={{ fontSize: 10, color: "var(--text-muted)" }}>
+                        Ingreso total por bloque ≈ {rew} + {feeBtc} BTC
+                      </div>
+                    </>
+                  );
+                }} />
               )} />
               {halvingsVisibles.map((h, i) => (
                 <ReferenceLine key={i} x={h.fechaLabel} stroke="#a855f730" strokeDasharray="4 4" />
@@ -270,33 +377,44 @@ export default function TabMineria() {
               <Line type="monotone" dataKey="pctComisiones" stroke="#a855f7" strokeWidth={2} dot={false} />
             </ComposedChart>
           </ResponsiveContainer>
+          <div style={{ fontSize: 10, color: "var(--text-muted)", marginTop: 6, lineHeight: 1.5 }}>
+            Un minero gana <span style={{ color: "#22c55e" }}>recompensa del bloque</span> + <span style={{ color: "#a855f7" }}>comisiones de los usuarios</span>. A medida que la recompensa baja con cada halving, las comisiones se vuelven una parte mayor del ingreso.
+          </div>
         </div>
         <div>
-          <div style={{ fontSize: 12, color: "#8899aa", marginBottom: 12, letterSpacing: "0.08em" }}>RECOMPENSA POR BLOQUE — BTC</div>
+          <div style={{ fontSize: 12, color: "var(--text-secondary)", marginBottom: 4, letterSpacing: "0.08em" }}>RECOMPENSA POR BLOQUE — BTC</div>
+          <div style={{ fontSize: 10, color: "var(--text-muted)", marginBottom: 12, lineHeight: 1.4 }}>
+            BTC nuevos creados en cada bloque · Proyección hasta 2036
+          </div>
           <ResponsiveContainer width="100%" height={isMobile ? 180 : 220}>
-            <AreaChart data={filtrado} margin={{ top: 10, right: 20, bottom: 10, left: isMobile ? 10 : 20 }}>
+            <AreaChart data={RECOMPENSA_PROYECTADA} margin={{ top: 10, right: 20, bottom: 10, left: isMobile ? 10 : 20 }}>
               <defs>
                 <linearGradient id="gR" x1="0" y1="0" x2="0" y2="1">
                   <stop offset="0%" stopColor="#22c55e" stopOpacity={0.3} />
                   <stop offset="100%" stopColor="#22c55e" stopOpacity={0.02} />
                 </linearGradient>
+                <linearGradient id="gRP" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stopColor="#22c55e" stopOpacity={0.12} />
+                  <stop offset="100%" stopColor="#22c55e" stopOpacity={0.02} />
+                </linearGradient>
               </defs>
-              <CartesianGrid strokeDasharray="3 3" stroke="#1a2332" />
-              <XAxis dataKey="fecha" tick={{ fill: "#667788", fontSize: 9 }} interval={intTick} />
-              <YAxis tick={{ fill: "#667788", fontSize: 10 }} domain={[0, 55]} />
+              <CartesianGrid strokeDasharray="3 3" stroke="var(--border-grid)" />
+              <XAxis dataKey="fecha" tick={{ fill: "var(--text-muted)", fontSize: 9 }} interval={intTickRecompensa} />
+              <YAxis tick={{ fill: "var(--text-muted)", fontSize: 10 }} domain={[0, 55]} />
               <Tooltip content={({ active, payload }) => (
                 <CustomTooltip active={active} payload={payload} render={(d) => (
                   <>
-                    <div style={{ fontSize: 11, color: "#8b949e" }}>{d?.fecha}</div>
+                    <div style={{ fontSize: 11, color: "var(--text-tooltip)" }}>{d?.fecha} {d?.proyectado ? "(proyectado)" : ""}</div>
                     <div style={{ fontSize: 13, color: "#22c55e", fontFamily: "monospace", fontWeight: 600, marginTop: 4 }}>{d?.recompensa} BTC por bloque</div>
+                    <div style={{ fontSize: 10, color: "var(--text-muted)", marginTop: 2 }}>{(d?.recompensa * 144).toFixed(1)} BTC/día · {(d?.recompensa * 144 * 30).toFixed(0)} BTC/mes</div>
                   </>
                 )} />
               )} />
-              {halvingsVisibles.map((h, i) => (
+              {halvingsRecompensa.map((h, i) => (
                 <ReferenceLine
                   key={i}
                   x={h.fechaLabel}
-                  stroke="#f0b42940"
+                  stroke="#f0b42960"
                   strokeDasharray="4 4"
                   label={{ value: h.label, fill: "#f0b429", fontSize: 8, position: "top" }}
                 />
@@ -304,21 +422,29 @@ export default function TabMineria() {
               <Area type="stepAfter" dataKey="recompensa" stroke="#22c55e" fill="url(#gR)" strokeWidth={2} />
             </AreaChart>
           </ResponsiveContainer>
+          <div style={{ display: "flex", gap: 12, marginTop: 6, flexWrap: "wrap" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 4, fontSize: 10, color: "var(--text-muted)" }}>
+              <div style={{ width: 8, height: 8, borderRadius: 2, background: "#22c55e" }} /> Recompensa actual/histórica
+            </div>
+            <div style={{ display: "flex", alignItems: "center", gap: 4, fontSize: 10, color: "var(--text-muted)" }}>
+              <div style={{ width: 8, height: 2, background: "#f0b42960", borderRadius: 1 }} /> Halving (recompensa se divide a la mitad)
+            </div>
+          </div>
         </div>
       </div>
 
       <PanelEdu icono={NARRATIVA.tabs.mineria.panelEdu.icono} titulo={NARRATIVA.tabs.mineria.panelEdu.titulo} color={NARRATIVA.tabs.mineria.panelEdu.color}>
         <strong style={{ color: "#f0b429" }}>La emisión sigue un calendario público.</strong> 50 → 25 → 12,5 → 6,25 → 3,125 BTC por bloque. En 2028 será 1,5625. Ningún banco central del mundo ha publicado su calendario de emisión para los próximos 100 años. Bitcoin lo hizo en 2009.
         <br /><br />
-        <strong style={{ color: "#e0e8f0" }}>La seguridad no depende de confianza.</strong> Cada segundo, la red procesa cientos de millones de billones de cálculos. La dificultad se ajusta sola para mantener un bloque cada 10 minutos — sin importar cuántos mineros se sumen o se retiren.
+        <strong style={{ color: "var(--text-primary)" }}>La seguridad no depende de confianza.</strong> Cada segundo, la red procesa cientos de millones de billones de cálculos. La dificultad se ajusta sola para mantener un bloque cada 10 minutos — sin importar cuántos mineros se sumen o se retiren.
         <br /><br />
-        <strong style={{ color: "#e0e8f0" }}>Cuando la recompensa baja, las comisiones compensan.</strong> El incentivo económico se recalibra con cada bloque. Los mineros ineficientes desaparecen, los eficientes sobreviven — selección natural económica.
+        <strong style={{ color: "var(--text-primary)" }}>Cuando la recompensa baja, las comisiones compensan.</strong> El incentivo económico se recalibra con cada bloque. Los mineros ineficientes desaparecen, los eficientes sobreviven — selección natural económica.
         <br /><br />
         A lo largo de este observatorio vas a ver qué hace la gente con un sistema que funciona así. La siguiente sección muestra cómo se reparte la propiedad.
         <br /><br />
-        <span style={{ color: "#8899aa", fontStyle: "italic" }}>{NARRATIVA.tabs.mineria.panelEdu.cierre}</span>
+        <span style={{ color: "var(--text-secondary)", fontStyle: "italic" }}>{NARRATIVA.tabs.mineria.panelEdu.cierre}</span>
         <br /><br />
-        <span style={{ color: "#667788", fontSize: 11 }}>
+        <span style={{ color: "var(--text-muted)", fontSize: 11 }}>
           Este análisis es informativo y no constituye asesoría financiera de ningún tipo. Datos de minería provienen de mempool.space y bitcoin-data.com.
         </span>
       </PanelEdu>

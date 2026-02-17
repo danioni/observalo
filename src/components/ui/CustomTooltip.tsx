@@ -12,7 +12,7 @@ export default function CustomTooltip({ active, payload, render }: CustomTooltip
   if (!active || !payload?.length) return null;
   const d = payload[0]?.payload;
   return (
-    <div style={{ background: "#0d1117ee", border: "1px solid #21262d", borderRadius: 8, padding: "10px 14px", backdropFilter: "blur(12px)" }}>
+    <div style={{ background: "var(--tooltip-bg)", border: "1px solid var(--border-subtle)", borderRadius: 8, padding: "10px 14px", backdropFilter: "blur(12px)" }}>
       {render(d, payload)}
     </div>
   );

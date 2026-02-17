@@ -18,8 +18,8 @@ export default function Dashboard() {
   return (
     <div style={{
       minHeight: "100vh",
-      background: "linear-gradient(180deg,#080c12 0%,#0a0f18 50%,#080c12 100%)",
-      color: "#e0e8f0",
+      background: `linear-gradient(180deg,var(--bg-primary) 0%,var(--bg-secondary) 50%,var(--bg-primary) 100%)`,
+      color: "var(--text-primary)",
       fontFamily: "'SF Pro Display',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif",
     }}>
       <Header tab={tab} setTab={setTab} />

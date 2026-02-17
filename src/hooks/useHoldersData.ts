@@ -1,9 +1,10 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useMemo } from "react";
 import type { Holder } from "@/types";
 import { DATOS_HOLDERS } from "@/data/holders";
 import type { HoldersApiData } from "@/app/api/holders/route";
+import { useFetchApi } from "./useFetchApi";
 
 // Mapeo de claves ETF de BGeometrics → tickers en nuestros datos
 const ETF_MAP: Record<string, string> = {
@@ -38,25 +39,14 @@ function mergeApiData(base: Holder[], api: HoldersApiData): Holder[] {
 }
 
 export function useHoldersData() {
-  const [datos, setDatos] = useState<Holder[]>(DATOS_HOLDERS);
-  const [esReal, setEsReal] = useState(false);
-  const [cargando, setCargando] = useState(true);
+  const { data, cargando, error, stale, lastSuccessAt, reintentar } = useFetchApi<HoldersApiData>("/api/holders");
 
-  useEffect(() => {
-    fetch("/api/holders")
-      .then((r) => (r.ok ? r.json() : null))
-      .then((json) => {
-        if (json?.data) {
-          const apiData: HoldersApiData = json.data;
-          if (apiData.etfHoldings) {
-            setDatos(mergeApiData(DATOS_HOLDERS, apiData));
-            setEsReal(true);
-          }
-        }
-      })
-      .catch(() => {})
-      .finally(() => setCargando(false));
-  }, []);
+  const datos = useMemo(() => {
+    if (data?.etfHoldings) return mergeApiData(DATOS_HOLDERS, data);
+    return DATOS_HOLDERS;
+  }, [data]);
 
-  return { datos, esReal, cargando };
+  const esReal = !!data?.etfHoldings;
+
+  return { datos, esReal, cargando, error, stale, lastSuccessAt, reintentar };
 }

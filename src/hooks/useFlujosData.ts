@@ -1,13 +1,19 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useMemo } from "react";
 import { FLUJOS_DIARIOS, FLUJOS_SEMANALES } from "@/data/flujos";
+import { useFetchApi } from "./useFetchApi";
 
 interface FlujoApiItem {
   d: string; // YYYY-MM-DD
   fecha: string;
   flujoNeto: number;
   reserva: number;
+}
+
+interface FlujosApiData {
+  diarios: FlujoApiItem[];
+  semanales: FlujoApiItem[];
 }
 
 export interface FlujoLocal {
@@ -58,37 +64,24 @@ function apiToFlujosSemanales(items: FlujoApiItem[]): FlujoLocal[] {
 }
 
 export function useFlujosData() {
-  // Iniciar vacío — no mostrar datos simulados mientras se carga la API
-  const [diarios, setDiarios] = useState<FlujoLocal[]>([]);
-  const [semanales, setSemanales] = useState<FlujoLocal[]>([]);
-  const [esReal, setEsReal] = useState(false);
-  const [cargando, setCargando] = useState(true);
+  const { data, cargando, error, stale, lastSuccessAt, reintentar } = useFetchApi<FlujosApiData>("/api/flujos");
 
-  useEffect(() => {
-    fetch("/api/flujos")
-      .then((r) => r.ok ? r.json() : null)
-      .then((json) => {
-        if (json?.data) {
-          if (json.data.diarios?.length) {
-            setDiarios(apiToFlujoLocal(json.data.diarios));
-          }
-          if (json.data.semanales?.length) {
-            setSemanales(apiToFlujosSemanales(json.data.semanales));
-          }
-          setEsReal(true);
-        } else {
-          // API falló — usar fallback estático
-          setDiarios(FLUJOS_DIARIOS as FlujoLocal[]);
-          setSemanales(FLUJOS_SEMANALES.map((s, i) => ({ ...s, numSem: i })) as FlujoLocal[]);
-        }
-      })
-      .catch(() => {
-        // Error de red — usar fallback estático
-        setDiarios(FLUJOS_DIARIOS as FlujoLocal[]);
-        setSemanales(FLUJOS_SEMANALES.map((s, i) => ({ ...s, numSem: i })) as FlujoLocal[]);
-      })
-      .finally(() => setCargando(false));
-  }, []);
+  const { diarios, semanales } = useMemo(() => {
+    if (data?.diarios?.length) {
+      return {
+        diarios: apiToFlujoLocal(data.diarios),
+        semanales: data.semanales?.length ? apiToFlujosSemanales(data.semanales) : [],
+      };
+    }
+    if (cargando) return { diarios: [], semanales: [] };
+    // Fallback to static data
+    return {
+      diarios: FLUJOS_DIARIOS as FlujoLocal[],
+      semanales: FLUJOS_SEMANALES.map((s, i) => ({ ...s, numSem: i })) as FlujoLocal[],
+    };
+  }, [data, cargando]);
 
-  return { diarios, semanales, esReal, cargando };
+  const esReal = !!data?.diarios?.length;
+
+  return { diarios, semanales, esReal, cargando, error, stale, lastSuccessAt, reintentar };
 }

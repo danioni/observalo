@@ -48,18 +48,18 @@ export default function TabDistribucion() {
 
       <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr", gap: 20 }}>
         <div>
-          <div style={{ fontSize: 12, color: "#8899aa", marginBottom: 12, letterSpacing: "0.08em" }}>% DE LA OFERTA POR COHORTE</div>
+          <div style={{ fontSize: 12, color: "var(--text-secondary)", marginBottom: 12, letterSpacing: "0.08em" }}>% DE LA OFERTA POR COHORTE</div>
           <ResponsiveContainer width="100%" height={chartHeight}>
             <BarChart data={DATOS_DISTRIBUCION} layout="vertical" margin={{ left: chartLeftMargin, right: 20 }}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#1a2332" horizontal={false} />
-              <XAxis type="number" domain={[0, 25]} tick={{ fill: "#667788", fontSize: 10 }} tickFormatter={v => v + "%"} />
-              <YAxis type="category" dataKey="cohorte" tick={{ fill: "#8899aa", fontSize: 11 }} width={isMobile ? 40 : 70} />
+              <CartesianGrid strokeDasharray="3 3" stroke="var(--border-grid)" horizontal={false} />
+              <XAxis type="number" domain={[0, 25]} tick={{ fill: "var(--text-muted)", fontSize: 10 }} tickFormatter={v => v + "%"} />
+              <YAxis type="category" dataKey="cohorte" tick={{ fill: "var(--text-secondary)", fontSize: 11 }} width={isMobile ? 40 : 70} />
               <Tooltip content={({ active, payload }) => (
                 <CustomTooltip active={active} payload={payload} render={(d) => (
                   <>
-                    <div style={{ fontSize: 13, color: "#e0e8f0", fontWeight: 600 }}>{d?.cohorte} ({d?.rango})</div>
-                    <div style={{ fontSize: 12, color: "#8899aa", marginTop: 4 }}>{d?.pctSupply?.toFixed(2)}% de la oferta total</div>
-                    <div style={{ fontSize: 12, color: "#8899aa" }}>{d?.btcRetenido?.toLocaleString("es-CL")} BTC retenidos</div>
+                    <div style={{ fontSize: 13, color: "var(--text-primary)", fontWeight: 600 }}>{d?.cohorte} ({d?.rango})</div>
+                    <div style={{ fontSize: 12, color: "var(--text-secondary)", marginTop: 4 }}>{d?.pctSupply?.toFixed(2)}% de la oferta total</div>
+                    <div style={{ fontSize: 12, color: "var(--text-secondary)" }}>{d?.btcRetenido?.toLocaleString("es-CL")} BTC retenidos</div>
                   </>
                 )} />
               )} />
@@ -70,18 +70,18 @@ export default function TabDistribucion() {
           </ResponsiveContainer>
         </div>
         <div>
-          <div style={{ fontSize: 12, color: "#8899aa", marginBottom: 12, letterSpacing: "0.08em" }}>DIRECCIONES POR COHORTE (ESCALA LOG)</div>
+          <div style={{ fontSize: 12, color: "var(--text-secondary)", marginBottom: 12, letterSpacing: "0.08em" }}>DIRECCIONES POR COHORTE (ESCALA LOG)</div>
           <ResponsiveContainer width="100%" height={chartHeight}>
             <BarChart data={barras} layout="vertical" margin={{ left: chartLeftMargin, right: 20 }}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#1a2332" horizontal={false} />
-              <XAxis type="number" tick={{ fill: "#667788", fontSize: 10 }} tickFormatter={v => v <= 0 ? "1" : fmt(Math.pow(10, v))} />
-              <YAxis type="category" dataKey="cohorte" tick={{ fill: "#8899aa", fontSize: 11 }} width={isMobile ? 40 : 70} />
+              <CartesianGrid strokeDasharray="3 3" stroke="var(--border-grid)" horizontal={false} />
+              <XAxis type="number" tick={{ fill: "var(--text-muted)", fontSize: 10 }} tickFormatter={v => v <= 0 ? "1" : fmt(Math.pow(10, v))} />
+              <YAxis type="category" dataKey="cohorte" tick={{ fill: "var(--text-secondary)", fontSize: 11 }} width={isMobile ? 40 : 70} />
               <Tooltip content={({ active, payload }) => (
                 <CustomTooltip active={active} payload={payload} render={(d) => (
                   <>
-                    <div style={{ fontSize: 13, color: "#e0e8f0", fontWeight: 600 }}>{d?.cohorte} ({d?.rango})</div>
-                    <div style={{ fontSize: 12, color: "#8899aa", marginTop: 4 }}>Direcciones: {d?.direcciones?.toLocaleString("es-CL")}</div>
-                    <div style={{ fontSize: 12, color: "#8899aa" }}>Promedio: {(d?.btcRetenido / d?.direcciones)?.toFixed(4)} BTC/dir.</div>
+                    <div style={{ fontSize: 13, color: "var(--text-primary)", fontWeight: 600 }}>{d?.cohorte} ({d?.rango})</div>
+                    <div style={{ fontSize: 12, color: "var(--text-secondary)", marginTop: 4 }}>Direcciones: {d?.direcciones?.toLocaleString("es-CL")}</div>
+                    <div style={{ fontSize: 12, color: "var(--text-secondary)" }}>Promedio: {(d?.btcRetenido / d?.direcciones)?.toFixed(4)} BTC/dir.</div>
                   </>
                 )} />
               )} />
@@ -94,38 +94,38 @@ export default function TabDistribucion() {
       </div>
 
       <div style={{ marginTop: 24 }}>
-        <div style={{ fontSize: 12, color: "#8899aa", marginBottom: 12, letterSpacing: "0.08em" }}>DETALLE POR COHORTE</div>
+        <div style={{ fontSize: 12, color: "var(--text-secondary)", marginBottom: 12, letterSpacing: "0.08em" }}>DETALLE POR COHORTE</div>
         <div style={{ overflowX: "auto" }}>
           <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 12 }}>
             <thead>
-              <tr style={{ borderBottom: "1px solid #21262d" }}>
+              <tr style={{ borderBottom: "1px solid var(--border-subtle)" }}>
                 {["Cohorte", "Rango", "Direcciones", "% Dir.", "BTC retenido", "% oferta", "BTC/Dir."].map(h => (
-                  <th key={h} style={{ padding: "8px 12px", textAlign: "left", color: "#667788", fontWeight: 500, fontSize: 10, letterSpacing: "0.1em", textTransform: "uppercase" }}>{h}</th>
+                  <th key={h} style={{ padding: "8px 12px", textAlign: "left", color: "var(--text-muted)", fontWeight: 500, fontSize: 10, letterSpacing: "0.1em", textTransform: "uppercase" }}>{h}</th>
                 ))}
               </tr>
             </thead>
             <tbody>
               {DATOS_DISTRIBUCION.map((d, i) => (
-                <tr key={i} style={{ borderBottom: "1px solid #161b22" }}>
+                <tr key={i} style={{ borderBottom: "1px solid var(--border-primary)" }}>
                   <td style={{ padding: "8px 12px" }}>
                     <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
                       <div style={{ width: 10, height: 10, borderRadius: 2, background: d.color }} />
-                      <span style={{ color: "#e0e8f0", fontWeight: 600 }}>{d.cohorte}</span>
+                      <span style={{ color: "var(--text-primary)", fontWeight: 600 }}>{d.cohorte}</span>
                     </div>
                   </td>
-                  <td style={{ padding: "8px 12px", color: "#8899aa", fontFamily: "monospace" }}>{d.rango}</td>
-                  <td style={{ padding: "8px 12px", color: "#c0c8d0", fontFamily: "monospace" }}>{d.direcciones.toLocaleString("es-CL")}</td>
-                  <td style={{ padding: "8px 12px", color: "#8899aa", fontFamily: "monospace" }}>{(d.direcciones / totalDir * 100).toFixed(2)}%</td>
-                  <td style={{ padding: "8px 12px", color: "#c0c8d0", fontFamily: "monospace" }}>{d.btcRetenido.toLocaleString("es-CL")}</td>
+                  <td style={{ padding: "8px 12px", color: "var(--text-secondary)", fontFamily: "monospace" }}>{d.rango}</td>
+                  <td style={{ padding: "8px 12px", color: "var(--text-medium)", fontFamily: "monospace" }}>{d.direcciones.toLocaleString("es-CL")}</td>
+                  <td style={{ padding: "8px 12px", color: "var(--text-secondary)", fontFamily: "monospace" }}>{(d.direcciones / totalDir * 100).toFixed(2)}%</td>
+                  <td style={{ padding: "8px 12px", color: "var(--text-medium)", fontFamily: "monospace" }}>{d.btcRetenido.toLocaleString("es-CL")}</td>
                   <td style={{ padding: "8px 12px" }}>
                     <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                      <div style={{ width: 60, height: 4, background: "#161b22", borderRadius: 2 }}>
+                      <div style={{ width: 60, height: 4, background: "var(--bg-bar-track)", borderRadius: 2 }}>
                         <div style={{ width: `${Math.min(d.pctSupply / 25 * 100, 100)}%`, height: "100%", background: d.color, borderRadius: 2 }} />
                       </div>
-                      <span style={{ color: "#e0e8f0", fontFamily: "monospace", fontWeight: 600 }}>{d.pctSupply.toFixed(2)}%</span>
+                      <span style={{ color: "var(--text-primary)", fontFamily: "monospace", fontWeight: 600 }}>{d.pctSupply.toFixed(2)}%</span>
                     </div>
                   </td>
-                  <td style={{ padding: "8px 12px", color: "#8899aa", fontFamily: "monospace" }}>{(d.btcRetenido / d.direcciones).toFixed(4)}</td>
+                  <td style={{ padding: "8px 12px", color: "var(--text-secondary)", fontFamily: "monospace" }}>{(d.btcRetenido / d.direcciones).toFixed(4)}</td>
                 </tr>
               ))}
             </tbody>
@@ -142,9 +142,9 @@ export default function TabDistribucion() {
         <br /><br />
         Pero tener Bitcoin es una cosa. No venderlo es otra. La siguiente sección muestra quién decidió retener — incluso durante los peores crashes.
         <br /><br />
-        <strong style={{ color: "#e0e8f0" }}>{NARRATIVA.tabs.distribucion.panelEdu.cierre}</strong>
+        <strong style={{ color: "var(--text-primary)" }}>{NARRATIVA.tabs.distribucion.panelEdu.cierre}</strong>
         <br /><br />
-        <span style={{ color: "#667788", fontSize: 11 }}>
+        <span style={{ color: "var(--text-muted)", fontSize: 11 }}>
           Este análisis es informativo y no constituye asesoría financiera de ningún tipo.
         </span>
       </PanelEdu>
