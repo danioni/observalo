@@ -69,12 +69,14 @@ function buildFlujos(netflows: BGeometricsNetflow[], reserves: BGeometricsReserv
   return { diarios, semanales };
 }
 
+const START_DATE = "2021-01-01";
+
 async function fetchFlujos(): Promise<FlujosData> {
   const [netflowRes, reserveRes] = await Promise.all([
-    fetch("https://bitcoin-data.com/v1/exchange-netflow-btc?startday=2021-01-01&size=2000", {
+    fetch(`https://bitcoin-data.com/v1/exchange-netflow-btc?startday=${START_DATE}&size=5000`, {
       signal: AbortSignal.timeout(15000),
     }),
-    fetch("https://bitcoin-data.com/v1/exchange-reserve-btc?startday=2021-01-01&size=2000", {
+    fetch(`https://bitcoin-data.com/v1/exchange-reserve-btc?startday=${START_DATE}&size=5000`, {
       signal: AbortSignal.timeout(15000),
     }),
   ]);
@@ -82,8 +84,12 @@ async function fetchFlujos(): Promise<FlujosData> {
   if (!netflowRes.ok) throw new Error(`Netflow API returned ${netflowRes.status}`);
   if (!reserveRes.ok) throw new Error(`Reserve API returned ${reserveRes.status}`);
 
-  const netflows: BGeometricsNetflow[] = await netflowRes.json();
-  const reserves: BGeometricsReserve[] = await reserveRes.json();
+  const rawNetflows: BGeometricsNetflow[] = await netflowRes.json();
+  const rawReserves: BGeometricsReserve[] = await reserveRes.json();
+
+  // The API may ignore startday — filter server-side to ensure correct range
+  const netflows = rawNetflows.filter(n => n.d >= START_DATE);
+  const reserves = rawReserves.filter(r => r.d >= START_DATE);
 
   return buildFlujos(netflows, reserves);
 }

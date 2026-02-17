@@ -39,7 +39,7 @@ export default function TabFlujos() {
   const fuente = gran === "diario" ? FLUJOS_DIARIOS : FLUJOS_SEMANALES;
   const filtrado = (() => {
     if (rango === "todo") return fuente;
-    const ahora = new Date(2026, 1, 16), corte = new Date(ahora);
+    const ahora = new Date(), corte = new Date(ahora);
     if (rango === "2a") corte.setFullYear(corte.getFullYear() - 2);
     else if (rango === "1a") corte.setFullYear(corte.getFullYear() - 1);
     else if (rango === "6m") corte.setMonth(corte.getMonth() - 6);
