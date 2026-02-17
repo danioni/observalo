@@ -93,7 +93,7 @@ export default function TabDistribucion() {
           <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 12 }}>
             <thead>
               <tr style={{ borderBottom: "1px solid #21262d" }}>
-                {["Cohorte", "Rango", "Direcciones", "BTC retenido", "% del supply", "BTC/Dir."].map(h => (
+                {["Cohorte", "Rango", "Direcciones", "% Dir.", "BTC retenido", "% del supply", "BTC/Dir."].map(h => (
                   <th key={h} style={{ padding: "8px 12px", textAlign: "left", color: "#667788", fontWeight: 500, fontSize: 10, letterSpacing: "0.1em", textTransform: "uppercase" }}>{h}</th>
                 ))}
               </tr>
@@ -109,6 +109,7 @@ export default function TabDistribucion() {
                   </td>
                   <td style={{ padding: "8px 12px", color: "#8899aa", fontFamily: "monospace" }}>{d.rango}</td>
                   <td style={{ padding: "8px 12px", color: "#c0c8d0", fontFamily: "monospace" }}>{d.direcciones.toLocaleString("es-CL")}</td>
+                  <td style={{ padding: "8px 12px", color: "#8899aa", fontFamily: "monospace" }}>{(d.direcciones / totalDir * 100).toFixed(2)}%</td>
                   <td style={{ padding: "8px 12px", color: "#c0c8d0", fontFamily: "monospace" }}>{d.btcRetenido.toLocaleString("es-CL")}</td>
                   <td style={{ padding: "8px 12px" }}>
                     <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
