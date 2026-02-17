@@ -119,22 +119,20 @@ export default function TabSoberania() {
         <div style={{ fontSize: 12, color: "var(--text-secondary)", marginBottom: 16, letterSpacing: "0.08em" }}>
           EMBUDO DE ESCASEZ — DE 21M A LA OFERTA SOBERANA
         </div>
-        <div style={{ display: "flex", flexDirection: "column", gap: 0, alignItems: isMobile ? "stretch" : "flex-start" }}>
+        <div style={{ display: "flex", flexDirection: "column", gap: 0, alignItems: "center" }}>
           {EMBUDO.map((paso, i) => {
-            // Escala visual: mapear [BTC_SOBERANO..BTC_CAP] → [30%..100%] para que parezca embudo real
-            const minBtc = EMBUDO[EMBUDO.length - 1].btc;
-            const t = (paso.btc - minBtc) / (BTC_CAP - minBtc); // 0..1
-            const ancho = 30 + t * 70; // 30%..100%
+            // Proporcional real (btc/21M * 100%) — centrado crea el efecto embudo
+            const ancho = (paso.btc / BTC_CAP) * 100;
             const esUltimo = i === EMBUDO.length - 1;
-            const labelDerecho = i === 0 ? "Cap máximo" : esUltimo ? "⚡ OFERTA SOBERANA" : `${pct(paso.btc)}%`;
+            const labelTexto = i === 0 ? "Cap máximo" : esUltimo ? "⚡ OFERTA SOBERANA" : `${pct(paso.btc)}%`;
             return (
-              <div key={i}>
+              <div key={i} style={{ width: "100%" }}>
                 {/* Resta (entre pasos) */}
                 {i > 0 && (
                   <div style={{
-                    display: "flex", alignItems: "center", gap: isMobile ? 6 : 12,
-                    padding: isMobile ? "3px 0 3px 8px" : "4px 0 4px 20px", fontSize: isMobile ? 9 : 11,
-                    flexWrap: isMobile ? "wrap" : undefined,
+                    display: "flex", alignItems: "center", justifyContent: "center",
+                    gap: isMobile ? 6 : 10,
+                    padding: isMobile ? "3px 0" : "4px 0", fontSize: isMobile ? 9 : 11,
                   }}>
                     <span style={{ color: paso.color, fontWeight: 600 }}>−</span>
                     <span style={{ color: "var(--text-muted)" }}>{EMBUDO[i].etiqueta}</span>
@@ -143,71 +141,41 @@ export default function TabSoberania() {
                     </span>
                   </div>
                 )}
-                {/* Barra + label */}
-                {isMobile ? (
-                  <div style={{ width: `${Math.max(ancho, 25)}%` }}>
-                    <div style={{
-                      height: esUltimo ? 36 : 26,
-                      background: esUltimo
-                        ? "linear-gradient(90deg, #22c55e 0%, #16a34a 100%)"
-                        : `linear-gradient(90deg, ${i === 0 ? "var(--bg-embudo)" : "var(--bg-embudo-mid)"} 0%, ${i === 0 ? "var(--bg-embudo-mid)" : "var(--bg-embudo-deep)"} 100%)`,
-                      borderRadius: 6,
-                      display: "flex", alignItems: "center", justifyContent: "space-between",
-                      padding: "0 8px",
-                      border: esUltimo ? "1px solid #22c55e44" : "1px solid var(--border-embudo)",
-                      boxShadow: esUltimo ? "0 0 20px rgba(34,197,94,0.15)" : "none",
-                    }}>
-                      <span style={{
-                        fontSize: esUltimo ? 11 : 9,
-                        fontWeight: 700,
-                        color: esUltimo ? "#fff" : "var(--text-embudo)",
-                        fontFamily: "'JetBrains Mono',monospace",
-                      }}>
-                        {fmt(paso.btc)} BTC
-                      </span>
-                      <span style={{
-                        fontSize: esUltimo ? 9 : 8,
-                        color: esUltimo ? "rgba(255,255,255,0.8)" : "var(--text-muted)",
-                        fontWeight: esUltimo ? 600 : 400,
-                      }}>
-                        {labelDerecho}
-                      </span>
-                    </div>
-                  </div>
-                ) : (
-                  <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-                    <div style={{
-                      height: esUltimo ? 40 : 28,
-                      width: `${Math.max(ancho, 8)}%`,
-                      background: esUltimo
-                        ? "linear-gradient(90deg, #22c55e 0%, #16a34a 100%)"
-                        : `linear-gradient(90deg, ${i === 0 ? "var(--bg-embudo)" : "var(--bg-embudo-mid)"} 0%, ${i === 0 ? "var(--bg-embudo-mid)" : "var(--bg-embudo-deep)"} 100%)`,
-                      borderRadius: 6,
-                      display: "flex", alignItems: "center", justifyContent: "center",
-                      border: esUltimo ? "1px solid #22c55e44" : "1px solid var(--border-embudo)",
-                      boxShadow: esUltimo ? "0 0 20px rgba(34,197,94,0.15)" : "none",
-                      transition: "all 0.3s ease",
-                    }}>
-                      <span style={{
-                        fontSize: esUltimo ? 14 : 12,
-                        fontWeight: 700,
-                        color: esUltimo ? "#fff" : "var(--text-embudo)",
-                        fontFamily: "'JetBrains Mono',monospace",
-                        letterSpacing: "-0.01em",
-                      }}>
-                        {paso.btc.toLocaleString("es-CL")} BTC
-                      </span>
-                    </div>
+                {/* Barra centrada */}
+                <div style={{ display: "flex", justifyContent: "center", width: "100%" }}>
+                  <div style={{
+                    height: esUltimo ? (isMobile ? 36 : 42) : (isMobile ? 26 : 30),
+                    width: `${Math.max(ancho, 20)}%`,
+                    background: esUltimo
+                      ? "linear-gradient(90deg, #22c55e 0%, #16a34a 100%)"
+                      : `linear-gradient(90deg, ${i === 0 ? "var(--bg-embudo)" : "var(--bg-embudo-mid)"} 0%, ${i === 0 ? "var(--bg-embudo-mid)" : "var(--bg-embudo-deep)"} 100%)`,
+                    borderRadius: 6,
+                    display: "flex", alignItems: "center", justifyContent: "center",
+                    gap: isMobile ? 6 : 12,
+                    padding: "0 10px",
+                    border: esUltimo ? "1px solid #22c55e44" : "1px solid var(--border-embudo)",
+                    boxShadow: esUltimo ? "0 0 20px rgba(34,197,94,0.15)" : "none",
+                    transition: "all 0.3s ease",
+                  }}>
                     <span style={{
-                      fontSize: esUltimo ? 12 : 10,
-                      color: esUltimo ? "#22c55e" : "var(--text-muted)",
-                      fontWeight: esUltimo ? 700 : 400,
+                      fontSize: esUltimo ? (isMobile ? 11 : 14) : (isMobile ? 9 : 12),
+                      fontWeight: 700,
+                      color: esUltimo ? "#fff" : "var(--text-embudo)",
+                      fontFamily: "'JetBrains Mono',monospace",
+                      letterSpacing: "-0.01em",
+                    }}>
+                      {isMobile ? fmt(paso.btc) : paso.btc.toLocaleString("es-CL")} BTC
+                    </span>
+                    <span style={{
+                      fontSize: esUltimo ? (isMobile ? 9 : 11) : (isMobile ? 8 : 10),
+                      color: esUltimo ? "rgba(255,255,255,0.8)" : "var(--text-muted)",
+                      fontWeight: esUltimo ? 600 : 400,
                       whiteSpace: "nowrap",
                     }}>
-                      {labelDerecho}
+                      {labelTexto}
                     </span>
                   </div>
-                )}
+                </div>
               </div>
             );
           })}
