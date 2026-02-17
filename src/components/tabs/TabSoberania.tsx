@@ -121,7 +121,10 @@ export default function TabSoberania() {
         </div>
         <div style={{ display: "flex", flexDirection: "column", gap: 0 }}>
           {EMBUDO.map((paso, i) => {
-            const ancho = (paso.btc / BTC_CAP) * 100;
+            // Escala visual: mapear [BTC_SOBERANO..BTC_CAP] → [30%..100%] para que parezca embudo real
+            const minBtc = EMBUDO[EMBUDO.length - 1].btc;
+            const t = (paso.btc - minBtc) / (BTC_CAP - minBtc); // 0..1
+            const ancho = 30 + t * 70; // 30%..100%
             const esUltimo = i === EMBUDO.length - 1;
             return (
               <div key={i}>
