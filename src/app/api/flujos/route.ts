@@ -69,7 +69,7 @@ function buildFlujos(netflows: BGeometricsNetflow[], reserves: BGeometricsReserv
   return { diarios, semanales };
 }
 
-const START_DATE = "2021-01-01";
+const START_DATE = "2011-01-01";
 
 async function fetchFlujos(): Promise<FlujosData> {
   const [netflowRes, reserveRes] = await Promise.all([
