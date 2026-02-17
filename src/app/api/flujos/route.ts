@@ -14,6 +14,7 @@ interface BGeometricsReserve {
 }
 
 export interface FlujosApiItem {
+  d: string; // raw date YYYY-MM-DD
   fecha: string;
   flujoNeto: number;
   reserva: number;
@@ -38,8 +39,9 @@ function buildFlujos(netflows: BGeometricsNetflow[], reserves: BGeometricsReserv
     const reserve = reserveMap.get(nf.d) ?? lastReserve;
     lastReserve = reserve;
     const d = new Date(nf.d);
-    const fecha = d.toLocaleDateString("es-CL", { month: "short", day: "numeric" });
+    const fecha = d.toLocaleDateString("es-CL", { year: "2-digit", month: "short", day: "numeric" });
     diarios.push({
+      d: nf.d,
       fecha,
       flujoNeto: Math.round(nf.exchangeNetflowBtc),
       reserva: reserve,
@@ -52,6 +54,7 @@ function buildFlujos(netflows: BGeometricsNetflow[], reserves: BGeometricsReserv
     const week = diarios.slice(i, i + 7);
     if (week.length === 0) continue;
     semanales.push({
+      d: week[0].d,
       fecha: week[0].fecha,
       flujoNeto: Math.round(week.reduce((s, d) => s + d.flujoNeto, 0)),
       reserva: week[week.length - 1].reserva,

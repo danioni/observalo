@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { FLUJOS_DIARIOS, FLUJOS_SEMANALES } from "@/data/flujos";
 
 interface FlujoApiItem {
+  d: string; // YYYY-MM-DD
   fecha: string;
   flujoNeto: number;
   reserva: number;
@@ -21,16 +22,14 @@ export interface FlujoLocal {
   reserva: number;
 }
 
-function apiToFlujoLocal(items: FlujoApiItem[], startDate: string): FlujoLocal[] {
-  const base = new Date(startDate);
+function apiToFlujoLocal(items: FlujoApiItem[]): FlujoLocal[] {
   return items.map((item, i) => {
-    const d = new Date(base);
-    d.setDate(d.getDate() + i);
+    const d = new Date(item.d + "T00:00:00");
     const absNeto = Math.abs(item.flujoNeto);
     return {
       fecha: d,
       etDia: d.toLocaleDateString("es-CL", { year: "numeric", month: "short", day: "numeric" }),
-      etCorta: item.fecha,
+      etCorta: d.toLocaleDateString("es-CL", { year: "2-digit", month: "short" }),
       numSem: Math.floor(i / 7),
       mes: d.getMonth(),
       flujoNeto: item.flujoNeto,
@@ -42,17 +41,20 @@ function apiToFlujoLocal(items: FlujoApiItem[], startDate: string): FlujoLocal[]
 }
 
 function apiToFlujosSemanales(items: FlujoApiItem[]): FlujoLocal[] {
-  return items.map((item, i) => ({
-    fecha: new Date(2021, 0, 1 + i * 7),
-    etDia: item.fecha,
-    etCorta: item.fecha,
-    numSem: i,
-    mes: 0,
-    flujoNeto: item.flujoNeto,
-    entrada: item.flujoNeto > 0 ? Math.abs(item.flujoNeto) : 0,
-    salida: item.flujoNeto < 0 ? Math.abs(item.flujoNeto) : 0,
-    reserva: item.reserva,
-  }));
+  return items.map((item, i) => {
+    const d = new Date(item.d + "T00:00:00");
+    return {
+      fecha: d,
+      etDia: d.toLocaleDateString("es-CL", { year: "numeric", month: "short", day: "numeric" }),
+      etCorta: d.toLocaleDateString("es-CL", { year: "2-digit", month: "short" }),
+      numSem: i,
+      mes: d.getMonth(),
+      flujoNeto: item.flujoNeto,
+      entrada: item.flujoNeto > 0 ? Math.abs(item.flujoNeto) : 0,
+      salida: item.flujoNeto < 0 ? Math.abs(item.flujoNeto) : 0,
+      reserva: item.reserva,
+    };
+  });
 }
 
 export function useFlujosData() {
@@ -67,7 +69,7 @@ export function useFlujosData() {
       .then((json) => {
         if (json?.data) {
           if (json.data.diarios?.length) {
-            setDiarios(apiToFlujoLocal(json.data.diarios, "2021-01-01"));
+            setDiarios(apiToFlujoLocal(json.data.diarios));
           }
           if (json.data.semanales?.length) {
             setSemanales(apiToFlujosSemanales(json.data.semanales));
