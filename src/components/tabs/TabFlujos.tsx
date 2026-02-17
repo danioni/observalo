@@ -22,11 +22,11 @@ function Btn({ items, val, set, color }: {
   color: string;
 }) {
   return (
-    <div style={{ display: "flex", gap: 0, background: "#0d1117", borderRadius: 6, border: "1px solid #21262d", overflow: "hidden" }}>
+    <div style={{ display: "flex", gap: 0, background: "var(--bg-surface)", borderRadius: 6, border: "1px solid var(--border-subtle)", overflow: "hidden" }}>
       {items.map(r => (
         <button key={r.id} onClick={() => set(r.id)} style={{
           padding: "6px 12px", border: "none", cursor: "pointer", fontSize: 10, fontWeight: 600, letterSpacing: "0.06em",
-          background: val === r.id ? `${color}22` : "transparent", color: val === r.id ? color : "#667788", transition: "all 0.15s ease",
+          background: val === r.id ? `${color}22` : "transparent", color: val === r.id ? color : "var(--text-muted)", transition: "all 0.15s ease",
         }}>{r.l}</button>
       ))}
     </div>
@@ -78,7 +78,7 @@ export default function TabFlujos() {
         <Concepto titulo={NARRATIVA.tabs.flujos.concepto.titulo}>
           {NARRATIVA.tabs.flujos.concepto.cuerpo}
         </Concepto>
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "center", height: 300, color: "#667788", fontSize: 14 }}>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "center", height: 300, color: "var(--text-muted)", fontSize: 14 }}>
           <div style={{ textAlign: "center" }}>
             <div style={{ fontSize: 24, marginBottom: 8 }}>⇄</div>
             Cargando datos reales de flujos...
@@ -105,13 +105,13 @@ export default function TabFlujos() {
         {NARRATIVA.tabs.flujos.senales.map((s, i) => (
           <Senal key={i} etiqueta={s.etiqueta} estado={s.estado} color={["#22c55e", "#06b6d4", "#a855f7"][i]} />
         ))}
-        {cargandoFlujos && <Senal etiqueta="DATOS" estado="Cargando datos reales..." color="#8899aa" />}
-        {!cargandoFlujos && <Senal etiqueta="FUENTE" estado={esReal ? "bitcoin-data.com + coinglass.com" : "Datos simulados (fallback)"} color={esReal ? "#f0b429" : "#667788"} />}
+        {cargandoFlujos && <Senal etiqueta="DATOS" estado="Cargando datos reales..." color="var(--text-secondary)" />}
+        {!cargandoFlujos && <Senal etiqueta="FUENTE" estado={esReal ? "bitcoin-data.com + coinglass.com" : "Datos simulados (fallback)"} color={esReal ? "#f0b429" : "var(--text-muted)"} />}
       </div>
 
       <div style={{ marginBottom: 24 }}>
         <div style={{ display: "flex", flexDirection: isMobile ? "column" : "row", alignItems: isMobile ? "flex-start" : "center", justifyContent: "space-between", marginBottom: 12, gap: isMobile ? 8 : 0 }}>
-          <div style={{ fontSize: 12, color: "#8899aa", letterSpacing: "0.08em" }}>FLUJO NETO — {gran === "diario" ? "DIARIO" : "SEMANAL"} (BTC)</div>
+          <div style={{ fontSize: 12, color: "var(--text-secondary)", letterSpacing: "0.08em" }}>FLUJO NETO — {gran === "diario" ? "DIARIO" : "SEMANAL"} (BTC)</div>
           <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
             <Btn items={[{ id: "3m", l: "3M" }, { id: "6m", l: "6M" }, { id: "1a", l: "1A" }, { id: "2a", l: "2A" }, { id: "5a", l: "5A" }, { id: "10a", l: "10A" }, { id: "todo", l: "TODO" }]} val={rango} set={setRango} color="#06b6d4" />
             <Btn items={[{ id: "diario", l: "DIARIO" }, { id: "semanal", l: "SEMANAL" }]} val={gran} set={setGran} color="#f0b429" />
@@ -119,20 +119,20 @@ export default function TabFlujos() {
         </div>
         <ResponsiveContainer width="100%" height={isMobile ? 280 : 340}>
           <BarChart data={filtrado} margin={{ top: 10, right: 20, bottom: 35, left: isMobile ? 10 : 20 }}>
-            <CartesianGrid strokeDasharray="3 3" stroke="#1a2332" />
-            <XAxis dataKey="etCorta" tick={{ fill: "#667788", fontSize: 9 }} interval={intTick} angle={-40} textAnchor="end" height={55} />
-            <YAxis tick={{ fill: "#667788", fontSize: 10 }} tickFormatter={v => fmt(v)} />
+            <CartesianGrid strokeDasharray="3 3" stroke="var(--border-grid)" />
+            <XAxis dataKey="etCorta" tick={{ fill: "var(--text-muted)", fontSize: 9 }} interval={intTick} angle={-40} textAnchor="end" height={55} />
+            <YAxis tick={{ fill: "var(--text-muted)", fontSize: 10 }} tickFormatter={v => fmt(v)} />
             <Tooltip content={({ active, payload }) => (
               <CustomTooltip active={active} payload={payload} render={(d) => (
                 <>
-                  <div style={{ fontSize: 11, color: "#8b949e", marginBottom: 6 }}>{d?.etDia}</div>
+                  <div style={{ fontSize: 11, color: "var(--text-tooltip)", marginBottom: 6 }}>{d?.etDia}</div>
                   <div style={{ fontSize: 13, color: d?.flujoNeto < 0 ? "#22c55e" : "#ef4444", fontFamily: "monospace", fontWeight: 600 }}>Neto: {d?.flujoNeto?.toLocaleString("es-CL")} BTC</div>
-                  <div style={{ fontSize: 11, color: "#667788", marginTop: 2 }}>Entrada: {d?.entrada?.toLocaleString("es-CL")} · Salida: {d?.salida?.toLocaleString("es-CL")}</div>
-                  <div style={{ fontSize: 11, color: "#667788" }}>Reservas: {d?.reserva?.toLocaleString("es-CL")} BTC</div>
+                  <div style={{ fontSize: 11, color: "var(--text-muted)", marginTop: 2 }}>Entrada: {d?.entrada?.toLocaleString("es-CL")} · Salida: {d?.salida?.toLocaleString("es-CL")}</div>
+                  <div style={{ fontSize: 11, color: "var(--text-muted)" }}>Reservas: {d?.reserva?.toLocaleString("es-CL")} BTC</div>
                 </>
               )} />
             )} />
-            <ReferenceLine y={0} stroke="#3d4450" strokeWidth={1} />
+            <ReferenceLine y={0} stroke="var(--refline-stroke)" strokeWidth={1} />
             {eventos.map((ev, i) => (
               <ReferenceLine key={i} x={ev.ec} stroke="#f0b42940" strokeDasharray="4 4" label={{ value: ev.et, fill: "#f0b429", fontSize: 9, position: "top" }} />
             ))}
@@ -142,10 +142,10 @@ export default function TabFlujos() {
           </BarChart>
         </ResponsiveContainer>
         <div style={{ display: "flex", justifyContent: "center", gap: 20, marginTop: 8 }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 11, color: "#8899aa" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 11, color: "var(--text-secondary)" }}>
             <div style={{ width: 10, height: 10, borderRadius: 2, background: "#22c55e" }} /> Salida neta (alcista — retiro a custodia propia)
           </div>
-          <div style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 11, color: "#8899aa" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 11, color: "var(--text-secondary)" }}>
             <div style={{ width: 10, height: 10, borderRadius: 2, background: "#ef4444" }} /> Entrada neta (bajista — depositan para vender)
           </div>
         </div>
@@ -153,8 +153,8 @@ export default function TabFlujos() {
 
       <div style={{ marginBottom: 24 }}>
         <div style={{ display: "flex", flexDirection: isMobile ? "column" : "row", alignItems: isMobile ? "flex-start" : "center", justifyContent: "space-between", marginBottom: 12, gap: isMobile ? 8 : 0 }}>
-          <div style={{ fontSize: 12, color: "#8899aa", letterSpacing: "0.08em" }}>RESERVAS EN EXCHANGES — TENDENCIA ESTRUCTURAL</div>
-          <div style={{ fontSize: 10, color: "#667788" }}>{pri?.etDia} → {ult?.etDia}</div>
+          <div style={{ fontSize: 12, color: "var(--text-secondary)", letterSpacing: "0.08em" }}>RESERVAS EN EXCHANGES — TENDENCIA ESTRUCTURAL</div>
+          <div style={{ fontSize: 10, color: "var(--text-muted)" }}>{pri?.etDia} → {ult?.etDia}</div>
         </div>
         <ResponsiveContainer width="100%" height={isMobile ? 220 : 260}>
           <AreaChart data={filtrado} margin={{ top: 10, right: 20, bottom: 10, left: isMobile ? 10 : 20 }}>
@@ -164,13 +164,13 @@ export default function TabFlujos() {
                 <stop offset="100%" stopColor="#ef4444" stopOpacity={0.02} />
               </linearGradient>
             </defs>
-            <CartesianGrid strokeDasharray="3 3" stroke="#1a2332" />
-            <XAxis dataKey="etCorta" tick={{ fill: "#667788", fontSize: 9 }} interval={intTick * 2} />
-            <YAxis tick={{ fill: "#667788", fontSize: 10 }} tickFormatter={v => fmt(v)} domain={['dataMin-30000', 'dataMax+30000']} />
+            <CartesianGrid strokeDasharray="3 3" stroke="var(--border-grid)" />
+            <XAxis dataKey="etCorta" tick={{ fill: "var(--text-muted)", fontSize: 9 }} interval={intTick * 2} />
+            <YAxis tick={{ fill: "var(--text-muted)", fontSize: 10 }} tickFormatter={v => fmt(v)} domain={['dataMin-30000', 'dataMax+30000']} />
             <Tooltip content={({ active, payload }) => (
               <CustomTooltip active={active} payload={payload} render={(d) => (
                 <>
-                  <div style={{ fontSize: 11, color: "#8b949e" }}>{d?.etDia}</div>
+                  <div style={{ fontSize: 11, color: "var(--text-tooltip)" }}>{d?.etDia}</div>
                   <div style={{ fontSize: 13, color: "#ef4444", fontFamily: "monospace", fontWeight: 600, marginTop: 4 }}>{d?.reserva?.toLocaleString("es-CL")} BTC</div>
                 </>
               )} />
@@ -196,9 +196,9 @@ export default function TabFlujos() {
         <br /><br />
         Pero los exchanges no son los únicos acumulando menos. La siguiente sección muestra quién está comprando a escala institucional.
         <br /><br />
-        <span style={{ color: "#8899aa", fontStyle: "italic" }}>{NARRATIVA.tabs.flujos.panelEdu.cierre}</span>
+        <span style={{ color: "var(--text-secondary)", fontStyle: "italic" }}>{NARRATIVA.tabs.flujos.panelEdu.cierre}</span>
         <br /><br />
-        <span style={{ color: "#667788", fontSize: 11 }}>
+        <span style={{ color: "var(--text-muted)", fontSize: 11 }}>
           Este análisis es informativo y no constituye asesoría financiera de ningún tipo. Datos de flujos provienen de fuentes públicas y pueden contener estimaciones.
         </span>
       </PanelEdu>

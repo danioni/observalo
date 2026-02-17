@@ -28,11 +28,11 @@ function Btn({ items, val, set, color }: {
   color: string;
 }) {
   return (
-    <div style={{ display: "flex", gap: 0, background: "#0d1117", borderRadius: 6, border: "1px solid #21262d", overflow: "hidden" }}>
+    <div style={{ display: "flex", gap: 0, background: "var(--bg-surface)", borderRadius: 6, border: "1px solid var(--border-subtle)", overflow: "hidden" }}>
       {items.map(r => (
         <button key={r.id} onClick={() => set(r.id)} style={{
           padding: "6px 12px", border: "none", cursor: "pointer", fontSize: 10, fontWeight: 600, letterSpacing: "0.06em",
-          background: val === r.id ? `${color}22` : "transparent", color: val === r.id ? color : "#667788", transition: "all 0.15s ease",
+          background: val === r.id ? `${color}22` : "transparent", color: val === r.id ? color : "var(--text-muted)", transition: "all 0.15s ease",
         }}>{r.l}</button>
       ))}
     </div>
@@ -74,7 +74,7 @@ function TreemapContent(props: {
       )}
       {/* Tile de color */}
       <rect x={x} y={y} width={width} height={height} rx={4}
-        fill={color} stroke="#0a0f18" strokeWidth={2} opacity={0.9} />
+        fill={color} stroke="var(--treemap-stroke)" strokeWidth={2} opacity={0.9} />
       {/* Gradiente oscuro — más oscuro abajo para contraste con texto arriba */}
       <rect x={x + 1} y={y + 1} width={width - 2} height={height - 2} rx={3}
         fill="url(#tileGrad)" style={{ pointerEvents: "none" }} />
@@ -177,7 +177,7 @@ export default function TabHolders() {
         <Senal
           etiqueta="FUENTE"
           estado={cargando ? "Cargando datos reales…" : esReal ? "ETFs actualizados vía API" : "Datos curados estáticos"}
-          color={cargando ? "#667788" : esReal ? "#f0b429" : "#667788"}
+          color={cargando ? "var(--text-muted)" : esReal ? "#f0b429" : "var(--text-muted)"}
         />
         {NARRATIVA.tabs.holders.senales.map((s, i) => (
           <Senal key={i} etiqueta={s.etiqueta} estado={s.estado} color={["#818cf8", "#f0b429", "#ef4444"][i]} />
@@ -188,7 +188,7 @@ export default function TabHolders() {
       {/* Treemap — ancho completo */}
       <div style={{ marginBottom: 24 }}>
         <div style={{ display: "flex", flexDirection: isMobile ? "column" : "row", justifyContent: "space-between", alignItems: isMobile ? "flex-start" : "center", marginBottom: 12, gap: isMobile ? 8 : 0 }}>
-          <div style={{ fontSize: 12, color: "#8899aa", letterSpacing: "0.08em" }}>MAPA DE ACUMULADORES (PROPORCIONAL A BTC)</div>
+          <div style={{ fontSize: 12, color: "var(--text-secondary)", letterSpacing: "0.08em" }}>MAPA DE ACUMULADORES (PROPORCIONAL A BTC)</div>
           <div style={{ display: "flex", flexWrap: isMobile ? "wrap" : undefined }}>
             <Btn
               items={[
@@ -206,16 +206,16 @@ export default function TabHolders() {
             <Treemap
               data={treemapData}
               dataKey="size"
-              stroke="#0a0f18"
+              stroke="var(--treemap-stroke)"
               content={<TreemapContent x={0} y={0} width={0} height={0} name="" btc={0} color="" />}
             >
               <Tooltip content={({ active, payload }) => (
                 <CustomTooltip active={active} payload={payload} render={(d) => (
                   <>
-                    <div style={{ fontSize: 14, color: "#e0e8f0", fontWeight: 600 }}>{d?.name}</div>
-                    <div style={{ fontSize: 12, color: "#8899aa", marginTop: 4 }}>{d?.categoria}</div>
-                    <div style={{ fontSize: 13, color: "#e0e8f0", marginTop: 2, fontFamily: "monospace" }}>{d?.btc?.toLocaleString("es-CL")} BTC</div>
-                    <div style={{ fontSize: 11, color: "#667788" }}>{d?.pct}% de la oferta</div>
+                    <div style={{ fontSize: 14, color: "var(--text-primary)", fontWeight: 600 }}>{d?.name}</div>
+                    <div style={{ fontSize: 12, color: "var(--text-secondary)", marginTop: 4 }}>{d?.categoria}</div>
+                    <div style={{ fontSize: 13, color: "var(--text-primary)", marginTop: 2, fontFamily: "monospace" }}>{d?.btc?.toLocaleString("es-CL")} BTC</div>
+                    <div style={{ fontSize: 11, color: "var(--text-muted)" }}>{d?.pct}% de la oferta</div>
                   </>
                 )} />
               )} />
@@ -226,18 +226,18 @@ export default function TabHolders() {
 
       {/* BarChart por categoría — debajo del treemap */}
       <div style={{ marginBottom: 24 }}>
-        <div style={{ fontSize: 12, color: "#8899aa", marginBottom: 12, letterSpacing: "0.08em" }}>BTC POR CATEGORÍA</div>
+        <div style={{ fontSize: 12, color: "var(--text-secondary)", marginBottom: 12, letterSpacing: "0.08em" }}>BTC POR CATEGORÍA</div>
         <ResponsiveContainer width="100%" height={isMobile ? 180 : 220}>
           <BarChart data={barData} layout="vertical" margin={{ left: isMobile ? 65 : 80, right: 30 }}>
-            <CartesianGrid strokeDasharray="3 3" stroke="#1a2332" horizontal={false} />
-            <XAxis type="number" tick={{ fill: "#667788", fontSize: 10 }} tickFormatter={v => fmt(v)} />
-            <YAxis type="category" dataKey="nombre" tick={{ fill: "#8899aa", fontSize: 11 }} width={isMobile ? 60 : 75} />
+            <CartesianGrid strokeDasharray="3 3" stroke="var(--border-grid)" horizontal={false} />
+            <XAxis type="number" tick={{ fill: "var(--text-muted)", fontSize: 10 }} tickFormatter={v => fmt(v)} />
+            <YAxis type="category" dataKey="nombre" tick={{ fill: "var(--text-secondary)", fontSize: 11 }} width={isMobile ? 60 : 75} />
             <Tooltip content={({ active, payload }) => (
               <CustomTooltip active={active} payload={payload} render={(d) => (
                 <>
-                  <div style={{ fontSize: 13, color: "#e0e8f0", fontWeight: 600 }}>{d?.nombre}</div>
-                  <div style={{ fontSize: 12, color: "#8899aa", marginTop: 4 }}>{d?.btc?.toLocaleString("es-CL")} BTC</div>
-                  <div style={{ fontSize: 11, color: "#667788" }}>{d?.pct?.toFixed(2)}% de la oferta</div>
+                  <div style={{ fontSize: 13, color: "var(--text-primary)", fontWeight: 600 }}>{d?.nombre}</div>
+                  <div style={{ fontSize: 12, color: "var(--text-secondary)", marginTop: 4 }}>{d?.btc?.toLocaleString("es-CL")} BTC</div>
+                  <div style={{ fontSize: 11, color: "var(--text-muted)" }}>{d?.pct?.toFixed(2)}% de la oferta</div>
                 </>
               )} />
             )} />
@@ -251,10 +251,10 @@ export default function TabHolders() {
       {/* Leyenda de categorías */}
       <div style={{ display: "flex", gap: 16, marginBottom: 20, flexWrap: "wrap" }}>
         {TODAS.map(cat => (
-          <div key={cat} style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 11, color: "#8899aa" }}>
+          <div key={cat} style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 11, color: "var(--text-secondary)" }}>
             <div style={{ width: 10, height: 10, borderRadius: 2, background: COLORES_CATEGORIA[cat] }} />
             <span>{ICONO_CATEGORIA[cat]} {NOMBRES_CATEGORIA[cat]}</span>
-            <span style={{ color: "#667788", fontFamily: "monospace" }}>
+            <span style={{ color: "var(--text-muted)", fontFamily: "monospace" }}>
               ({(porCategoria.find(c => c.categoria === cat)?.pct || 0).toFixed(1)}%)
             </span>
           </div>
@@ -263,16 +263,16 @@ export default function TabHolders() {
 
       {/* Tabla detallada */}
       <div style={{ marginTop: 8 }}>
-        <div style={{ fontSize: 12, color: "#8899aa", marginBottom: 12, letterSpacing: "0.08em" }}>
+        <div style={{ fontSize: 12, color: "var(--text-secondary)", marginBottom: 12, letterSpacing: "0.08em" }}>
           DETALLE POR ENTIDAD {filtro !== "todos" ? `— ${NOMBRES_CATEGORIA[filtro as CategoriaHolder].toUpperCase()}` : ""}
         </div>
         <div style={{ overflowX: "auto" }}>
           <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 12 }}>
             <thead>
-              <tr style={{ borderBottom: "1px solid #21262d" }}>
+              <tr style={{ borderBottom: "1px solid var(--border-subtle)" }}>
                 {["#", "Nombre", "Ticker", "Categoría", "País", "BTC", "% Oferta"].map(h => (
                   <th key={h} style={{
-                    padding: "8px 12px", textAlign: "left", color: "#667788", fontWeight: 500,
+                    padding: "8px 12px", textAlign: "left", color: "var(--text-muted)", fontWeight: 500,
                     fontSize: 10, letterSpacing: "0.1em", textTransform: "uppercase",
                   }}>{h}</th>
                 ))}
@@ -282,15 +282,15 @@ export default function TabHolders() {
               {[...filtrados].sort((a, b) => b.btc - a.btc).map((h, i) => {
                 const pct = (h.btc / BTC_SUPPLY * 100);
                 return (
-                  <tr key={i} style={{ borderBottom: "1px solid #161b22" }}>
-                    <td style={{ padding: "8px 12px", color: "#667788", fontFamily: "monospace", fontSize: 10 }}>{i + 1}</td>
+                  <tr key={i} style={{ borderBottom: "1px solid var(--border-primary)" }}>
+                    <td style={{ padding: "8px 12px", color: "var(--text-muted)", fontFamily: "monospace", fontSize: 10 }}>{i + 1}</td>
                     <td style={{ padding: "8px 12px" }}>
                       <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
                         <div style={{ width: 10, height: 10, borderRadius: 2, background: h.color }} />
-                        <span style={{ color: "#e0e8f0", fontWeight: 600 }}>{h.nombre}</span>
+                        <span style={{ color: "var(--text-primary)", fontWeight: 600 }}>{h.nombre}</span>
                       </div>
                     </td>
-                    <td style={{ padding: "8px 12px", color: "#8899aa", fontFamily: "monospace" }}>{h.ticker || "—"}</td>
+                    <td style={{ padding: "8px 12px", color: "var(--text-secondary)", fontFamily: "monospace" }}>{h.ticker || "—"}</td>
                     <td style={{ padding: "8px 12px" }}>
                       <span style={{
                         fontSize: 10, padding: "2px 8px", borderRadius: 4,
@@ -299,21 +299,21 @@ export default function TabHolders() {
                         {ICONO_CATEGORIA[h.categoria]} {NOMBRES_CATEGORIA[h.categoria]}
                       </span>
                     </td>
-                    <td style={{ padding: "8px 12px", color: "#8899aa", fontSize: 11 }}>{h.pais}</td>
+                    <td style={{ padding: "8px 12px", color: "var(--text-secondary)", fontSize: 11 }}>{h.pais}</td>
                     <td style={{ padding: "8px 12px" }}>
                       <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                        <div style={{ width: 80, height: 4, background: "#161b22", borderRadius: 2, flexShrink: 0 }}>
+                        <div style={{ width: 80, height: 4, background: "var(--bg-bar-track)", borderRadius: 2, flexShrink: 0 }}>
                           <div style={{
                             width: `${Math.min(h.btc / maxBtcTabla * 100, 100)}%`,
                             height: "100%", background: h.color, borderRadius: 2,
                           }} />
                         </div>
-                        <span style={{ color: "#e0e8f0", fontFamily: "monospace", fontWeight: 600, whiteSpace: "nowrap" }}>
+                        <span style={{ color: "var(--text-primary)", fontFamily: "monospace", fontWeight: 600, whiteSpace: "nowrap" }}>
                           {h.btc.toLocaleString("es-CL")}
                         </span>
                       </div>
                     </td>
-                    <td style={{ padding: "8px 12px", color: "#8899aa", fontFamily: "monospace" }}>{pct.toFixed(2)}%</td>
+                    <td style={{ padding: "8px 12px", color: "var(--text-secondary)", fontFamily: "monospace" }}>{pct.toFixed(2)}%</td>
                   </tr>
                 );
               })}
@@ -331,9 +331,9 @@ export default function TabHolders() {
         <br /><br />
         ¿Cuánto queda después de restar todo lo que ya está acumulado? La última sección hace la cuenta.
         <br /><br />
-        <span style={{ color: "#8899aa", fontStyle: "italic" }}>{NARRATIVA.tabs.holders.panelEdu.cierre}</span>
+        <span style={{ color: "var(--text-secondary)", fontStyle: "italic" }}>{NARRATIVA.tabs.holders.panelEdu.cierre}</span>
         <br /><br />
-        <span style={{ color: "#667788", fontSize: 11 }}>
+        <span style={{ color: "var(--text-muted)", fontSize: 11 }}>
           Este análisis es informativo y no constituye asesoría financiera de ningún tipo. Datos basados en informes públicos (SEC, bitcointreasuries.net) y pueden contener estimaciones.
         </span>
       </PanelEdu>

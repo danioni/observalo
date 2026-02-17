@@ -23,7 +23,7 @@ export default function TabOndas() {
         <Concepto titulo={NARRATIVA.tabs.ondas.concepto.titulo}>
           {NARRATIVA.tabs.ondas.concepto.cuerpo}
         </Concepto>
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "center", height: 300, color: "#667788", fontSize: 14 }}>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "center", height: 300, color: "var(--text-muted)", fontSize: 14 }}>
           <div style={{ textAlign: "center" }}>
             <div style={{ fontSize: 24, marginBottom: 8 }}>◈</div>
             Cargando datos reales de ondas HODL desde bitcoin-data.com...
@@ -56,26 +56,26 @@ export default function TabOndas() {
         {NARRATIVA.tabs.ondas.senales.map((s, i) => (
           <Senal key={i} etiqueta={s.etiqueta} estado={s.estado} color={["#22c55e", "#06b6d4"][i]} />
         ))}
-        {cargando && <Senal etiqueta="DATOS" estado="Cargando datos reales..." color="#8899aa" />}
-        {!cargando && <Senal etiqueta="FUENTE" estado={esReal ? "bitcoin-data.com (datos reales)" : "Datos simulados (fallback)"} color={esReal ? "#f0b429" : "#667788"} />}
+        {cargando && <Senal etiqueta="DATOS" estado="Cargando datos reales..." color="var(--text-secondary)" />}
+        {!cargando && <Senal etiqueta="FUENTE" estado={esReal ? "bitcoin-data.com (datos reales)" : "Datos simulados (fallback)"} color={esReal ? "#f0b429" : "var(--text-muted)"} />}
       </div>
 
-      <div style={{ fontSize: 12, color: "#8899aa", marginBottom: 12, letterSpacing: "0.08em" }}>DISTRIBUCIÓN DE ANTIGÜEDAD DE UTXO (2020–2026)</div>
+      <div style={{ fontSize: 12, color: "var(--text-secondary)", marginBottom: 12, letterSpacing: "0.08em" }}>DISTRIBUCIÓN DE ANTIGÜEDAD DE UTXO (2020–2026)</div>
       <ResponsiveContainer width="100%" height={isMobile ? 320 : 420}>
         <AreaChart data={DATOS_ONDAS} margin={{ top: 10, right: 20, bottom: isMobile ? 12 : 20, left: 20 }} stackOffset="expand">
-          <CartesianGrid strokeDasharray="3 3" stroke="#1a2332" />
-          <XAxis dataKey="fecha" tick={{ fill: "#667788", fontSize: 9 }} interval={6} angle={-30} textAnchor="end" />
-          <YAxis tick={{ fill: "#667788", fontSize: 10 }} tickFormatter={v => (v * 100).toFixed(0) + "%"} />
+          <CartesianGrid strokeDasharray="3 3" stroke="var(--border-grid)" />
+          <XAxis dataKey="fecha" tick={{ fill: "var(--text-muted)", fontSize: 9 }} interval={6} angle={-30} textAnchor="end" />
+          <YAxis tick={{ fill: "var(--text-muted)", fontSize: 10 }} tickFormatter={v => (v * 100).toFixed(0) + "%"} />
           <Tooltip content={({ active, payload, label }) => {
             if (!active || !payload?.length) return null;
             return (
-              <div style={{ background: "#0d1117ee", border: "1px solid #21262d", borderRadius: 8, padding: "10px 14px", backdropFilter: "blur(12px)" }}>
-                <div style={{ fontSize: 11, color: "#8b949e", marginBottom: 6 }}>{label}</div>
+              <div style={{ background: "var(--tooltip-bg)", border: "1px solid var(--border-subtle)", borderRadius: 8, padding: "10px 14px", backdropFilter: "blur(12px)" }}>
+                <div style={{ fontSize: 11, color: "var(--text-tooltip)", marginBottom: 6 }}>{label}</div>
                 {payload.slice().reverse().map((p, i) => (
                   <div key={i} style={{ fontSize: 11, display: "flex", gap: 6, alignItems: "center" }}>
                     <div style={{ width: 8, height: 8, borderRadius: 2, background: p.fill || p.color }} />
-                    <span style={{ color: "#8899aa", width: 60 }}>{NOMBRES_BANDAS[p.name as string] || p.name}</span>
-                    <span style={{ color: "#e0e8f0", fontFamily: "monospace" }}>{typeof p.value === 'number' ? p.value.toFixed(1) : p.value}%</span>
+                    <span style={{ color: "var(--text-secondary)", width: 60 }}>{NOMBRES_BANDAS[p.name as string] || p.name}</span>
+                    <span style={{ color: "var(--text-primary)", fontFamily: "monospace" }}>{typeof p.value === 'number' ? p.value.toFixed(1) : p.value}%</span>
                   </div>
                 ))}
               </div>
@@ -92,7 +92,7 @@ export default function TabOndas() {
         {BANDAS.map((b, i) => (
           <div key={b} style={{ display: "flex", alignItems: "center", gap: 4 }}>
             <div style={{ width: 10, height: 10, borderRadius: 2, background: COLORES_ONDAS[i] }} />
-            <span style={{ fontSize: 10, color: "#8899aa" }}>{NOMBRES_BANDAS[b]}</span>
+            <span style={{ fontSize: 10, color: "var(--text-secondary)" }}>{NOMBRES_BANDAS[b]}</span>
           </div>
         ))}
       </div>
@@ -104,9 +104,9 @@ export default function TabOndas() {
         <br /><br />
         Pero retener no es lo mismo que retirar. La siguiente sección muestra hacia dónde se mueve físicamente el Bitcoin — y de dónde está saliendo.
         <br /><br />
-        <strong style={{ color: "#e0e8f0" }}>{NARRATIVA.tabs.ondas.panelEdu.cierre}</strong>
+        <strong style={{ color: "var(--text-primary)" }}>{NARRATIVA.tabs.ondas.panelEdu.cierre}</strong>
         <br /><br />
-        <span style={{ color: "#667788", fontSize: 11 }}>
+        <span style={{ color: "var(--text-muted)", fontSize: 11 }}>
           Este análisis es informativo y no constituye asesoría financiera de ningún tipo.
         </span>
       </PanelEdu>
