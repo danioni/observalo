@@ -39,14 +39,15 @@ export default function TabFlujos() {
   const fuente = gran === "diario" ? FLUJOS_DIARIOS : FLUJOS_SEMANALES;
   const filtrado = (() => {
     if (rango === "todo") return fuente;
-    const ahora = new Date(), corte = new Date(ahora);
+    const corte = new Date();
     if (rango === "10a") corte.setFullYear(corte.getFullYear() - 10);
     else if (rango === "5a") corte.setFullYear(corte.getFullYear() - 5);
     else if (rango === "2a") corte.setFullYear(corte.getFullYear() - 2);
     else if (rango === "1a") corte.setFullYear(corte.getFullYear() - 1);
     else if (rango === "6m") corte.setMonth(corte.getMonth() - 6);
     else if (rango === "3m") corte.setMonth(corte.getMonth() - 3);
-    return fuente.filter(d => d.fecha >= corte);
+    const corteTime = corte.getTime();
+    return fuente.filter(d => d.fecha.getTime() >= corteTime);
   })();
 
   const ult = filtrado[filtrado.length - 1];
@@ -112,7 +113,7 @@ export default function TabFlujos() {
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12 }}>
           <div style={{ fontSize: 12, color: "#8899aa", letterSpacing: "0.08em" }}>FLUJO NETO — {gran === "diario" ? "DIARIO" : "SEMANAL"} (BTC)</div>
           <div style={{ display: "flex", gap: 8 }}>
-            <Btn items={[{ id: "3m", l: "3M" }, { id: "6m", l: "6M" }, { id: "1a", l: "1A" }, { id: "2a", l: "2A" }, { id: "5a", l: "5A" }, { id: "10a", l: "10A" }, { id: "todo", l: "TODO" }]} val={rango} set={setRango} color="#06b6d4" />
+            <Btn items={[{ id: "3m", l: "3M" }, { id: "6m", l: "6M" }, { id: "1a", l: "1A" }, { id: "todo", l: "TODO" }]} val={rango} set={setRango} color="#06b6d4" />
             <Btn items={[{ id: "diario", l: "DIARIO" }, { id: "semanal", l: "SEMANAL" }]} val={gran} set={setGran} color="#f0b429" />
           </div>
         </div>
