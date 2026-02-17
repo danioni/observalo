@@ -15,6 +15,7 @@ import PanelEdu from "@/components/ui/PanelEdu";
 import Concepto from "@/components/ui/Concepto";
 import CustomTooltip from "@/components/ui/CustomTooltip";
 import { NARRATIVA } from "@/data/narrativa";
+import { RECOMPENSA_PROYECTADA } from "@/data/mineria";
 
 /* ── Selector de rango ── */
 function Btn({ items, val, set, color }: {
@@ -46,6 +47,13 @@ const HALVINGS = [
   { fecha: "2016-07", label: "2do Halving" },
   { fecha: "2020-05", label: "3er Halving" },
   { fecha: "2024-04", label: "4to Halving" },
+];
+
+const HALVINGS_FULL = [
+  ...HALVINGS,
+  { fecha: "2028-04", label: "5to Halving" },
+  { fecha: "2032-04", label: "6to Halving" },
+  { fecha: "2036-04", label: "7mo Halving" },
 ];
 
 export default function TabMineria() {
@@ -85,6 +93,20 @@ export default function TabMineria() {
       return match ? { ...h, fechaLabel: match.fecha } : null;
     }).filter(Boolean) as { fecha: string; label: string; fechaLabel: string }[];
   }, [filtrado]);
+
+  /* ── Halvings visibles en la proyección de recompensa ── */
+  const halvingsRecompensa = useMemo(() => {
+    const rp = RECOMPENSA_PROYECTADA;
+    if (rp.length === 0) return [];
+    const inicio = (rp[0]?.fechaRaw ?? "").slice(0, 7);
+    const fin = (rp[rp.length - 1]?.fechaRaw ?? "").slice(0, 7);
+    return HALVINGS_FULL.filter(h => h.fecha >= inicio && h.fecha <= fin).map(h => {
+      const match = rp.find(d => (d.fechaRaw ?? "").slice(0, 7) === h.fecha);
+      return match ? { ...h, fechaLabel: match.fecha } : null;
+    }).filter(Boolean) as { fecha: string; label: string; fechaLabel: string }[];
+  }, []);
+
+  const intTickRecompensa = Math.max(1, Math.floor(RECOMPENSA_PROYECTADA.length / 18));
 
   /* ── Rango dinámico del header ── */
   const rangoLabel = filtrado.length > 1
@@ -249,19 +271,33 @@ export default function TabMineria() {
       {/* ── Comisiones + Recompensa ── */}
       <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr", gap: 20 }}>
         <div>
-          <div style={{ fontSize: 12, color: "var(--text-secondary)", marginBottom: 12, letterSpacing: "0.08em" }}>COMISIONES — % DEL INGRESO MINERO</div>
+          <div style={{ fontSize: 12, color: "var(--text-secondary)", marginBottom: 4, letterSpacing: "0.08em" }}>COMISIONES — % DEL INGRESO DEL MINERO</div>
+          <div style={{ fontSize: 10, color: "var(--text-muted)", marginBottom: 12, lineHeight: 1.4 }}>
+            Qué porcentaje de lo que gana un minero viene de comisiones (vs. la recompensa del bloque)
+          </div>
           <ResponsiveContainer width="100%" height={isMobile ? 180 : 220}>
             <ComposedChart data={filtrado} margin={{ top: 10, right: 20, bottom: 10, left: isMobile ? 10 : 20 }}>
               <CartesianGrid strokeDasharray="3 3" stroke="var(--border-grid)" />
               <XAxis dataKey="fecha" tick={{ fill: "var(--text-muted)", fontSize: 9 }} interval={intTick} />
               <YAxis tick={{ fill: "var(--text-muted)", fontSize: 10 }} tickFormatter={v => v + "%"} />
               <Tooltip content={({ active, payload }) => (
-                <CustomTooltip active={active} payload={payload} render={(d) => (
-                  <>
-                    <div style={{ fontSize: 11, color: "var(--text-tooltip)" }}>{d?.fecha}</div>
-                    <div style={{ fontSize: 13, color: "#a855f7", fontFamily: "monospace", fontWeight: 600, marginTop: 4 }}>{d?.pctComisiones}% del ingreso</div>
-                  </>
-                )} />
+                <CustomTooltip active={active} payload={payload} render={(d) => {
+                  const pct = d?.pctComisiones ?? 0;
+                  const rew = d?.recompensa ?? 0;
+                  const feeBtc = rew > 0 ? (pct / 100 * rew / (1 - pct / 100)).toFixed(3) : "—";
+                  return (
+                    <>
+                      <div style={{ fontSize: 11, color: "var(--text-tooltip)" }}>{d?.fecha}</div>
+                      <div style={{ fontSize: 13, color: "#a855f7", fontFamily: "monospace", fontWeight: 600, marginTop: 4 }}>{pct}% del ingreso en comisiones</div>
+                      <div style={{ fontSize: 10, color: "var(--text-muted)", marginTop: 2 }}>
+                        Recompensa: {rew} BTC · Comisiones ≈ {feeBtc} BTC
+                      </div>
+                      <div style={{ fontSize: 10, color: "var(--text-muted)" }}>
+                        Ingreso total por bloque ≈ {rew} + {feeBtc} BTC
+                      </div>
+                    </>
+                  );
+                }} />
               )} />
               {halvingsVisibles.map((h, i) => (
                 <ReferenceLine key={i} x={h.fechaLabel} stroke="#a855f730" strokeDasharray="4 4" />
@@ -270,33 +306,44 @@ export default function TabMineria() {
               <Line type="monotone" dataKey="pctComisiones" stroke="#a855f7" strokeWidth={2} dot={false} />
             </ComposedChart>
           </ResponsiveContainer>
+          <div style={{ fontSize: 10, color: "var(--text-muted)", marginTop: 6, lineHeight: 1.5 }}>
+            Un minero gana <span style={{ color: "#22c55e" }}>recompensa del bloque</span> + <span style={{ color: "#a855f7" }}>comisiones de los usuarios</span>. A medida que la recompensa baja con cada halving, las comisiones se vuelven una parte mayor del ingreso.
+          </div>
         </div>
         <div>
-          <div style={{ fontSize: 12, color: "var(--text-secondary)", marginBottom: 12, letterSpacing: "0.08em" }}>RECOMPENSA POR BLOQUE — BTC</div>
+          <div style={{ fontSize: 12, color: "var(--text-secondary)", marginBottom: 4, letterSpacing: "0.08em" }}>RECOMPENSA POR BLOQUE — BTC</div>
+          <div style={{ fontSize: 10, color: "var(--text-muted)", marginBottom: 12, lineHeight: 1.4 }}>
+            BTC nuevos creados en cada bloque · Proyección hasta 2036
+          </div>
           <ResponsiveContainer width="100%" height={isMobile ? 180 : 220}>
-            <AreaChart data={filtrado} margin={{ top: 10, right: 20, bottom: 10, left: isMobile ? 10 : 20 }}>
+            <AreaChart data={RECOMPENSA_PROYECTADA} margin={{ top: 10, right: 20, bottom: 10, left: isMobile ? 10 : 20 }}>
               <defs>
                 <linearGradient id="gR" x1="0" y1="0" x2="0" y2="1">
                   <stop offset="0%" stopColor="#22c55e" stopOpacity={0.3} />
                   <stop offset="100%" stopColor="#22c55e" stopOpacity={0.02} />
                 </linearGradient>
+                <linearGradient id="gRP" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stopColor="#22c55e" stopOpacity={0.12} />
+                  <stop offset="100%" stopColor="#22c55e" stopOpacity={0.02} />
+                </linearGradient>
               </defs>
               <CartesianGrid strokeDasharray="3 3" stroke="var(--border-grid)" />
-              <XAxis dataKey="fecha" tick={{ fill: "var(--text-muted)", fontSize: 9 }} interval={intTick} />
+              <XAxis dataKey="fecha" tick={{ fill: "var(--text-muted)", fontSize: 9 }} interval={intTickRecompensa} />
               <YAxis tick={{ fill: "var(--text-muted)", fontSize: 10 }} domain={[0, 55]} />
               <Tooltip content={({ active, payload }) => (
                 <CustomTooltip active={active} payload={payload} render={(d) => (
                   <>
-                    <div style={{ fontSize: 11, color: "var(--text-tooltip)" }}>{d?.fecha}</div>
+                    <div style={{ fontSize: 11, color: "var(--text-tooltip)" }}>{d?.fecha} {d?.proyectado ? "(proyectado)" : ""}</div>
                     <div style={{ fontSize: 13, color: "#22c55e", fontFamily: "monospace", fontWeight: 600, marginTop: 4 }}>{d?.recompensa} BTC por bloque</div>
+                    <div style={{ fontSize: 10, color: "var(--text-muted)", marginTop: 2 }}>{(d?.recompensa * 144).toFixed(1)} BTC/día · {(d?.recompensa * 144 * 30).toFixed(0)} BTC/mes</div>
                   </>
                 )} />
               )} />
-              {halvingsVisibles.map((h, i) => (
+              {halvingsRecompensa.map((h, i) => (
                 <ReferenceLine
                   key={i}
                   x={h.fechaLabel}
-                  stroke="#f0b42940"
+                  stroke="#f0b42960"
                   strokeDasharray="4 4"
                   label={{ value: h.label, fill: "#f0b429", fontSize: 8, position: "top" }}
                 />
@@ -304,6 +351,14 @@ export default function TabMineria() {
               <Area type="stepAfter" dataKey="recompensa" stroke="#22c55e" fill="url(#gR)" strokeWidth={2} />
             </AreaChart>
           </ResponsiveContainer>
+          <div style={{ display: "flex", gap: 12, marginTop: 6, flexWrap: "wrap" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 4, fontSize: 10, color: "var(--text-muted)" }}>
+              <div style={{ width: 8, height: 8, borderRadius: 2, background: "#22c55e" }} /> Recompensa actual/histórica
+            </div>
+            <div style={{ display: "flex", alignItems: "center", gap: 4, fontSize: 10, color: "var(--text-muted)" }}>
+              <div style={{ width: 8, height: 2, background: "#f0b42960", borderRadius: 1 }} /> Halving (recompensa se divide a la mitad)
+            </div>
+          </div>
         </div>
       </div>
 

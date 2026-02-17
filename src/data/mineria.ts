@@ -1,5 +1,5 @@
 import { HistorialMineria } from "@/types";
-import { supplyAtDate } from "@/lib/supply";
+import { supplyAtDate, rewardAtDate } from "@/lib/supply";
 
 /**
  * Historia completa de minería Bitcoin: enero 2009 — presente.
@@ -109,7 +109,7 @@ export const HISTORIAL_MINERIA: HistorialMineria[] = (() => {
     const fechaRaw = `${year}-${String(month + 1).padStart(2, "0")}-01`;
     const fecha = d.toLocaleDateString("es-CL", { year: "2-digit", month: "short" });
 
-    const { supply, blockHeight, reward } = supplyAtDate(d);
+    const { supply, blockHeight } = supplyAtDate(d);
 
     datos.push({
       fecha,
@@ -117,9 +117,36 @@ export const HISTORIAL_MINERIA: HistorialMineria[] = (() => {
       hashrate: hashrateParaMes(year, month),
       dificultad: dificultadParaMes(year, month),
       pctComisiones: comisionesParaMes(year, month),
-      recompensa: reward,
+      recompensa: rewardAtDate(d),
       suministro: supply,
       bloque: blockHeight,
+    });
+
+    d.setMonth(d.getMonth() + 1);
+  }
+
+  return datos;
+})();
+
+/** Proyección de recompensa por bloque hasta ~2036 (para chart extendido) */
+export const RECOMPENSA_PROYECTADA: { fecha: string; fechaRaw: string; recompensa: number; proyectado?: boolean }[] = (() => {
+  const datos: { fecha: string; fechaRaw: string; recompensa: number; proyectado?: boolean }[] = [];
+  const now = new Date();
+  const start = new Date(2009, 0, 1);
+  const end = new Date(2037, 0, 1);
+
+  const d = new Date(start);
+  while (d <= end) {
+    const year = d.getFullYear();
+    const month = d.getMonth();
+    const fechaRaw = `${year}-${String(month + 1).padStart(2, "0")}-01`;
+    const fecha = d.toLocaleDateString("es-CL", { year: "2-digit", month: "short" });
+
+    datos.push({
+      fecha,
+      fechaRaw,
+      recompensa: rewardAtDate(d),
+      proyectado: d > now,
     });
 
     d.setMonth(d.getMonth() + 1);

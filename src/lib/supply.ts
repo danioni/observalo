@@ -9,6 +9,27 @@ const GENESIS = new Date(2009, 0, 3); // 3 de enero 2009
 const BLOCKS_PER_DAY = 144; // promedio: 1 bloque cada ~10 min
 export const MAX_SUPPLY = 21_000_000;
 
+/** Fechas reales/estimadas de cada halving (mes exacto) */
+export const HALVING_DATES: { date: Date; rewardAfter: number }[] = [
+  { date: new Date(2012, 10, 1), rewardAfter: 25 },    // Nov 2012 — bloque 210.000
+  { date: new Date(2016, 6, 1), rewardAfter: 12.5 },    // Jul 2016 — bloque 420.000
+  { date: new Date(2020, 4, 1), rewardAfter: 6.25 },    // May 2020 — bloque 630.000
+  { date: new Date(2024, 3, 1), rewardAfter: 3.125 },   // Abr 2024 — bloque 840.000
+  { date: new Date(2028, 3, 1), rewardAfter: 1.5625 },  // ~Abr 2028 — bloque 1.050.000 (estimado)
+  { date: new Date(2032, 3, 1), rewardAfter: 0.78125 }, // ~Abr 2032 — bloque 1.260.000 (estimado)
+  { date: new Date(2036, 3, 1), rewardAfter: 0.390625 },// ~Abr 2036 — bloque 1.470.000 (estimado)
+];
+
+/** Recompensa por bloque según fecha real del halving */
+export function rewardAtDate(date: Date): number {
+  let reward = INITIAL_REWARD;
+  for (const h of HALVING_DATES) {
+    if (date >= h.date) reward = h.rewardAfter;
+    else break;
+  }
+  return reward;
+}
+
 /** Altura aproximada del bloque para una fecha dada */
 export function blockHeightAtDate(date: Date): number {
   const days = (date.getTime() - GENESIS.getTime()) / 86_400_000;
