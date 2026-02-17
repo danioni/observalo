@@ -32,10 +32,15 @@ function buildFlujos(netflows: BGeometricsNetflow[], reserves: BGeometricsReserv
     reserveMap.set(r.d, Math.round(r.exchangeReserveBtc));
   }
 
-  // Build daily data
+  // Find the last date that has reserve data to avoid trailing zeros
+  const lastReserveDate = reserves.length > 0 ? reserves[reserves.length - 1].d : "";
+
+  // Build daily data — only include days up to the last reserve data point
   const diarios: FlujosApiItem[] = [];
-  let lastReserve = 0;
+  let lastReserve = reserves.length > 0 ? Math.round(reserves[0].exchangeReserveBtc) : 0;
   for (const nf of netflows) {
+    // Stop if we're past the last date with reserve data
+    if (lastReserveDate && nf.d > lastReserveDate) break;
     const reserve = reserveMap.get(nf.d) ?? lastReserve;
     lastReserve = reserve;
     const d = new Date(nf.d);
