@@ -28,8 +28,8 @@ export default function TabDistribucion() {
 
   return (
     <div>
-      <Concepto titulo="¿De quién es realmente la red?">
-        El dinero tradicional no publica quién tiene cuánto. Bitcoin sí. Cada dirección tiene un saldo público, verificable, en tiempo real. Al clasificarlas por tamaño — desde las más pequeñas hasta las ballenas — se revela un patrón que se repite ciclo tras ciclo: las cohortes pequeñas y medianas crecen, las mega-direcciones se comprimen. En un sistema donde nadie coordina la distribución, la propiedad se dispersa por millones de decisiones individuales. En Soberanía viste cuánto BTC queda disponible. Aquí ves cómo se reparte.
+      <Concepto titulo={NARRATIVA.tabs.distribucion.concepto.titulo}>
+        {NARRATIVA.tabs.distribucion.concepto.cuerpo}
         <br /><strong style={{ color: "#f0b429" }}>Importante:</strong> una dirección no es una persona. Un exchange puede tener una sola dirección con millones de BTC que representan a miles de usuarios. Las direcciones de los ETF también aparecen como &quot;Mega&quot; pero son vehículos colectivos.
       </Concepto>
 
@@ -41,9 +41,9 @@ export default function TabDistribucion() {
       </div>
 
       <div style={{ display: "flex", gap: 8, marginBottom: 20, flexWrap: "wrap" }}>
-        <Senal etiqueta="DISTRIBUCIÓN" estado="La propiedad se dispersa — sin que nadie lo ordene" color="#22c55e" />
-        <Senal etiqueta="GRANDES TENEDORES" estado="Las ballenas pesan menos ciclo tras ciclo" color="#f0b429" />
-        <Senal etiqueta="MINORISTAS" estado="Más billeteras individuales que nunca" color="#06b6d4" />
+        {NARRATIVA.tabs.distribucion.senales.map((s, i) => (
+          <Senal key={i} etiqueta={s.etiqueta} estado={s.estado} color={["#22c55e", "#f0b429", "#06b6d4"][i]} />
+        ))}
       </div>
 
       <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr", gap: 20 }}>
@@ -133,14 +133,16 @@ export default function TabDistribucion() {
         </div>
       </div>
 
-      <PanelEdu icono="◆" titulo="Lo que la distribución revela" color="#06b6d4">
-        Las mega-direcciones pierden peso. Las cohortes medianas y pequeñas ganan. No es un trimestre — es una tendencia de más de una década. Los exchanges acumulan menos, los ETF redistribuyen propiedad fraccional, y millones de billeteras individuales suman fracciones que, en conjunto, desplazan a los grandes tenedores.
+      <PanelEdu icono={NARRATIVA.tabs.distribucion.panelEdu.icono} titulo={NARRATIVA.tabs.distribucion.panelEdu.titulo} color={NARRATIVA.tabs.distribucion.panelEdu.color}>
+        Las mega-direcciones pierden peso. Las cohortes medianas y pequeñas ganan. No es un trimestre — es una tendencia de más de una década.
         <br /><br />
-        Una dirección no es una persona — un exchange puede tener millones de usuarios detrás de una sola dirección. Pero la dirección inversa es más reveladora: cada nueva billetera pequeña con saldo sí es una decisión individual.
+        Una dirección no es una persona. Un exchange puede tener millones de usuarios detrás de una sola dirección. Pero lo inverso es más revelador: cada nueva billetera pequeña con saldo sí representa una decisión individual de acumular.
         <br /><br />
-        En ningún otro sistema monetario se puede verificar públicamente quién tiene cuánto. En el dinero tradicional, los balances son privados, las reglas cambian sin aviso, y la distribución es opaca por diseño.
+        En ningún otro sistema monetario puedes verificar públicamente la distribución de la propiedad. En el dinero tradicional, los balances son privados y las reglas cambian sin aviso.
         <br /><br />
-        <strong style={{ color: "#e0e8f0" }}>Aquí, las decisiones se acumulan bloque a bloque — sin que nadie las coordine, sin que nadie las pueda revertir.</strong>
+        Pero tener Bitcoin es una cosa. No venderlo es otra. La siguiente sección muestra quién decidió retener — incluso durante los peores crashes.
+        <br /><br />
+        <strong style={{ color: "#e0e8f0" }}>{NARRATIVA.tabs.distribucion.panelEdu.cierre}</strong>
         <br /><br />
         <span style={{ color: "#667788", fontSize: 11 }}>
           Este análisis es informativo y no constituye asesoría financiera de ningún tipo.

@@ -13,6 +13,7 @@ import Senal from "@/components/ui/Senal";
 import PanelEdu from "@/components/ui/PanelEdu";
 import Concepto from "@/components/ui/Concepto";
 import CustomTooltip from "@/components/ui/CustomTooltip";
+import { NARRATIVA } from "@/data/narrativa";
 
 function Btn({ items, val, set, color }: {
   items: { id: string; l: string }[];
@@ -74,8 +75,8 @@ export default function TabFlujos() {
   if (cargandoFlujos && fuente.length === 0) {
     return (
       <div>
-        <Concepto titulo="Los exchanges se vacían. ¿A dónde va el Bitcoin?">
-          En el sistema bancario, tu dinero es una promesa del banco — un número en su base de datos. Cuando retiras BTC de un exchange, dejas de depender de promesas.
+        <Concepto titulo={NARRATIVA.tabs.flujos.concepto.titulo}>
+          {NARRATIVA.tabs.flujos.concepto.cuerpo}
         </Concepto>
         <div style={{ display: "flex", alignItems: "center", justifyContent: "center", height: 300, color: "#667788", fontSize: 14 }}>
           <div style={{ textAlign: "center" }}>
@@ -89,8 +90,8 @@ export default function TabFlujos() {
 
   return (
     <div>
-      <Concepto titulo="Los exchanges se vacían. ¿A dónde va el Bitcoin?">
-        En el sistema bancario, tu dinero es una promesa del banco — un número en su base de datos. Cuando retiras BTC de un exchange a tu propia billetera, dejas de depender de promesas. Después del colapso de FTX, millones aprendieron la diferencia entre custodiar y confiar. Las reservas en exchanges están en niveles no vistos desde 2018. Los ETFs al contado aceleran las salidas desde enero 2024. El patrón es estructural, no cíclico. En Ondas viste que la convicción crece — aquí ves cómo se materializa: el capital migra de custodios hacia soberanía individual.
+      <Concepto titulo={NARRATIVA.tabs.flujos.concepto.titulo}>
+        {NARRATIVA.tabs.flujos.concepto.cuerpo}
       </Concepto>
 
       <div style={{ display: "grid", gridTemplateColumns: isMobile ? "repeat(2,1fr)" : "repeat(4,1fr)", gap: isMobile ? 8 : 12, marginBottom: 24 }}>
@@ -101,9 +102,9 @@ export default function TabFlujos() {
       </div>
 
       <div style={{ display: "flex", gap: 8, marginBottom: 20, flexWrap: "wrap" }}>
-        <Senal etiqueta="RESERVAS" estado="El tanque de venta se vacía. Mínimos de 7 años." color="#22c55e" />
-        <Senal etiqueta="EFECTO ETF" estado="Los ETFs drenan exchanges a ritmo industrial" color="#06b6d4" />
-        <Senal etiqueta="CUSTODIA PROPIA" estado="Después de FTX, la gente eligió sus propias llaves" color="#a855f7" />
+        {NARRATIVA.tabs.flujos.senales.map((s, i) => (
+          <Senal key={i} etiqueta={s.etiqueta} estado={s.estado} color={["#22c55e", "#06b6d4", "#a855f7"][i]} />
+        ))}
         {cargandoFlujos && <Senal etiqueta="DATOS" estado="Cargando datos reales..." color="#8899aa" />}
         {!cargandoFlujos && <Senal etiqueta="FUENTE" estado={esReal ? "bitcoin-data.com + coinglass.com" : "Datos simulados (fallback)"} color={esReal ? "#f0b429" : "#667788"} />}
       </div>
@@ -182,18 +183,20 @@ export default function TabFlujos() {
         </ResponsiveContainer>
       </div>
 
-      <PanelEdu icono="⇄" titulo="Cómo se vació la tubería — cinco años en datos" color="#06b6d4">
+      <PanelEdu icono={NARRATIVA.tabs.flujos.panelEdu.icono} titulo={NARRATIVA.tabs.flujos.panelEdu.titulo} color={NARRATIVA.tabs.flujos.panelEdu.color}>
         <strong style={{ color: "#ef4444" }}>2021:</strong> La euforia llenó los exchanges. Todo el mundo depositaba para vender en máximos.
         <br /><br />
-        <strong style={{ color: "#ef4444" }}>2022:</strong> FTX demostró que &quot;confía en nosotros&quot; no es una garantía — es lo mismo que prometen los bancos, con la misma fragilidad. Las salidas se aceleraron.
+        <strong style={{ color: "#ef4444" }}>2022:</strong> FTX demostró que &quot;confía en nosotros&quot; no es una garantía. Las salidas se aceleraron.
         <br /><br />
         <strong style={{ color: "#22c55e" }}>2023:</strong> Silencio en los titulares. Éxodo constante en los datos. El mercado acumulaba mientras los medios lo ignoraban.
         <br /><br />
-        <strong style={{ color: "#06b6d4" }}>2024:</strong> Los ETFs al contado empezaron a absorber oferta a escala industrial. El halving recortó la emisión a la mitad. Dos fuerzas convergiendo.
+        <strong style={{ color: "#06b6d4" }}>2024:</strong> Los ETFs al contado empezaron a absorber oferta. El halving recortó la emisión a la mitad. Dos fuerzas convergiendo sobre una oferta fija.
         <br /><br />
-        <strong style={{ color: "#a855f7" }}>2025-26:</strong> Reservas en mínimos de 7 años. Compare esto con cualquier moneda fiduciaria: ¿cuándo fue la última vez que la oferta de dólares, euros o pesos disminuyó?
+        <strong style={{ color: "#a855f7" }}>2025-26:</strong> Reservas en mínimos de 7 años. ¿Cuándo fue la última vez que la oferta de dólares, euros o pesos disminuyó?
         <br /><br />
-        <span style={{ color: "#8899aa", fontStyle: "italic" }}>El sistema diseñado para tener un suministro fijo está mostrando exactamente lo que pasa cuando la demanda es estructural y la oferta no negocia.</span>
+        Pero los exchanges no son los únicos acumulando menos. La siguiente sección muestra quién está comprando a escala institucional.
+        <br /><br />
+        <span style={{ color: "#8899aa", fontStyle: "italic" }}>{NARRATIVA.tabs.flujos.panelEdu.cierre}</span>
         <br /><br />
         <span style={{ color: "#667788", fontSize: 11 }}>
           Este análisis es informativo y no constituye asesoría financiera de ningún tipo. Datos de flujos provienen de fuentes públicas y pueden contener estimaciones.

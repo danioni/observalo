@@ -12,7 +12,7 @@ import TabSoberania from "@/components/tabs/TabSoberania";
 import { useBreakpoint } from "@/hooks/useBreakpoint";
 
 export default function Dashboard() {
-  const [tab, setTab] = useState("soberania");
+  const [tab, setTab] = useState("lared");
   const { isMobile, isTablet } = useBreakpoint();
 
   return (
@@ -27,12 +27,12 @@ export default function Dashboard() {
         padding: isMobile ? "12px" : isTablet ? "16px" : "24px",
         maxWidth: 1280, margin: "0 auto",
       }}>
+        {tab === "lared" && <TabMineria />}
         {tab === "distribucion" && <TabDistribucion />}
-        {tab === "soberania" && <TabSoberania />}
-        {tab === "ondas" && <TabOndas />}
+        {tab === "conviccion" && <TabOndas />}
         {tab === "flujos" && <TabFlujos />}
-        {tab === "mineria" && <TabMineria />}
-        {tab === "holders" && <TabHolders />}
+        {tab === "acumuladores" && <TabHolders />}
+        {tab === "escasez" && <TabSoberania />}
       </div>
       <Footer />
     </div>

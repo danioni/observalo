@@ -14,6 +14,7 @@ import Senal from "@/components/ui/Senal";
 import PanelEdu from "@/components/ui/PanelEdu";
 import Concepto from "@/components/ui/Concepto";
 import CustomTooltip from "@/components/ui/CustomTooltip";
+import { NARRATIVA } from "@/data/narrativa";
 
 /* ── Selector de rango ── */
 function Btn({ items, val, set, color }: {
@@ -92,8 +93,8 @@ export default function TabMineria() {
 
   return (
     <div>
-      <Concepto titulo="Cada bloque cuesta electricidad real. Eso es lo que lo hace distinto.">
-        El dinero tradicional se crea con un clic — literalmente. Un banco central decide, un teclado ejecuta. Bitcoin invirtió la lógica: para crear un bloque, hay que gastar electricidad real. No hay atajo, no hay privilegio, no hay amigos del comité. El hashrate — el poder computacional total que protege la red — está en máximos históricos. Atacar Bitcoin hoy costaría más que el PIB de muchos países. Y cada ~4 años, la emisión se corta a la mitad — sin votación, sin excepciones. En Flujos viste el capital migrando a custodia propia. Aquí ves la fortaleza del sistema que eligieron.
+      <Concepto titulo={NARRATIVA.tabs.mineria.concepto.titulo}>
+        {NARRATIVA.tabs.mineria.concepto.cuerpo}
       </Concepto>
 
       {/* ── Métricas ── */}
@@ -106,8 +107,9 @@ export default function TabMineria() {
 
       {/* ── Señales ── */}
       <div style={{ display: "flex", gap: 8, marginBottom: 20, flexWrap: "wrap" }}>
-        <Senal etiqueta="HASHRATE" estado="Nunca fue más caro atacar Bitcoin" color="#22c55e" />
-        <Senal etiqueta="4to HALVING" estado="3,125 BTC por bloque. En 2028, la mitad." color="#f0b429" />
+        {NARRATIVA.tabs.mineria.senales.map((s, i) => (
+          <Senal key={i} etiqueta={s.etiqueta} estado={s.estado} color={["#22c55e", "#f0b429", "#06b6d4"][i]} />
+        ))}
         <Senal etiqueta="SUMINISTRO" estado={`${pctMinado}% emitido de 21M — queda menos del 6% para los próximos 114 años`} color="#f0b429" />
         {cargando && <Senal etiqueta="DATOS EN VIVO" estado="Cargando desde mempool.space..." color="#8899aa" />}
         {cargandoHistorico && <Senal etiqueta="HISTÓRICO" estado="Cargando datos reales..." color="#8899aa" />}
@@ -305,14 +307,16 @@ export default function TabMineria() {
         </div>
       </div>
 
-      <PanelEdu icono="⛏" titulo="Reglas escritas en código, no en decretos" color="#f0b429">
-        <strong style={{ color: "#f0b429" }}>La emisión no se discute. Se ejecuta.</strong> Cada ~4 años el código reduce la recompensa a la mitad. No hubo voto. No hubo lobby. No hubo excepción. 50 → 25 → 12,5 → 6,25 → 3,125 BTC por bloque. En 2028 será 1,5625. Compara esto con cualquier banco central del mundo: ¿cuándo publicaron su calendario de emisión para los próximos 100 años?
+      <PanelEdu icono={NARRATIVA.tabs.mineria.panelEdu.icono} titulo={NARRATIVA.tabs.mineria.panelEdu.titulo} color={NARRATIVA.tabs.mineria.panelEdu.color}>
+        <strong style={{ color: "#f0b429" }}>La emisión sigue un calendario público.</strong> 50 → 25 → 12,5 → 6,25 → 3,125 BTC por bloque. En 2028 será 1,5625. Ningún banco central del mundo ha publicado su calendario de emisión para los próximos 100 años. Bitcoin lo hizo en 2009.
         <br /><br />
-        <strong style={{ color: "#e0e8f0" }}>Seguridad:</strong> Cada segundo, la red procesa cientos de millones de billones de cálculos. Revertir un solo bloque requeriría más energía que la producción anual de países enteros. Y la dificultad se ajusta sola — sin comité, sin votación.
+        <strong style={{ color: "#e0e8f0" }}>La seguridad no depende de confianza.</strong> Cada segundo, la red procesa cientos de millones de billones de cálculos. La dificultad se ajusta sola para mantener un bloque cada 10 minutos — sin importar cuántos mineros se sumen o se retiren.
         <br /><br />
-        <strong style={{ color: "#e0e8f0" }}>Sustentabilidad:</strong> Cuando la recompensa baja, las comisiones suben proporcionalmente. El incentivo se recalibra con cada bloque.
+        <strong style={{ color: "#e0e8f0" }}>Cuando la recompensa baja, las comisiones compensan.</strong> El incentivo económico se recalibra con cada bloque. Los mineros ineficientes desaparecen, los eficientes sobreviven — selección natural económica.
         <br /><br />
-        <span style={{ color: "#8899aa", fontStyle: "italic" }}>Es el único sistema monetario donde la seguridad no depende de la buena fe de nadie — depende de la física y las matemáticas.</span>
+        A lo largo de este observatorio vas a ver qué hace la gente con un sistema que funciona así. La siguiente sección muestra cómo se reparte la propiedad.
+        <br /><br />
+        <span style={{ color: "#8899aa", fontStyle: "italic" }}>{NARRATIVA.tabs.mineria.panelEdu.cierre}</span>
         <br /><br />
         <span style={{ color: "#667788", fontSize: 11 }}>
           Este análisis es informativo y no constituye asesoría financiera de ningún tipo. Datos de minería provienen de mempool.space y bitcoin-data.com.

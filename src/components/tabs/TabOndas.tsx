@@ -20,8 +20,8 @@ export default function TabOndas() {
   if (cargando && DATOS_ONDAS.length === 0) {
     return (
       <div>
-        <Concepto titulo="El BTC que no se vende. Ni en crashes. Ni en máximos.">
-          En los mercados tradicionales, el pánico genera ventas masivas. En Bitcoin, algo distinto está ocurriendo. Cada UTXO registra cuándo se movió por última vez.
+        <Concepto titulo={NARRATIVA.tabs.ondas.concepto.titulo}>
+          {NARRATIVA.tabs.ondas.concepto.cuerpo}
         </Concepto>
         <div style={{ display: "flex", alignItems: "center", justifyContent: "center", height: 300, color: "#667788", fontSize: 14 }}>
           <div style={{ textAlign: "center" }}>
@@ -41,11 +41,8 @@ export default function TabOndas() {
 
   return (
     <div>
-      <Concepto titulo="El BTC que no se vende. Ni en crashes. Ni en máximos.">
-        En los mercados tradicionales, el pánico genera ventas masivas — es la norma. En Bitcoin, algo distinto está ocurriendo. Cada UTXO registra públicamente cuándo se movió por última vez.
-        Cuando agrupas toda la oferta por antigüedad, aparece un patrón sin precedente: las bandas frías — BTC que lleva más de 3 años sin moverse — se expanden ciclo tras ciclo.
-        Ese capital sobrevivió caídas del 80%, quiebras de exchanges y pánico mediático sin venderse.
-        En Distribución viste quién tiene Bitcoin. Aquí ves quién decidió no soltarlo.
+      <Concepto titulo={NARRATIVA.tabs.ondas.concepto.titulo}>
+        {NARRATIVA.tabs.ondas.concepto.cuerpo}
       </Concepto>
 
       <div style={{ display: "grid", gridTemplateColumns: isMobile ? "repeat(2,1fr)" : "repeat(4,1fr)", gap: isMobile ? 8 : 12, marginBottom: 24 }}>
@@ -56,8 +53,9 @@ export default function TabOndas() {
       </div>
 
       <div style={{ display: "flex", gap: 8, marginBottom: 20, flexWrap: "wrap" }}>
-        <Senal etiqueta="CONVICCIÓN" estado="Máxima convicción registrada en la historia de la red" color="#22c55e" />
-        <Senal etiqueta="FASE DEL CICLO" estado="Bandas calientes comprimidas — nadie vende" color="#06b6d4" />
+        {NARRATIVA.tabs.ondas.senales.map((s, i) => (
+          <Senal key={i} etiqueta={s.etiqueta} estado={s.estado} color={["#22c55e", "#06b6d4"][i]} />
+        ))}
         {cargando && <Senal etiqueta="DATOS" estado="Cargando datos reales..." color="#8899aa" />}
         {!cargando && <Senal etiqueta="FUENTE" estado={esReal ? "bitcoin-data.com (datos reales)" : "Datos simulados (fallback)"} color={esReal ? "#f0b429" : "#667788"} />}
       </div>
@@ -99,12 +97,14 @@ export default function TabOndas() {
         ))}
       </div>
 
-      <PanelEdu icono="◈" titulo="Lo que las ondas revelan sobre la convicción" color="#a855f7">
-        <strong style={{ color: "#ef4444" }}>Bandas calientes (menos de 6 meses):</strong> Cuando se expanden, es dinero nuevo entrando — compradores de último momento. Cuando se comprimen, nadie está vendiendo lo que acaba de comprar. Hoy están comprimidas.<br /><br />
-        <strong style={{ color: "#3b82f6" }}>Bandas frías (más de 3 años):</strong> Capital que sobrevivió a caídas del 80%, a la quiebra de FTX, al pánico de Luna/UST — y no se movió. Cada ciclo, estas bandas crecen. Nunca se han contraído.<br /><br />
-        En los mercados tradicionales, los crashes generan capitulación masiva. En Bitcoin, cada crash deja una base más grande de tenedores que no vendieron.
+      <PanelEdu icono={NARRATIVA.tabs.ondas.panelEdu.icono} titulo={NARRATIVA.tabs.ondas.panelEdu.titulo} color={NARRATIVA.tabs.ondas.panelEdu.color}>
+        <strong style={{ color: "#ef4444" }}>Bandas calientes (menos de 6 meses):</strong> Cuando se expanden, hay dinero nuevo entrando — compradores recientes. Cuando se comprimen, nadie está vendiendo lo que acaba de comprar.<br /><br />
+        <strong style={{ color: "#3b82f6" }}>Bandas frías (más de 3 años):</strong> Capital que sobrevivió caídas del 80%, la quiebra de FTX, el pánico de Luna/UST — y no se movió. Estas bandas crecen con cada ciclo. Nunca se han contraído de forma sostenida.<br /><br />
+        En los mercados tradicionales, los crashes generan capitulación masiva. En Bitcoin, cada crash deja una base más grande de personas que deciden no vender.
         <br /><br />
-        <strong style={{ color: "#e0e8f0" }}>No tiene precedente en ningún otro activo: un mercado donde, después de cada pánico, más gente decide retener en lugar de huir.</strong>
+        Pero retener no es lo mismo que retirar. La siguiente sección muestra hacia dónde se mueve físicamente el Bitcoin — y de dónde está saliendo.
+        <br /><br />
+        <strong style={{ color: "#e0e8f0" }}>{NARRATIVA.tabs.ondas.panelEdu.cierre}</strong>
         <br /><br />
         <span style={{ color: "#667788", fontSize: 11 }}>
           Este análisis es informativo y no constituye asesoría financiera de ningún tipo.

@@ -35,7 +35,7 @@ export default function TabSoberania() {
   return (
     <div>
       <Concepto titulo={NARRATIVA.tabs.soberania.concepto.titulo}>
-        Son 21 millones de Bitcoin. Sin excepciones. Pero no todos están disponibles. Hay que restar lo que aún no se minó, lo perdido para siempre, y lo que ya acapararon ETFs, corporaciones y gobiernos. Lo que queda después de restar todo eso es lo disponible para tomar soberanía — para que individuos como tú elijan custodiar sus propias llaves, sin depender de bancos ni intermediarios. Esa fracción se achica cada día. Esta sección muestra exactamente cuánto queda.
+        {NARRATIVA.tabs.soberania.concepto.cuerpo}
       </Concepto>
 
       {/* Métricas principales */}
@@ -67,9 +67,9 @@ export default function TabSoberania() {
 
       {/* Señales */}
       <div style={{ display: "flex", gap: 8, marginBottom: 24, flexWrap: "wrap" }}>
-        <Senal etiqueta="OFERTA SOBERANA" estado="Solo el 22% queda para individuos soberanos" color="#22c55e" />
-        <Senal etiqueta="PRESIÓN INSTITUCIONAL" estado="Cada ETF que compra reduce lo que queda" color="#818cf8" />
-        <Senal etiqueta="ESCASEZ" estado="Si todos quisieran, no alcanza" color="#f0b429" />
+        {NARRATIVA.tabs.soberania.senales.map((s, i) => (
+          <Senal key={i} etiqueta={s.etiqueta} estado={s.estado} color={["#22c55e", "#818cf8", "#f0b429"][i]} />
+        ))}
       </div>
 
       {/* Stacked horizontal bar — Desglose completo de 21M */}
@@ -184,7 +184,7 @@ export default function TabSoberania() {
         border: "1px solid rgba(34,197,94,0.15)",
       }}>
         <div style={{ fontSize: 13, color: "#22c55e", fontWeight: 700, marginBottom: 8 }}>
-          📐 La cuenta que nadie hace
+          📐 La cuenta final
         </div>
         <div style={{ fontSize: 12, color: "#c0c8d0", lineHeight: 1.7 }}>
           Si cada adulto del planeta (~{fmt(ADULTOS_MUNDIAL)}) quisiera Bitcoin, solo hay <strong style={{ color: "#22c55e" }}>{fmt(BTC_SOBERANO)}</strong> disponibles en autocustodia.
@@ -200,14 +200,14 @@ export default function TabSoberania() {
         </div>
       </div>
 
-      <PanelEdu icono="🔑" titulo="Tus llaves, tu Bitcoin. Sin llaves, no es tuyo." color="#f0b429">
-        Cuando tu dinero está en un banco, lo que tienes es una promesa: un número en su base de datos. Si el banco quiebra, congela cuentas o el gobierno interviene — ese número puede desaparecer. Ha pasado antes. Pasará de nuevo.
+      <PanelEdu icono="🔑" titulo="Autocustodia: la diferencia entre poseer y que te deban" color="#f0b429">
+        Has recorrido todo el observatorio. Viste las reglas, la distribución, la convicción, los flujos, la acumulación. Todo converge en una decisión: ¿quién custodia tu Bitcoin? Cuando está en un exchange o un ETF, lo que tienes es una promesa — un número en la base de datos de otro.
         <br /><br />
         <strong style={{ color: "#f0b429" }}>Autocustodia</strong> cambia esa ecuación. Significa que tú controlas las llaves criptográficas, y nadie más puede mover tus fondos — ni un banco, ni un gobierno, ni un exchange. Es la diferencia entre poseer y que te deban.
         <br /><br />
         Cada Bitcoin que sale de un exchange hacia una billetera personal es un voto por la soberanía financiera. Y cada uno que entra a un ETF o treasury corporativa es oferta que deja de estar disponible para individuos.
         <br /><br />
-        <strong style={{ color: "#e0e8f0" }}>21 millones es el límite. Lo que hagas con esa información es tu decisión — no la de un banco.</strong>
+        <strong style={{ color: "#e0e8f0" }}>21 millones es el límite. Los datos están aquí para que decidas con información, no con fe.</strong>
         <br /><br />
         <span style={{ color: "#667788", fontSize: 11 }}>
           Este análisis es informativo y no constituye asesoría financiera de ningún tipo.

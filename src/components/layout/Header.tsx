@@ -6,12 +6,12 @@ import { useBreakpoint } from "@/hooks/useBreakpoint";
 import { NARRATIVA } from "@/data/narrativa";
 
 const PESTANAS: Pestana[] = [
-  { id: "soberania", etiqueta: "SOBERANÍA", icono: "⚡" },
+  { id: "lared", etiqueta: "LA RED", icono: "⛏" },
   { id: "distribucion", etiqueta: "DISTRIBUCIÓN", icono: "◆" },
-  { id: "mineria", etiqueta: "MINERÍA", icono: "⛏" },
-  { id: "ondas", etiqueta: "ONDAS HODL", icono: "◈" },
-  { id: "flujos", etiqueta: "FLUJOS EXCHANGES", icono: "⇄" },
-  { id: "holders", etiqueta: "ACUMULADORES", icono: "⬡" },
+  { id: "conviccion", etiqueta: "CONVICCIÓN", icono: "◈" },
+  { id: "flujos", etiqueta: "FLUJOS", icono: "⇄" },
+  { id: "acumuladores", etiqueta: "ACUMULADORES", icono: "⬡" },
+  { id: "escasez", etiqueta: "ESCASEZ", icono: "⚡" },
 ];
 
 interface HeaderProps {

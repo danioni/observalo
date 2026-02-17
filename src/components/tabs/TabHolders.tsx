@@ -17,6 +17,7 @@ import Senal from "@/components/ui/Senal";
 import PanelEdu from "@/components/ui/PanelEdu";
 import Concepto from "@/components/ui/Concepto";
 import CustomTooltip from "@/components/ui/CustomTooltip";
+import { NARRATIVA } from "@/data/narrativa";
 
 const TODAS: CategoriaHolder[] = ["treasury", "etf", "exchange", "minero", "gobierno", "protocolo"];
 
@@ -161,8 +162,8 @@ export default function TabHolders() {
 
   return (
     <div>
-      <Concepto titulo="ETFs, corporaciones, gobiernos. Todos acumulando.">
-        Durante décadas, las instituciones financieras ignoraron Bitcoin. Ahora compiten por acumularlo. BlackRock lanzó un ETF y en meses acumuló más BTC que la mayoría de los países. Strategy lleva años convirtiendo su tesorería. Los gobiernos incautan pero no venden. Lo que antes era &quot;activo especulativo&quot; ahora aparece en balances corporativos auditados y prospectos regulados. Esta tabla muestra solo la fracción visible — la mayoría del Bitcoin está en manos de tenedores anónimos que no responden ante ningún regulador. La asimetría de información se está cerrando.
+      <Concepto titulo={NARRATIVA.tabs.holders.concepto.titulo}>
+        {NARRATIVA.tabs.holders.concepto.cuerpo}
       </Concepto>
 
       <div style={{ display: "grid", gridTemplateColumns: isMobile ? "repeat(2,1fr)" : "repeat(4,1fr)", gap: isMobile ? 8 : 12, marginBottom: 24 }}>
@@ -178,9 +179,9 @@ export default function TabHolders() {
           estado={cargando ? "Cargando datos reales…" : esReal ? "ETFs actualizados vía API" : "Datos curados estáticos"}
           color={cargando ? "#667788" : esReal ? "#f0b429" : "#667788"}
         />
-        <Senal etiqueta="ETFs" estado="BlackRock + Fidelity: los nuevos mega-tenedores" color="#818cf8" />
-        <Senal etiqueta="TREASURIES" estado="Las corporaciones convierten efectivo en Bitcoin" color="#f0b429" />
-        <Senal etiqueta="GOBIERNOS" estado="Incautan pero no venden — incluso ellos retienen" color="#ef4444" />
+        {NARRATIVA.tabs.holders.senales.map((s, i) => (
+          <Senal key={i} etiqueta={s.etiqueta} estado={s.estado} color={["#818cf8", "#f0b429", "#ef4444"][i]} />
+        ))}
         <Senal etiqueta="EXCHANGES" estado={fmt(totalExchange) + " BTC en custodia"} color="#06b6d4" />
       </div>
 
@@ -321,14 +322,16 @@ export default function TabHolders() {
         </div>
       </div>
 
-      <PanelEdu icono="⬡" titulo="La carrera que no sale en los titulares" color="#818cf8">
-        En enero 2024, BlackRock lanzó un ETF de Bitcoin. En meses, acumuló más BTC que la mayoría de los países. Fidelity le sigue. Strategy lleva años convirtiendo su tesorería. Hasta los gobiernos — que incautan Bitcoin a criminales — prefieren retenerlo antes que venderlo.
+      <PanelEdu icono={NARRATIVA.tabs.holders.panelEdu.icono} titulo={NARRATIVA.tabs.holders.panelEdu.titulo} color={NARRATIVA.tabs.holders.panelEdu.color}>
+        BlackRock, Fidelity, Strategy, gobiernos — cada uno acumulando por razones distintas pero con el mismo efecto: comprimen la oferta disponible.
         <br /><br />
-        Mientras tanto, los bancos centrales siguen repitiendo que Bitcoin &quot;no tiene valor intrínseco&quot; — mientras las instituciones que ellos regulan lo acumulan a ritmo récord.
+        Mientras tanto, los bancos centrales repiten que Bitcoin &quot;no tiene valor intrínseco&quot;. Las instituciones que ellos regulan lo acumulan a ritmo récord.
         <br /><br />
-        Esta tabla muestra solo la fracción identificable. La mayoría del Bitcoin está en billeteras anónimas de individuos que acumulan sin comunicar a regulador alguno.
+        Esta tabla muestra solo la punta visible. La mayoría del Bitcoin está en billeteras anónimas de individuos que no reportan a ningún regulador. Ambas fuerzas — la institucional visible y la individual silenciosa — aprietan la oferta desde los dos lados.
         <br /><br />
-        <span style={{ color: "#8899aa", fontStyle: "italic" }}>Los datos institucionales son la punta visible de un fenómeno mucho más profundo — y ambas fuerzas, la visible y la silenciosa, comprimen la oferta desde los dos lados.</span>
+        ¿Cuánto queda después de restar todo lo que ya está acumulado? La última sección hace la cuenta.
+        <br /><br />
+        <span style={{ color: "#8899aa", fontStyle: "italic" }}>{NARRATIVA.tabs.holders.panelEdu.cierre}</span>
         <br /><br />
         <span style={{ color: "#667788", fontSize: 11 }}>
           Este análisis es informativo y no constituye asesoría financiera de ningún tipo. Datos basados en informes públicos (SEC, bitcointreasuries.net) y pueden contener estimaciones.
