@@ -35,7 +35,7 @@ export default function TabSoberania() {
   return (
     <div>
       <Concepto titulo={NARRATIVA.tabs.soberania.concepto.titulo}>
-        En el sistema tradicional, la oferta de dinero cambia cada vez que un banco central lo decide — y lo decide a puertas cerradas. Bitcoin eliminó esa puerta. Son 21 millones de unidades, escritas en código abierto, verificables por cualquiera en cualquier momento. Pero de esos 21 millones, hay que restar lo perdido para siempre, lo que aún no se minó, y lo que ya acapararon ETFs, corporaciones y gobiernos. Lo que queda — la oferta soberana — se achica cada día. Esta sección muestra exactamente cuánto.
+        Son 21 millones de Bitcoin. Sin excepciones. Pero no todos están disponibles. Hay que restar lo que aún no se minó, lo perdido para siempre, y lo que ya acapararon ETFs, corporaciones y gobiernos. Lo que queda después de restar todo eso es lo disponible para tomar soberanía — para que individuos como tú elijan custodiar sus propias llaves, sin depender de bancos ni intermediarios. Esa fracción se achica cada día. Esta sección muestra exactamente cuánto queda.
       </Concepto>
 
       {/* Métricas principales */}
