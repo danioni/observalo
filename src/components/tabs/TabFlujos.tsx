@@ -78,7 +78,7 @@ export default function TabFlujos() {
         <div style={{ display: "flex", alignItems: "center", justifyContent: "center", height: 300, color: "#667788", fontSize: 14 }}>
           <div style={{ textAlign: "center" }}>
             <div style={{ fontSize: 24, marginBottom: 8 }}>⇄</div>
-            Cargando datos reales de flujos desde bitcoin-data.com...
+            Cargando datos reales de flujos desde CoinGlass...
           </div>
         </div>
       </div>
@@ -105,7 +105,7 @@ export default function TabFlujos() {
         <Senal etiqueta="EFECTO ETF" estado="Salidas aceleradas desde aprobación" color="#06b6d4" />
         <Senal etiqueta="CUSTODIA PROPIA" estado="Tendencia irreversible post-FTX" color="#a855f7" />
         {cargandoFlujos && <Senal etiqueta="DATOS" estado="Cargando datos reales..." color="#8899aa" />}
-        {!cargandoFlujos && <Senal etiqueta="FUENTE" estado={esReal ? "bitcoin-data.com (datos reales)" : "Datos simulados (fallback)"} color={esReal ? "#f0b429" : "#667788"} />}
+        {!cargandoFlujos && <Senal etiqueta="FUENTE" estado={esReal ? "coinglass.com (datos reales)" : "Datos simulados (fallback)"} color={esReal ? "#f0b429" : "#667788"} />}
       </div>
 
       <div style={{ marginBottom: 24 }}>
