@@ -84,7 +84,7 @@ export default function TabFlujos() {
       </div>
 
       <div style={{ display: "flex", gap: 8, marginBottom: 20, flexWrap: "wrap" }}>
-        <Senal etiqueta="RESERVAS" estado="Mínimos de varios años — escasez de oferta" color="#22c55e" />
+        <Senal etiqueta="RESERVAS" estado="Repunte reciente tras mínimos históricos" color="#f0b429" />
         <Senal etiqueta="EFECTO ETF" estado="Salidas aceleradas desde aprobación" color="#06b6d4" />
         <Senal etiqueta="CUSTODIA PROPIA" estado="Tendencia irreversible post-FTX" color="#a855f7" />
         {cargandoFlujos && <Senal etiqueta="DATOS" estado="Cargando datos reales..." color="#8899aa" />}
@@ -170,7 +170,7 @@ export default function TabFlujos() {
         <strong style={{ color: "#ef4444" }}>2022 (Bajista):</strong> Dos shocks: colapso de Luna/UST (mayo) y colapso de FTX (noviembre). Después de FTX, &quot;si no son tus llaves, no son tus monedas&quot; se volvió dominante.{" "}
         <strong style={{ color: "#22c55e" }}>2023 (Recuperación):</strong> Éxodo sostenido de exchanges. Custodia propia se normaliza. Acumulación silenciosa.{" "}
         <strong style={{ color: "#06b6d4" }}>2024 (Halving + ETF):</strong> ETF al contado aprobado en enero aceleró salidas institucionales. Halving en abril redujo emisión a 3,125 BTC por bloque.{" "}
-        <strong style={{ color: "#a855f7" }}>2025-26:</strong> Reservas en mínimos de varios años. Escasez estructural de oferta en progreso.
+        <strong style={{ color: "#a855f7" }}>2025-26:</strong> Tras tocar mínimos históricos, las reservas han repuntado — posible redistribución institucional vía ETFs y nuevos depósitos. La tendencia de largo plazo sigue siendo de salida neta.
         <br /><br />
         <span style={{ color: "#667788", fontSize: 11 }}>
           Este análisis es informativo y no constituye asesoría financiera de ningún tipo. Datos de flujos provienen de fuentes públicas y pueden contener estimaciones.
