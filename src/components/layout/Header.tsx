@@ -19,10 +19,23 @@ interface HeaderProps {
 
 export default function Header({ tab, setTab }: HeaderProps) {
   const [ahora, setAhora] = useState<Date | null>(null);
+  const [bloque, setBloque] = useState<number | null>(null);
+
   useEffect(() => {
     setAhora(new Date());
     const t = setInterval(() => setAhora(new Date()), 1000);
-    return () => clearInterval(t);
+
+    // Fetch último bloque desde mempool.space
+    const fetchBloque = () => {
+      fetch("https://mempool.space/api/blocks/tip/height")
+        .then(r => r.ok ? r.text() : null)
+        .then(h => { if (h) setBloque(parseInt(h, 10)); })
+        .catch(() => {});
+    };
+    fetchBloque();
+    const b = setInterval(fetchBloque, 60_000);
+
+    return () => { clearInterval(t); clearInterval(b); };
   }, []);
 
   return (
@@ -45,7 +58,12 @@ export default function Header({ tab, setTab }: HeaderProps) {
           </div>
         </div>
         <div style={{ textAlign: "right" }}>
-          <div style={{ fontSize: 13, color: "#e0e8f0", fontFamily: "'JetBrains Mono',monospace", fontWeight: 500 }}>{ahora ? ahora.toLocaleTimeString("es-CL") : "\u00A0"}</div>
+          {bloque && (
+            <div style={{ fontSize: 13, color: "#f0b429", fontFamily: "'JetBrains Mono',monospace", fontWeight: 600, marginBottom: 2 }}>
+              ⛏ bloque #{bloque.toLocaleString("es-CL")}
+            </div>
+          )}
+          <div style={{ fontSize: 12, color: "#e0e8f0", fontFamily: "'JetBrains Mono',monospace", fontWeight: 500 }}>{ahora ? ahora.toLocaleTimeString("es-CL") : "\u00A0"}</div>
           <div style={{ fontSize: 10, color: "#667788" }}>{ahora ? ahora.toLocaleDateString("es-CL", { weekday: "long", year: "numeric", month: "long", day: "numeric" }) : "\u00A0"}</div>
         </div>
       </div>
