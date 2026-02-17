@@ -8,11 +8,8 @@ interface BGeometricsHashrate {
   hashrate: string;
 }
 
-interface BGeometricsDifficulty {
-  d: string;
-  unixTs: string;
-  difficulty: string;
-}
+// mempool.space difficulty adjustment: [timestamp, blockHeight, difficulty, timeRatio]
+type MempoolDiffAdj = [number, number, number, number];
 
 export interface MineriaApiItem {
   fecha: string;
@@ -27,39 +24,57 @@ export interface MineriaApiItem {
 function parseHashrateToEH(raw: string): number {
   const n = parseFloat(raw);
   if (isNaN(n) || n <= 0) return 0;
-  // If already in EH/s range (100-2000), return as-is
   if (n > 50 && n < 5000) return Math.round(n);
-  // If in H/s (very large number), convert to EH/s
   if (n > 1e15) return Math.round(n / 1e18);
-  // If in TH/s range
   if (n > 1e6) return Math.round(n / 1e6);
-  // Very small values (early Bitcoin or GH/s)
   if (n < 0.001) return parseFloat(n.toFixed(6));
   if (n < 1) return parseFloat(n.toFixed(3));
   return Math.round(n);
 }
 
-function parseDifficultyToT(raw: string): number {
-  const n = parseFloat(raw);
-  if (isNaN(n) || n <= 0) return 0;
-  // If already in T range (10-500), return as-is
-  if (n > 5 && n < 500) return parseFloat(n.toFixed(1));
-  // If raw difficulty value (very large), convert to T
-  if (n > 1e9) return parseFloat((n / 1e12).toFixed(1));
-  // Small values
-  if (n < 0.001) return parseFloat(n.toFixed(9));
-  return parseFloat(n.toFixed(4));
+function difficultyToT(raw: number): number {
+  if (raw <= 0) return 0;
+  if (raw > 1e9) return parseFloat((raw / 1e12).toFixed(2));
+  if (raw < 0.001) return parseFloat(raw.toFixed(9));
+  return parseFloat(raw.toFixed(4));
 }
 
-function buildMineria(hashrates: BGeometricsHashrate[], difficulties: BGeometricsDifficulty[]): MineriaApiItem[] {
-  // Build difficulty lookup by month
-  const diffMap = new Map<string, number>();
-  for (const d of difficulties) {
-    const month = d.d.substring(0, 7);
-    diffMap.set(month, parseDifficultyToT(d.difficulty));
+/** Build monthly difficulty map from mempool.space adjustments */
+function buildDiffMap(diffAdjs: MempoolDiffAdj[]): Map<string, number> {
+  const sorted = [...diffAdjs].sort((a, b) => a[0] - b[0]);
+  const diffByMonth = new Map<string, number>();
+  for (const adj of sorted) {
+    const d = new Date(adj[0] * 1000);
+    const month = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+    diffByMonth.set(month, adj[2]);
   }
 
-  // Sample hashrate monthly
+  // Fill gaps — carry forward
+  const allMonths = Array.from(diffByMonth.keys()).sort();
+  if (allMonths.length > 0) {
+    const [fy, fm] = allMonths[0].split("-").map(Number);
+    const [ly, lm] = allMonths[allMonths.length - 1].split("-").map(Number);
+    let prevDiff = diffByMonth.get(allMonths[0]) ?? 1;
+    for (let y = fy; y <= ly; y++) {
+      const startM = y === fy ? fm : 1;
+      const endM = y === ly ? lm : 12;
+      for (let m = startM; m <= endM; m++) {
+        const key = `${y}-${String(m).padStart(2, "0")}`;
+        if (diffByMonth.has(key)) {
+          prevDiff = diffByMonth.get(key)!;
+        } else {
+          diffByMonth.set(key, prevDiff);
+        }
+      }
+    }
+  }
+  return diffByMonth;
+}
+
+function buildFromHashrate(
+  hashrates: BGeometricsHashrate[],
+  diffByMonth: Map<string, number>,
+): MineriaApiItem[] {
   const monthly: MineriaApiItem[] = [];
   let lastMonth = "";
   for (const h of hashrates) {
@@ -69,12 +84,11 @@ function buildMineria(hashrates: BGeometricsHashrate[], difficulties: BGeometric
       const fecha = d.toLocaleDateString("es-CL", { year: "2-digit", month: "short" });
       const fechaRaw = month + "-01";
       const { supply, blockHeight, reward } = supplyAtDate(d);
-
       monthly.push({
         fecha,
         fechaRaw,
         hashrate: parseHashrateToEH(h.hashrate),
-        dificultad: diffMap.get(month) ?? 0,
+        dificultad: difficultyToT(diffByMonth.get(month) ?? 0),
         recompensa: reward,
         suministro: supply,
         bloque: blockHeight,
@@ -82,30 +96,56 @@ function buildMineria(hashrates: BGeometricsHashrate[], difficulties: BGeometric
       lastMonth = month;
     }
   }
-
   return monthly;
 }
 
-async function fetchMineria(): Promise<MineriaApiItem[]> {
-  // Fetch from 2014 onward — BGeometrics likely has reliable data from then
-  const hashrateRes = await fetch(
-    "https://bitcoin-data.com/v1/hashrate?startday=2014-01-01&size=5000",
-    { signal: AbortSignal.timeout(15000) }
+/** Fallback: build from difficulty-only (mempool.space) when BGeometrics is rate-limited */
+function buildFromDiffOnly(diffByMonth: Map<string, number>): MineriaApiItem[] {
+  const months = Array.from(diffByMonth.keys()).sort();
+  return months.map((month) => {
+    const d = new Date(month + "-01");
+    const fecha = d.toLocaleDateString("es-CL", { year: "2-digit", month: "short" });
+    const { supply, blockHeight, reward } = supplyAtDate(d);
+    return {
+      fecha,
+      fechaRaw: month + "-01",
+      hashrate: 0, // not available without BGeometrics
+      dificultad: difficultyToT(diffByMonth.get(month) ?? 0),
+      recompensa: reward,
+      suministro: supply,
+      bloque: blockHeight,
+    };
+  });
+}
+
+async function fetchMineria(): Promise<{ items: MineriaApiItem[]; hasHashrate: boolean }> {
+  // Always try mempool.space difficulty first (no rate limit)
+  const diffRes = await fetch(
+    "https://mempool.space/api/v1/mining/difficulty-adjustments?interval=1m",
+    { signal: AbortSignal.timeout(15000) },
   );
-  if (!hashrateRes.ok) throw new Error(`Hashrate API returned ${hashrateRes.status}`);
-  const hashrates: BGeometricsHashrate[] = await hashrateRes.json();
+  if (!diffRes.ok) throw new Error(`mempool.space difficulty returned ${diffRes.status}`);
+  const diffAdjs: MempoolDiffAdj[] = await diffRes.json();
+  const diffByMonth = buildDiffMap(diffAdjs);
 
-  // Small delay between requests to be gentle on rate limit
-  await new Promise(r => setTimeout(r, 500));
+  // Try BGeometrics hashrate (may be rate limited)
+  try {
+    const hashrateRes = await fetch(
+      "https://bitcoin-data.com/v1/hashrate?size=6000",
+      { signal: AbortSignal.timeout(20000) },
+    );
+    if (hashrateRes.ok) {
+      const hashrates: BGeometricsHashrate[] = await hashrateRes.json();
+      if (hashrates.length > 0) {
+        return { items: buildFromHashrate(hashrates, diffByMonth), hasHashrate: true };
+      }
+    }
+  } catch {
+    // BGeometrics failed — continue with diff-only
+  }
 
-  const difficultyRes = await fetch(
-    "https://bitcoin-data.com/v1/difficulty?startday=2014-01-01&size=5000",
-    { signal: AbortSignal.timeout(15000) }
-  );
-  if (!difficultyRes.ok) throw new Error(`Difficulty API returned ${difficultyRes.status}`);
-  const difficulties: BGeometricsDifficulty[] = await difficultyRes.json();
-
-  return buildMineria(hashrates, difficulties);
+  // Fallback: difficulty + supply data only (no hashrate)
+  return { items: buildFromDiffOnly(diffByMonth), hasHashrate: false };
 }
 
 export async function GET() {
@@ -114,8 +154,11 @@ export async function GET() {
     return NextResponse.json({ error: "No data available", fallback: true }, { status: 503 });
   }
   return NextResponse.json({
-    data: result.data,
+    data: result.data.items,
     fromCache: result.fromCache,
-    source: "bitcoin-data.com",
+    hasHashrate: result.data.hasHashrate,
+    source: result.data.hasHashrate
+      ? "bitcoin-data.com + mempool.space"
+      : "mempool.space",
   });
 }
