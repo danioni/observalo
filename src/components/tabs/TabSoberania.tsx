@@ -207,7 +207,7 @@ export default function TabSoberania() {
         <br /><br />
         Cada Bitcoin que sale de un exchange hacia una billetera personal es un voto por la soberanía financiera. Y cada uno que entra a un ETF o treasury corporativa es oferta que deja de estar disponible para individuos.
         <br /><br />
-        <strong style={{ color: "#e0e8f0" }}>La pregunta no es si Bitcoin es escaso — eso ya está resuelto. La pregunta es cuánto queda para quienes decidan tomar control.</strong>
+        <strong style={{ color: "#e0e8f0" }}>21 millones es el límite. Lo que hagas con esa información es tu decisión — no la de un banco.</strong>
         <br /><br />
         <span style={{ color: "#667788", fontSize: 11 }}>
           Este análisis es informativo y no constituye asesoría financiera de ningún tipo.
