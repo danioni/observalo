@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { cachedFetch } from "@/lib/cache";
+import type { ApiEnvelope } from "@/types";
 
 interface BGeometricsHodlWave {
   d: string;
@@ -93,12 +94,19 @@ async function fetchOndas(): Promise<OndasApiItem[]> {
 
 export async function GET() {
   const result = await cachedFetch("ondas", fetchOndas);
+
   if (!result) {
-    return NextResponse.json({ error: "No data available", fallback: true }, { status: 503 });
+    const envelope: ApiEnvelope<OndasApiItem[]> = {
+      data: null, status: "unavailable", stale: false,
+      lastSuccessAt: null, source: "bitcoin-data.com",
+      message: "Sin datos de ondas HODL disponibles.",
+    };
+    return NextResponse.json(envelope, { status: 503 });
   }
-  return NextResponse.json({
-    data: result.data,
-    fromCache: result.fromCache,
-    source: "bitcoin-data.com",
-  });
+
+  const envelope: ApiEnvelope<OndasApiItem[]> = {
+    data: result.data, status: result.status, stale: result.stale,
+    lastSuccessAt: result.lastSuccessAt, source: "bitcoin-data.com",
+  };
+  return NextResponse.json(envelope);
 }

@@ -1,22 +1,10 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { DatosOndas } from "@/types";
+import { useMemo } from "react";
+import type { DatosOndas } from "@/types";
+import type { OndasApiItem } from "@/app/api/ondas/route";
 import { DATOS_ONDAS } from "@/data/ondas";
-
-interface OndasApiItem {
-  fecha: string;
-  "<1m": number;
-  "1-3m": number;
-  "3-6m": number;
-  "6-12m": number;
-  "1-2a": number;
-  "2-3a": number;
-  "3-5a": number;
-  "5-7a": number;
-  "7-10a": number;
-  "10a+": number;
-}
+import { useFetchApi } from "./useFetchApi";
 
 function apiToDatosOndas(items: OndasApiItem[]): DatosOndas[] {
   return items.map((item, idx) => ({
@@ -36,27 +24,14 @@ function apiToDatosOndas(items: OndasApiItem[]): DatosOndas[] {
 }
 
 export function useOndasData() {
-  // Iniciar vacío — no mostrar datos simulados mientras se carga la API
-  const [datos, setDatos] = useState<DatosOndas[]>([]);
-  const [esReal, setEsReal] = useState(false);
-  const [cargando, setCargando] = useState(true);
+  const { data, cargando, error, stale, lastSuccessAt, reintentar } = useFetchApi<OndasApiItem[]>("/api/ondas");
 
-  useEffect(() => {
-    fetch("/api/ondas")
-      .then((r) => r.ok ? r.json() : null)
-      .then((json) => {
-        if (json?.data?.length) {
-          setDatos(apiToDatosOndas(json.data));
-          setEsReal(true);
-        } else {
-          setDatos(DATOS_ONDAS);
-        }
-      })
-      .catch(() => {
-        setDatos(DATOS_ONDAS);
-      })
-      .finally(() => setCargando(false));
-  }, []);
+  const datos = useMemo(() => {
+    if (!data?.length) return cargando ? [] : DATOS_ONDAS;
+    return apiToDatosOndas(data);
+  }, [data, cargando]);
 
-  return { datos, esReal, cargando };
+  const esReal = !!data?.length;
+
+  return { datos, esReal, cargando, error, stale, lastSuccessAt, reintentar };
 }

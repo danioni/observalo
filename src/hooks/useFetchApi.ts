@@ -1,12 +1,27 @@
 "use client";
 
 import { useState, useEffect, useCallback, useRef } from "react";
-import type { DatosVivosMineria, ApiEnvelope } from "@/types";
+import type { ApiEnvelope } from "@/types";
 
-const FETCH_TIMEOUT = 6_000; // 6s — never leave "Cargando..." stuck
+const FETCH_TIMEOUT = 6_000; // 6s max
 
-export function useMempoolData() {
-  const [vivo, setVivo] = useState<DatosVivosMineria | null>(null);
+interface UseFetchApiResult<T> {
+  data: T | null;
+  cargando: boolean;
+  error: string | null;
+  stale: boolean;
+  lastSuccessAt: string | null;
+  reintentar: () => void;
+}
+
+/**
+ * Generic hook to fetch from our API routes with:
+ * - 6s AbortController timeout
+ * - Envelope parsing (status/stale/lastSuccessAt)
+ * - Error state + retry
+ */
+export function useFetchApi<T>(url: string): UseFetchApiResult<T> {
+  const [data, setData] = useState<T | null>(null);
   const [cargando, setCargando] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [stale, setStale] = useState(false);
@@ -21,21 +36,15 @@ export function useMempoolData() {
     const timeout = setTimeout(() => controller.abort(), FETCH_TIMEOUT);
 
     try {
-      const res = await fetch("/api/mempool", { signal: controller.signal });
+      const res = await fetch(url, { signal: controller.signal });
       clearTimeout(timeout);
 
-      if (!res.ok) {
-        const body: ApiEnvelope<DatosVivosMineria> = await res.json().catch(() => null);
-        if (body?.message) throw new Error(body.message);
-        throw new Error(`HTTP ${res.status}`);
-      }
-
-      const envelope: ApiEnvelope<DatosVivosMineria> = await res.json();
+      const envelope: ApiEnvelope<T> = await res.json();
 
       if (!mountedRef.current) return;
 
-      if (envelope.data) {
-        setVivo(envelope.data);
+      if (envelope.data !== null && envelope.data !== undefined) {
+        setData(envelope.data);
         setStale(envelope.stale);
         setLastSuccessAt(envelope.lastSuccessAt);
         setError(null);
@@ -52,7 +61,7 @@ export function useMempoolData() {
     } finally {
       if (mountedRef.current) setCargando(false);
     }
-  }, []);
+  }, [url]);
 
   useEffect(() => {
     mountedRef.current = true;
@@ -62,5 +71,5 @@ export function useMempoolData() {
 
   const reintentar = useCallback(() => { fetchData(); }, [fetchData]);
 
-  return { vivo, cargando, error, stale, lastSuccessAt, reintentar };
+  return { data, cargando, error, stale, lastSuccessAt, reintentar };
 }

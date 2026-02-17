@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { cachedFetch } from "@/lib/cache";
 import { supplyAtDate } from "@/lib/supply";
+import type { ApiEnvelope } from "@/types";
 
 // mempool.space difficulty adjustment: [timestamp, blockHeight, difficulty, timeRatio]
 type MempoolDiffAdj = [number, number, number, number];
@@ -93,13 +94,19 @@ async function fetchMineria(): Promise<MineriaApiItem[]> {
 
 export async function GET() {
   const result = await cachedFetch("mineria", fetchMineria);
+
   if (!result) {
-    return NextResponse.json({ error: "No data available", fallback: true }, { status: 503 });
+    const envelope: ApiEnvelope<MineriaApiItem[]> = {
+      data: null, status: "unavailable", stale: false,
+      lastSuccessAt: null, source: "mempool.space",
+      message: "Sin datos de minería disponibles.",
+    };
+    return NextResponse.json(envelope, { status: 503 });
   }
-  return NextResponse.json({
-    data: result.data,
-    fromCache: result.fromCache,
-    hasHashrate: true,
-    source: "mempool.space",
-  });
+
+  const envelope: ApiEnvelope<MineriaApiItem[]> = {
+    data: result.data, status: result.status, stale: result.stale,
+    lastSuccessAt: result.lastSuccessAt, source: "mempool.space",
+  };
+  return NextResponse.json(envelope);
 }

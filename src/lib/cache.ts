@@ -5,18 +5,50 @@ interface CacheEntry<T> {
 
 const store = new Map<string, CacheEntry<unknown>>();
 
-const DEFAULT_TTL = 4 * 60 * 60 * 1000; // 4 hours
+const FRESH_TTL = 60 * 1000;           // 60s — considered fresh
+const STALE_TTL = 10 * 60 * 1000;      // 10min — serve stale if fetch fails
 
-export function getCached<T>(key: string): T | null {
+export interface CachedResult<T> {
+  data: T;
+  stale: boolean;
+  lastSuccessAt: string;   // ISO 8601
+  status: "ok" | "stale" | "unavailable";
+}
+
+export function getCached<T>(key: string): CachedResult<T> | null {
   const entry = store.get(key) as CacheEntry<T> | undefined;
   if (!entry) return null;
-  if (Date.now() - entry.timestamp < DEFAULT_TTL) return entry.data;
+  const age = Date.now() - entry.timestamp;
+  if (age < FRESH_TTL) {
+    return {
+      data: entry.data,
+      stale: false,
+      lastSuccessAt: new Date(entry.timestamp).toISOString(),
+      status: "ok",
+    };
+  }
+  // Between fresh and stale TTL — mark as stale but still usable
+  if (age < STALE_TTL) {
+    return {
+      data: entry.data,
+      stale: true,
+      lastSuccessAt: new Date(entry.timestamp).toISOString(),
+      status: "stale",
+    };
+  }
   return null;
 }
 
-export function getStale<T>(key: string): T | null {
+/** Return data regardless of age — last resort on fetch failure */
+export function getStale<T>(key: string): CachedResult<T> | null {
   const entry = store.get(key) as CacheEntry<T> | undefined;
-  return entry?.data ?? null;
+  if (!entry) return null;
+  return {
+    data: entry.data,
+    stale: true,
+    lastSuccessAt: new Date(entry.timestamp).toISOString(),
+    status: "stale",
+  };
 }
 
 export function setCache<T>(key: string, data: T): void {
@@ -26,17 +58,24 @@ export function setCache<T>(key: string, data: T): void {
 export async function cachedFetch<T>(
   key: string,
   fetcher: () => Promise<T>,
-): Promise<{ data: T; fromCache: boolean } | null> {
+): Promise<CachedResult<T> | null> {
+  // Return fresh data immediately
   const cached = getCached<T>(key);
-  if (cached) return { data: cached, fromCache: true };
+  if (cached && !cached.stale) return cached;
 
   try {
     const data = await fetcher();
     setCache(key, data);
-    return { data, fromCache: false };
+    return {
+      data,
+      stale: false,
+      lastSuccessAt: new Date().toISOString(),
+      status: "ok",
+    };
   } catch {
+    // Fetch failed — try stale data (any age)
     const stale = getStale<T>(key);
-    if (stale) return { data: stale, fromCache: true };
+    if (stale) return stale;
     return null;
   }
 }

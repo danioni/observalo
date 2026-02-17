@@ -14,7 +14,7 @@ import { useBreakpoint } from "@/hooks/useBreakpoint";
 import { NARRATIVA } from "@/data/narrativa";
 
 export default function TabOndas() {
-  const { datos: DATOS_ONDAS, esReal, cargando } = useOndasData();
+  const { datos: DATOS_ONDAS, esReal, cargando, error, stale, lastSuccessAt, reintentar } = useOndasData();
   const { isMobile, isDesktop } = useBreakpoint();
 
   if (cargando && DATOS_ONDAS.length === 0) {
@@ -28,6 +28,26 @@ export default function TabOndas() {
             <div style={{ fontSize: 24, marginBottom: 8 }}>◈</div>
             Cargando datos reales de ondas HODL desde bitcoin-data.com...
           </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (error && DATOS_ONDAS.length === 0) {
+    return (
+      <div>
+        <Concepto titulo={NARRATIVA.tabs.ondas.concepto.titulo}>
+          {NARRATIVA.tabs.ondas.concepto.cuerpo}
+        </Concepto>
+        <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", height: 300, color: "var(--text-muted)", fontSize: 14, gap: 12 }}>
+          <div style={{ textAlign: "center" }}>
+            <div style={{ fontSize: 24, marginBottom: 8 }}>◈</div>
+            {error}
+          </div>
+          <button onClick={reintentar} style={{
+            padding: "8px 20px", borderRadius: 6, border: "1px solid var(--border-subtle)",
+            background: "var(--bg-surface)", color: "#f0b429", fontSize: 12, fontWeight: 600, cursor: "pointer",
+          }}>Reintentar</button>
         </div>
       </div>
     );
@@ -57,7 +77,18 @@ export default function TabOndas() {
           <Senal key={i} etiqueta={s.etiqueta} estado={s.estado} color={["#22c55e", "#06b6d4"][i]} />
         ))}
         {cargando && <Senal etiqueta="DATOS" estado="Cargando datos reales..." color="var(--text-secondary)" />}
-        {!cargando && <Senal etiqueta="FUENTE" estado={esReal ? "bitcoin-data.com (datos reales)" : "Datos simulados (fallback)"} color={esReal ? "#f0b429" : "var(--text-muted)"} />}
+        {error && !cargando && (
+          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+            <Senal etiqueta="ERROR" estado={error} color="#ef4444" />
+            <button onClick={reintentar} style={{ padding: "4px 12px", borderRadius: 4, border: "1px solid var(--border-subtle)", background: "var(--bg-surface)", color: "#f0b429", fontSize: 10, fontWeight: 600, cursor: "pointer" }}>Reintentar</button>
+          </div>
+        )}
+        {!cargando && !error && <Senal etiqueta="FUENTE" estado={esReal ? "bitcoin-data.com (datos reales)" : "Datos simulados (fallback)"} color={esReal ? "#f0b429" : "var(--text-muted)"} />}
+        {stale && (
+          <span style={{ display: "inline-flex", alignItems: "center", padding: "2px 8px", borderRadius: 4, fontSize: 10, fontWeight: 600, background: "rgba(234,179,8,0.15)", color: "#eab308" }}>
+            desactualizado
+          </span>
+        )}
       </div>
 
       <div style={{ fontSize: 12, color: "var(--text-secondary)", marginBottom: 12, letterSpacing: "0.08em" }}>DISTRIBUCIÓN DE ANTIGÜEDAD DE UTXO (2020–2026)</div>

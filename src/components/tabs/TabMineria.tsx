@@ -9,6 +9,7 @@ import { useMempoolData } from "@/hooks/useMempoolData";
 import { useMineriaHistorica } from "@/hooks/useMineriaHistorica";
 import { useBreakpoint } from "@/hooks/useBreakpoint";
 import { fmt } from "@/utils/format";
+import { horaUTC, rangoFechas } from "@/utils/fechas";
 import Metrica from "@/components/ui/Metrica";
 import Senal from "@/components/ui/Senal";
 import PanelEdu from "@/components/ui/PanelEdu";
@@ -16,6 +17,32 @@ import Concepto from "@/components/ui/Concepto";
 import CustomTooltip from "@/components/ui/CustomTooltip";
 import { NARRATIVA } from "@/data/narrativa";
 import { RECOMPENSA_PROYECTADA } from "@/data/mineria";
+
+/* ── Inline badge for stale data ── */
+function BadgeDesactualizado({ lastSuccessAt }: { lastSuccessAt: string | null }) {
+  return (
+    <span style={{
+      display: "inline-flex", alignItems: "center", gap: 4,
+      padding: "2px 8px", borderRadius: 4, fontSize: 10, fontWeight: 600,
+      background: "rgba(234,179,8,0.15)", color: "#eab308",
+    }}>
+      desactualizado {lastSuccessAt && `· ${horaUTC(lastSuccessAt)}`}
+    </span>
+  );
+}
+
+/* ── Retry button ── */
+function BotonReintentar({ onClick, label }: { onClick: () => void; label?: string }) {
+  return (
+    <button onClick={onClick} style={{
+      padding: "6px 16px", borderRadius: 6, border: "1px solid var(--border-subtle)",
+      background: "var(--bg-surface)", color: "#f0b429", fontSize: 11, fontWeight: 600,
+      cursor: "pointer", transition: "all 0.15s ease",
+    }}>
+      {label ?? "Reintentar"}
+    </button>
+  );
+}
 
 /* ── Selector de rango ── */
 function Btn({ items, val, set, color }: {
@@ -56,9 +83,11 @@ const HALVINGS_FULL = [
   { fecha: "2036-04", label: "7mo Halving" },
 ];
 
+const NO_DISPONIBLE = "No disponible (reintentando)";
+
 export default function TabMineria() {
-  const { vivo, cargando } = useMempoolData();
-  const { datos, esReal, cargando: cargandoHistorico } = useMineriaHistorica();
+  const { vivo, cargando, error: errorVivo, stale: staleVivo, lastSuccessAt: lastVivo, reintentar: reintentarVivo } = useMempoolData();
+  const { datos, esReal, cargando: cargandoHistorico, error: errorHist, stale: staleHist, lastSuccessAt: lastHist, reintentar: reintentarHist } = useMineriaHistorica();
   const [rango, setRango] = useState("todo");
   const { isMobile, isDesktop } = useBreakpoint();
 
@@ -78,8 +107,10 @@ export default function TabMineria() {
 
   const intTick = Math.max(1, Math.floor(filtrado.length / 18));
   const ult = datos[datos.length - 1];
-  const hashM = vivo?.hashrate || String(ult?.hashrate ?? "—");
-  const diffM = vivo?.dificultad || String(ult?.dificultad ?? "—");
+
+  // Explicit fallback — never show "—"
+  const hashM = vivo?.hashrate ?? (ult?.hashrate != null ? String(ult.hashrate) : null);
+  const diffM = vivo?.dificultad ?? (ult?.dificultad != null ? String(ult.dificultad) : null);
   const supplyActual = ult?.suministro ?? 19_820_000;
   const pctMinado = (supplyActual / 21_000_000 * 100).toFixed(1);
 
@@ -108,9 +139,9 @@ export default function TabMineria() {
 
   const intTickRecompensa = Math.max(1, Math.floor(RECOMPENSA_PROYECTADA.length / 18));
 
-  /* ── Rango dinámico del header ── */
+  /* ── Rango dinámico del header — unambiguous format ── */
   const rangoLabel = filtrado.length > 1
-    ? `${filtrado[0].fecha.toUpperCase()} — ${filtrado[filtrado.length - 1].fecha.toUpperCase()}`
+    ? rangoFechas(filtrado[0].fechaRaw ?? "", filtrado[filtrado.length - 1].fechaRaw ?? "")
     : "";
 
   return (
@@ -119,12 +150,37 @@ export default function TabMineria() {
         {NARRATIVA.tabs.mineria.concepto.cuerpo}
       </Concepto>
 
+      {/* ── Global timestamp ── */}
+      <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 12, flexWrap: "wrap" }}>
+        {lastVivo && (
+          <span style={{ fontSize: 10, color: "var(--text-muted)", fontFamily: "'JetBrains Mono',monospace" }}>
+            Actualizado: {horaUTC(lastVivo)}
+          </span>
+        )}
+        {staleVivo && <BadgeDesactualizado lastSuccessAt={lastVivo} />}
+        {staleHist && <BadgeDesactualizado lastSuccessAt={lastHist} />}
+      </div>
+
       {/* ── Métricas ── */}
       <div style={{ display: "grid", gridTemplateColumns: isMobile ? "repeat(2,1fr)" : "repeat(4,1fr)", gap: isMobile ? 8 : 12, marginBottom: 24 }}>
-        <Metrica etiqueta={vivo?.hashrate ? "Hashrate (EN VIVO)" : "Hashrate"} valor={hashM + " EH/s"} sub="Poder computacional de la red" acento="#f0b429" />
-        <Metrica etiqueta="Dificultad" valor={diffM + "T"} sub={vivo?.ajuste ? `Último ajuste: ${(vivo.ajuste.diffChange * 100).toFixed(2)}%` : "Ajuste automático cada ~2 semanas"} />
+        <Metrica
+          etiqueta={vivo?.hashrate ? "Hashrate (EN VIVO)" : "Hashrate"}
+          valor={hashM != null ? hashM + " EH/s" : NO_DISPONIBLE}
+          sub="Poder computacional de la red"
+          acento="#f0b429"
+        />
+        <Metrica
+          etiqueta="Dificultad"
+          valor={diffM != null ? diffM + "T" : NO_DISPONIBLE}
+          sub={vivo?.ajuste ? `Último ajuste: ${(vivo.ajuste.diffChange * 100).toFixed(2)}%` : "Ajuste automático cada ~2 semanas"}
+        />
         <Metrica etiqueta="Suministro emitido" valor={fmt(supplyActual) + " BTC"} sub={`${pctMinado}% de 21M minados`} acento="#f0b429" />
-        <Metrica etiqueta="Último bloque" valor={vivo?.bloque ? `#${vivo.bloque.height.toLocaleString("es-CL")}` : "—"} sub={vivo?.bloque ? `${vivo.bloque.tx_count} tx · ${(vivo.bloque.size / 1e6).toFixed(2)} MB` : "Datos de mempool.space"} acento="#a855f7" />
+        <Metrica
+          etiqueta="Último bloque"
+          valor={vivo?.bloque ? `#${vivo.bloque.height.toLocaleString("es-CL")}` : (cargando ? "Consultando..." : NO_DISPONIBLE)}
+          sub={vivo?.bloque ? `${vivo.bloque.tx_count} tx · ${(vivo.bloque.size / 1e6).toFixed(2)} MB` : "Datos de mempool.space"}
+          acento="#a855f7"
+        />
       </div>
 
       {/* ── Señales ── */}
@@ -133,9 +189,24 @@ export default function TabMineria() {
           <Senal key={i} etiqueta={s.etiqueta} estado={s.estado} color={["#22c55e", "#f0b429", "#06b6d4"][i]} />
         ))}
         <Senal etiqueta="SUMINISTRO" estado={`${pctMinado}% emitido de 21M — queda menos del 6% para los próximos 114 años`} color="#f0b429" />
+
+        {/* Error states with retry */}
+        {errorVivo && !cargando && (
+          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+            <Senal etiqueta="DATOS EN VIVO" estado={errorVivo} color="#ef4444" />
+            <BotonReintentar onClick={reintentarVivo} />
+          </div>
+        )}
         {cargando && <Senal etiqueta="DATOS EN VIVO" estado="Cargando desde mempool.space..." color="var(--text-secondary)" />}
+
+        {errorHist && !cargandoHistorico && (
+          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+            <Senal etiqueta="HISTÓRICO" estado={errorHist} color="#ef4444" />
+            <BotonReintentar onClick={reintentarHist} />
+          </div>
+        )}
         {cargandoHistorico && <Senal etiqueta="HISTÓRICO" estado="Cargando datos reales..." color="var(--text-secondary)" />}
-        {!cargandoHistorico && <Senal etiqueta="FUENTE" estado={esReal ? "bitcoin-data.com (datos reales)" : "Datos estimados (fallback)"} color={esReal ? "#f0b429" : "var(--text-muted)"} />}
+        {!cargandoHistorico && !errorHist && <Senal etiqueta="FUENTE" estado={esReal ? "bitcoin-data.com (datos reales)" : "Datos estimados (fallback)"} color={esReal ? "#f0b429" : "var(--text-muted)"} />}
       </div>
 
       {/* ── Gráfico principal: SUMINISTRO ACUMULADO ── */}

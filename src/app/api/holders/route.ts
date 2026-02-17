@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { cachedFetch } from "@/lib/cache";
+import type { ApiEnvelope } from "@/types";
 
 interface BGeometricsEtf {
   d: string;
@@ -63,12 +64,19 @@ async function fetchHoldersData(): Promise<HoldersApiData> {
 
 export async function GET() {
   const result = await cachedFetch("holders", fetchHoldersData);
+
   if (!result) {
-    return NextResponse.json({ data: null, fallback: true });
+    const envelope: ApiEnvelope<HoldersApiData> = {
+      data: null, status: "unavailable", stale: false,
+      lastSuccessAt: null, source: "bitcoin-data.com",
+      message: "Sin datos de holders disponibles.",
+    };
+    return NextResponse.json(envelope, { status: 503 });
   }
-  return NextResponse.json({
-    data: result.data,
-    fromCache: result.fromCache,
-    source: "bitcoin-data.com",
-  });
+
+  const envelope: ApiEnvelope<HoldersApiData> = {
+    data: result.data, status: result.status, stale: result.stale,
+    lastSuccessAt: result.lastSuccessAt, source: "bitcoin-data.com",
+  };
+  return NextResponse.json(envelope);
 }

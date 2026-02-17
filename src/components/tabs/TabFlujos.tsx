@@ -34,7 +34,7 @@ function Btn({ items, val, set, color }: {
 }
 
 export default function TabFlujos() {
-  const { diarios: FLUJOS_DIARIOS, semanales: FLUJOS_SEMANALES, esReal, cargando: cargandoFlujos } = useFlujosData();
+  const { diarios: FLUJOS_DIARIOS, semanales: FLUJOS_SEMANALES, esReal, cargando: cargandoFlujos, error, stale, reintentar } = useFlujosData();
   const [gran, setGran] = useState("semanal");
   const [rango, setRango] = useState("todo");
   const { isMobile, isDesktop } = useBreakpoint();
@@ -88,6 +88,23 @@ export default function TabFlujos() {
     );
   }
 
+  if (error && fuente.length === 0) {
+    return (
+      <div>
+        <Concepto titulo={NARRATIVA.tabs.flujos.concepto.titulo}>
+          {NARRATIVA.tabs.flujos.concepto.cuerpo}
+        </Concepto>
+        <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", height: 300, color: "var(--text-muted)", fontSize: 14, gap: 12 }}>
+          <div style={{ textAlign: "center" }}>
+            <div style={{ fontSize: 24, marginBottom: 8 }}>⇄</div>
+            {error}
+          </div>
+          <button onClick={reintentar} style={{ padding: "8px 20px", borderRadius: 6, border: "1px solid var(--border-subtle)", background: "var(--bg-surface)", color: "#f0b429", fontSize: 12, fontWeight: 600, cursor: "pointer" }}>Reintentar</button>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div>
       <Concepto titulo={NARRATIVA.tabs.flujos.concepto.titulo}>
@@ -95,7 +112,7 @@ export default function TabFlujos() {
       </Concepto>
 
       <div style={{ display: "grid", gridTemplateColumns: isMobile ? "repeat(2,1fr)" : "repeat(4,1fr)", gap: isMobile ? 8 : 12, marginBottom: 24 }}>
-        <Metrica etiqueta="Reservas en exchanges" valor={ult ? fmt(ult.reserva) : "—"} sub={`${cambioRes.toFixed(1)}% en el período`} acento={cambioRes < 0 ? "#22c55e" : "#ef4444"} />
+        <Metrica etiqueta="Reservas en exchanges" valor={ult ? fmt(ult.reserva) : "No disponible"} sub={`${cambioRes.toFixed(1)}% en el período`} acento={cambioRes < 0 ? "#22c55e" : "#ef4444"} />
         <Metrica etiqueta="Flujo neto del período" valor={fmt(netoTotal)} sub={netoTotal < 0 ? "Salida neta (alcista)" : "Entrada neta (bajista)"} acento={netoTotal < 0 ? "#22c55e" : "#ef4444"} />
         <Metrica etiqueta={`${etPer} con salida neta`} valor={`${perSalida}/${filtrado.length}`} sub={`${filtrado.length > 0 ? (perSalida / filtrado.length * 100).toFixed(0) : 0}% del período`} acento="#06b6d4" />
         <Metrica etiqueta="Total retirado" valor={fmt(totalRet)} sub="BTC sacados de exchanges" acento="#22c55e" />
@@ -106,7 +123,18 @@ export default function TabFlujos() {
           <Senal key={i} etiqueta={s.etiqueta} estado={s.estado} color={["#22c55e", "#06b6d4", "#a855f7"][i]} />
         ))}
         {cargandoFlujos && <Senal etiqueta="DATOS" estado="Cargando datos reales..." color="var(--text-secondary)" />}
-        {!cargandoFlujos && <Senal etiqueta="FUENTE" estado={esReal ? "bitcoin-data.com + coinglass.com" : "Datos simulados (fallback)"} color={esReal ? "#f0b429" : "var(--text-muted)"} />}
+        {error && !cargandoFlujos && (
+          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+            <Senal etiqueta="ERROR" estado={error} color="#ef4444" />
+            <button onClick={reintentar} style={{ padding: "4px 12px", borderRadius: 4, border: "1px solid var(--border-subtle)", background: "var(--bg-surface)", color: "#f0b429", fontSize: 10, fontWeight: 600, cursor: "pointer" }}>Reintentar</button>
+          </div>
+        )}
+        {!cargandoFlujos && !error && <Senal etiqueta="FUENTE" estado={esReal ? "bitcoin-data.com + coinglass.com" : "Datos simulados (fallback)"} color={esReal ? "#f0b429" : "var(--text-muted)"} />}
+        {stale && (
+          <span style={{ display: "inline-flex", alignItems: "center", padding: "2px 8px", borderRadius: 4, fontSize: 10, fontWeight: 600, background: "rgba(234,179,8,0.15)", color: "#eab308" }}>
+            desactualizado
+          </span>
+        )}
       </div>
 
       <div style={{ marginBottom: 24 }}>

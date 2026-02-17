@@ -106,7 +106,7 @@ function TreemapContent(props: {
 
 
 export default function TabHolders() {
-  const { datos, esReal, cargando } = useHoldersData();
+  const { datos, esReal, cargando, error, stale, reintentar } = useHoldersData();
   const [filtro, setFiltro] = useState<string>("todos");
   const { isMobile, isDesktop } = useBreakpoint();
 
@@ -176,9 +176,17 @@ export default function TabHolders() {
       <div style={{ display: "flex", gap: 8, marginBottom: 20, flexWrap: "wrap" }}>
         <Senal
           etiqueta="FUENTE"
-          estado={cargando ? "Cargando datos reales…" : esReal ? "ETFs actualizados vía API" : "Datos curados estáticos"}
-          color={cargando ? "var(--text-muted)" : esReal ? "#f0b429" : "var(--text-muted)"}
+          estado={cargando ? "Cargando datos reales…" : error ? error : esReal ? "ETFs actualizados vía API" : "Datos curados estáticos"}
+          color={cargando ? "var(--text-muted)" : error ? "#ef4444" : esReal ? "#f0b429" : "var(--text-muted)"}
         />
+        {error && !cargando && (
+          <button onClick={reintentar} style={{ padding: "4px 12px", borderRadius: 4, border: "1px solid var(--border-subtle)", background: "var(--bg-surface)", color: "#f0b429", fontSize: 10, fontWeight: 600, cursor: "pointer" }}>Reintentar</button>
+        )}
+        {stale && (
+          <span style={{ display: "inline-flex", alignItems: "center", padding: "2px 8px", borderRadius: 4, fontSize: 10, fontWeight: 600, background: "rgba(234,179,8,0.15)", color: "#eab308" }}>
+            desactualizado
+          </span>
+        )}
         {NARRATIVA.tabs.holders.senales.map((s, i) => (
           <Senal key={i} etiqueta={s.etiqueta} estado={s.estado} color={["#818cf8", "#f0b429", "#ef4444"][i]} />
         ))}

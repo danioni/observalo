@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { Pestana } from "@/types";
+import { useState, useEffect, useCallback } from "react";
+import type { Pestana, ApiEnvelope, DatosVivosMineria } from "@/types";
 import { useBreakpoint } from "@/hooks/useBreakpoint";
 import { NARRATIVA } from "@/data/narrativa";
 import ThemeToggle from "@/components/ui/ThemeToggle";
@@ -25,24 +25,31 @@ export default function Header({ tab, setTab }: HeaderProps) {
   const [bloque, setBloque] = useState<number | null>(null);
   const { isMobile, isDesktop } = useBreakpoint();
 
+  // Fetch block height from our API proxy
+  const fetchBloque = useCallback(() => {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 6000);
+    fetch("/api/mempool", { signal: controller.signal })
+      .then(r => r.ok ? r.json() : null)
+      .then((envelope: ApiEnvelope<DatosVivosMineria> | null) => {
+        clearTimeout(timeout);
+        if (envelope?.data?.bloque?.height) {
+          setBloque(envelope.data.bloque.height);
+        }
+      })
+      .catch(() => { clearTimeout(timeout); });
+  }, []);
+
   useEffect(() => {
     setAhora(new Date());
     const t = setInterval(() => setAhora(new Date()), 1000);
-
-    const fetchBloque = () => {
-      fetch("https://mempool.space/api/blocks/tip/height")
-        .then(r => r.ok ? r.text() : null)
-        .then(h => { if (h) setBloque(parseInt(h, 10)); })
-        .catch(() => {});
-    };
     fetchBloque();
     const b = setInterval(fetchBloque, 60_000);
-
     return () => { clearInterval(t); clearInterval(b); };
-  }, []);
+  }, [fetchBloque]);
 
   return (
-    <div style={{
+    <header style={{
       position: "sticky", top: 0, zIndex: 50,
       background: `linear-gradient(180deg,rgba(var(--bg-primary-rgb),1) 0%,rgba(var(--bg-primary-rgb),0.93) 80%,rgba(var(--bg-primary-rgb),0) 100%)`,
       padding: isMobile ? "12px 12px 8px" : "16px 24px 12px",
@@ -65,9 +72,13 @@ export default function Header({ tab, setTab }: HeaderProps) {
         </div>
         <div style={{ display: "flex", alignItems: "center", gap: isMobile ? 8 : 12 }}>
           <div style={{ textAlign: "right" }}>
-            {bloque && (
+            {bloque ? (
               <div style={{ fontSize: isMobile ? 11 : 13, color: "#f0b429", fontFamily: "'JetBrains Mono',monospace", fontWeight: 600, marginBottom: 2 }}>
-                ⛏ bloque #{bloque.toLocaleString("es-CL")}
+                Altura: #{bloque.toLocaleString("es-CL")}
+              </div>
+            ) : (
+              <div style={{ fontSize: isMobile ? 10 : 11, color: "var(--text-muted)", fontFamily: "'JetBrains Mono',monospace", marginBottom: 2 }}>
+                Altura: consultando...
               </div>
             )}
             <div style={{ fontSize: isMobile ? 11 : 12, color: "var(--text-primary)", fontFamily: "'JetBrains Mono',monospace", fontWeight: 500 }}>{ahora ? ahora.toLocaleTimeString("es-CL") : "\u00A0"}</div>
@@ -85,26 +96,34 @@ export default function Header({ tab, setTab }: HeaderProps) {
         </div>
       )}
 
-      <div className="tabs-scroll" style={{
+      <nav aria-label="Secciones del observatorio" className="tabs-scroll" style={{
         display: "flex", gap: isMobile ? 2 : 4,
         overflowX: isDesktop ? "visible" : "auto",
       }}>
-        {PESTANAS.map(t2 => (
-          <button key={t2.id} onClick={() => setTab(t2.id)} style={{
-            padding: isMobile ? "6px 10px" : "8px 16px",
-            borderRadius: 6, border: "none", cursor: "pointer",
-            fontSize: isMobile ? 10 : 11, fontWeight: 600,
-            letterSpacing: "0.06em", transition: "all 0.2s ease",
-            background: tab === t2.id ? "rgba(240,180,41,0.12)" : "transparent",
-            color: tab === t2.id ? "#f0b429" : "var(--text-muted)",
-            borderBottom: tab === t2.id ? "2px solid #f0b429" : "2px solid transparent",
-            whiteSpace: "nowrap", flexShrink: 0,
-          }}>
-            <span style={{ marginRight: isMobile ? 4 : 6 }}>{t2.icono}</span>
+        {PESTANAS.map((t2, idx) => (
+          <a
+            key={t2.id}
+            href={`#${t2.id}`}
+            role="tab"
+            aria-selected={tab === t2.id}
+            onClick={(e) => { e.preventDefault(); setTab(t2.id); }}
+            style={{
+              padding: isMobile ? "6px 10px" : "8px 16px",
+              borderRadius: 6, border: "none", cursor: "pointer",
+              fontSize: isMobile ? 10 : 11, fontWeight: 600,
+              letterSpacing: "0.06em", transition: "all 0.2s ease",
+              background: tab === t2.id ? "rgba(240,180,41,0.12)" : "transparent",
+              color: tab === t2.id ? "#f0b429" : "var(--text-muted)",
+              borderBottom: tab === t2.id ? "2px solid #f0b429" : "2px solid transparent",
+              whiteSpace: "nowrap", flexShrink: 0,
+              textDecoration: "none",
+            }}
+          >
+            <span aria-hidden="true" style={{ marginRight: isMobile ? 4 : 6 }}>{t2.icono}</span>
             {isMobile ? t2.etiqueta.split(" ")[0] : t2.etiqueta}
-          </button>
+          </a>
         ))}
-      </div>
-    </div>
+      </nav>
+    </header>
   );
 }
