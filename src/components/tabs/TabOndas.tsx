@@ -4,13 +4,15 @@ import {
   AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip,
   ResponsiveContainer, ReferenceLine,
 } from "recharts";
-import { DATOS_ONDAS, COLORES_ONDAS, BANDAS, NOMBRES_BANDAS } from "@/data/ondas";
+import { COLORES_ONDAS, BANDAS, NOMBRES_BANDAS } from "@/data/ondas";
+import { useOndasData } from "@/hooks/useOndasData";
 import Metrica from "@/components/ui/Metrica";
 import Senal from "@/components/ui/Senal";
 import PanelEdu from "@/components/ui/PanelEdu";
 import Concepto from "@/components/ui/Concepto";
 
 export default function TabOndas() {
+  const { datos: DATOS_ONDAS, esReal, cargando } = useOndasData();
   const u = DATOS_ONDAS[DATOS_ONDAS.length - 1];
   const corto = (u["<1m"] + u["1-3m"] + u["3-6m"]).toFixed(1);
   const largo = (u["3-5a"] + u["5-7a"] + u["7-10a"] + u["10a+"]).toFixed(1);
@@ -36,6 +38,8 @@ export default function TabOndas() {
       <div style={{ display: "flex", gap: 8, marginBottom: 20, flexWrap: "wrap" }}>
         <Senal etiqueta="CONVICCIÓN" estado="Máximos históricos en tenedores de largo plazo" color="#22c55e" />
         <Senal etiqueta="FASE DEL CICLO" estado="Acumulación post-halving" color="#06b6d4" />
+        {cargando && <Senal etiqueta="DATOS" estado="Cargando datos reales..." color="#8899aa" />}
+        {!cargando && <Senal etiqueta="FUENTE" estado={esReal ? "bitcoin-data.com (datos reales)" : "Datos simulados (fallback)"} color={esReal ? "#f0b429" : "#667788"} />}
       </div>
 
       <div style={{ fontSize: 12, color: "#8899aa", marginBottom: 12, letterSpacing: "0.08em" }}>DISTRIBUCIÓN DE ANTIGÜEDAD DE UTXO (2020–2026)</div>

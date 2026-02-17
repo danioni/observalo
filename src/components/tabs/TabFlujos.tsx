@@ -5,7 +5,7 @@ import {
   BarChart, Bar, AreaChart, Area, XAxis, YAxis, CartesianGrid,
   Tooltip, ResponsiveContainer, Cell, ReferenceLine,
 } from "recharts";
-import { FLUJOS_DIARIOS, FLUJOS_SEMANALES } from "@/data/flujos";
+import { useFlujosData } from "@/hooks/useFlujosData";
 import { fmt } from "@/utils/format";
 import Metrica from "@/components/ui/Metrica";
 import Senal from "@/components/ui/Senal";
@@ -32,6 +32,7 @@ function Btn({ items, val, set, color }: {
 }
 
 export default function TabFlujos() {
+  const { diarios: FLUJOS_DIARIOS, semanales: FLUJOS_SEMANALES, esReal, cargando: cargandoFlujos } = useFlujosData();
   const [gran, setGran] = useState("semanal");
   const [rango, setRango] = useState("todo");
 
@@ -84,6 +85,8 @@ export default function TabFlujos() {
         <Senal etiqueta="RESERVAS" estado="Mínimos de varios años — escasez de oferta" color="#22c55e" />
         <Senal etiqueta="EFECTO ETF" estado="Salidas aceleradas desde aprobación" color="#06b6d4" />
         <Senal etiqueta="CUSTODIA PROPIA" estado="Tendencia irreversible post-FTX" color="#a855f7" />
+        {cargandoFlujos && <Senal etiqueta="DATOS" estado="Cargando datos reales..." color="#8899aa" />}
+        {!cargandoFlujos && <Senal etiqueta="FUENTE" estado={esReal ? "bitcoin-data.com (datos reales)" : "Datos simulados (fallback)"} color={esReal ? "#f0b429" : "#667788"} />}
       </div>
 
       <div style={{ marginBottom: 24 }}>

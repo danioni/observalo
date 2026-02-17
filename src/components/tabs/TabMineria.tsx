@@ -4,8 +4,8 @@ import {
   AreaChart, Area, ComposedChart, Bar, Line, XAxis, YAxis,
   CartesianGrid, Tooltip, ResponsiveContainer, ReferenceLine,
 } from "recharts";
-import { HISTORIAL_MINERIA } from "@/data/mineria";
 import { useMempoolData } from "@/hooks/useMempoolData";
+import { useMineriaHistorica } from "@/hooks/useMineriaHistorica";
 import Metrica from "@/components/ui/Metrica";
 import Senal from "@/components/ui/Senal";
 import PanelEdu from "@/components/ui/PanelEdu";
@@ -14,6 +14,7 @@ import CustomTooltip from "@/components/ui/CustomTooltip";
 
 export default function TabMineria() {
   const { vivo, cargando } = useMempoolData();
+  const { datos: HISTORIAL_MINERIA, esReal, cargando: cargandoHistorico } = useMineriaHistorica();
 
   const ult = HISTORIAL_MINERIA[HISTORIAL_MINERIA.length - 1];
   const hashM = vivo?.hashrate || String(ult.hashrate);
@@ -40,6 +41,8 @@ export default function TabMineria() {
         <Senal etiqueta="POST-HALVING" estado="Recompensa: 3,125 BTC por bloque" color="#f0b429" />
         <Senal etiqueta="COMISIONES" estado="Ingreso complementario en crecimiento" color="#06b6d4" />
         {cargando && <Senal etiqueta="DATOS EN VIVO" estado="Cargando desde mempool.space..." color="#8899aa" />}
+        {cargandoHistorico && <Senal etiqueta="HISTÓRICO" estado="Cargando datos reales..." color="#8899aa" />}
+        {!cargandoHistorico && <Senal etiqueta="FUENTE" estado={esReal ? "bitcoin-data.com (datos reales)" : "Datos simulados (fallback)"} color={esReal ? "#f0b429" : "#667788"} />}
       </div>
 
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 20, marginBottom: 24 }}>
