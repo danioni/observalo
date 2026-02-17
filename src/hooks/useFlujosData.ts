@@ -58,8 +58,9 @@ function apiToFlujosSemanales(items: FlujoApiItem[]): FlujoLocal[] {
 }
 
 export function useFlujosData() {
-  const [diarios, setDiarios] = useState(FLUJOS_DIARIOS);
-  const [semanales, setSemanales] = useState(FLUJOS_SEMANALES);
+  // Iniciar vacío — no mostrar datos simulados mientras se carga la API
+  const [diarios, setDiarios] = useState<FlujoLocal[]>([]);
+  const [semanales, setSemanales] = useState<FlujoLocal[]>([]);
   const [esReal, setEsReal] = useState(false);
   const [cargando, setCargando] = useState(true);
 
@@ -75,9 +76,17 @@ export function useFlujosData() {
             setSemanales(apiToFlujosSemanales(json.data.semanales));
           }
           setEsReal(true);
+        } else {
+          // API falló — usar fallback estático
+          setDiarios(FLUJOS_DIARIOS as FlujoLocal[]);
+          setSemanales(FLUJOS_SEMANALES.map((s, i) => ({ ...s, numSem: i })) as FlujoLocal[]);
         }
       })
-      .catch(() => {})
+      .catch(() => {
+        // Error de red — usar fallback estático
+        setDiarios(FLUJOS_DIARIOS as FlujoLocal[]);
+        setSemanales(FLUJOS_SEMANALES.map((s, i) => ({ ...s, numSem: i })) as FlujoLocal[]);
+      })
       .finally(() => setCargando(false));
   }, []);
 

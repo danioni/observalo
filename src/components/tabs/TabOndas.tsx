@@ -13,7 +13,26 @@ import Concepto from "@/components/ui/Concepto";
 
 export default function TabOndas() {
   const { datos: DATOS_ONDAS, esReal, cargando } = useOndasData();
+
+  if (cargando && DATOS_ONDAS.length === 0) {
+    return (
+      <div>
+        <Concepto titulo="¿Qué son las Ondas HODL?">
+          Cada Bitcoin gastable (UTXO) tiene un registro de cuándo fue movido por última vez.
+          Las &quot;Ondas&quot; agrupan todos los BTC según su antigüedad — cuánto tiempo llevan sin moverse.
+        </Concepto>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "center", height: 300, color: "#667788", fontSize: 14 }}>
+          <div style={{ textAlign: "center" }}>
+            <div style={{ fontSize: 24, marginBottom: 8 }}>◈</div>
+            Cargando datos reales de ondas HODL desde bitcoin-data.com...
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   const u = DATOS_ONDAS[DATOS_ONDAS.length - 1];
+  if (!u) return null;
   const corto = (u["<1m"] + u["1-3m"] + u["3-6m"]).toFixed(1);
   const largo = (u["3-5a"] + u["5-7a"] + u["7-10a"] + u["10a+"]).toFixed(1);
   const acero = (u["5-7a"] + u["7-10a"] + u["10a+"]).toFixed(1);

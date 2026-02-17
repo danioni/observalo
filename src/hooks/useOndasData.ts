@@ -36,7 +36,8 @@ function apiToDatosOndas(items: OndasApiItem[]): DatosOndas[] {
 }
 
 export function useOndasData() {
-  const [datos, setDatos] = useState<DatosOndas[]>(DATOS_ONDAS);
+  // Iniciar vacío — no mostrar datos simulados mientras se carga la API
+  const [datos, setDatos] = useState<DatosOndas[]>([]);
   const [esReal, setEsReal] = useState(false);
   const [cargando, setCargando] = useState(true);
 
@@ -47,9 +48,13 @@ export function useOndasData() {
         if (json?.data?.length) {
           setDatos(apiToDatosOndas(json.data));
           setEsReal(true);
+        } else {
+          setDatos(DATOS_ONDAS);
         }
       })
-      .catch(() => {})
+      .catch(() => {
+        setDatos(DATOS_ONDAS);
+      })
       .finally(() => setCargando(false));
   }, []);
 
