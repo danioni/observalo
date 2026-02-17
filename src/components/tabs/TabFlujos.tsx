@@ -79,7 +79,7 @@ export default function TabFlujos() {
         <div style={{ display: "flex", alignItems: "center", justifyContent: "center", height: 300, color: "#667788", fontSize: 14 }}>
           <div style={{ textAlign: "center" }}>
             <div style={{ fontSize: 24, marginBottom: 8 }}>⇄</div>
-            Cargando datos reales de flujos desde CoinGlass...
+            Cargando datos reales de flujos...
           </div>
         </div>
       </div>
@@ -106,14 +106,14 @@ export default function TabFlujos() {
         <Senal etiqueta="EFECTO ETF" estado="Salidas aceleradas desde aprobación" color="#06b6d4" />
         <Senal etiqueta="CUSTODIA PROPIA" estado="Tendencia irreversible post-FTX" color="#a855f7" />
         {cargandoFlujos && <Senal etiqueta="DATOS" estado="Cargando datos reales..." color="#8899aa" />}
-        {!cargandoFlujos && <Senal etiqueta="FUENTE" estado={esReal ? "coinglass.com (datos reales)" : "Datos simulados (fallback)"} color={esReal ? "#f0b429" : "#667788"} />}
+        {!cargandoFlujos && <Senal etiqueta="FUENTE" estado={esReal ? "bitcoin-data.com + coinglass.com" : "Datos simulados (fallback)"} color={esReal ? "#f0b429" : "#667788"} />}
       </div>
 
       <div style={{ marginBottom: 24 }}>
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12 }}>
           <div style={{ fontSize: 12, color: "#8899aa", letterSpacing: "0.08em" }}>FLUJO NETO — {gran === "diario" ? "DIARIO" : "SEMANAL"} (BTC)</div>
           <div style={{ display: "flex", gap: 8 }}>
-            <Btn items={[{ id: "3m", l: "3M" }, { id: "6m", l: "6M" }, { id: "1a", l: "1A" }, { id: "todo", l: "TODO" }]} val={rango} set={setRango} color="#06b6d4" />
+            <Btn items={[{ id: "3m", l: "3M" }, { id: "6m", l: "6M" }, { id: "1a", l: "1A" }, { id: "2a", l: "2A" }, { id: "5a", l: "5A" }, { id: "10a", l: "10A" }, { id: "todo", l: "TODO" }]} val={rango} set={setRango} color="#06b6d4" />
             <Btn items={[{ id: "diario", l: "DIARIO" }, { id: "semanal", l: "SEMANAL" }]} val={gran} set={setGran} color="#f0b429" />
           </div>
         </div>

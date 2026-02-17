@@ -45,3 +45,5 @@ next-env.d.ts
 tmp_*.json
 nul
 Usersfrancobservalotmp_*
+
+.vercel
