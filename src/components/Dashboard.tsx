@@ -9,9 +9,11 @@ import TabFlujos from "@/components/tabs/TabFlujos";
 import TabMineria from "@/components/tabs/TabMineria";
 import TabHolders from "@/components/tabs/TabHolders";
 import TabSoberania from "@/components/tabs/TabSoberania";
+import { useBreakpoint } from "@/hooks/useBreakpoint";
 
 export default function Dashboard() {
   const [tab, setTab] = useState("soberania");
+  const { isMobile, isTablet } = useBreakpoint();
 
   return (
     <div style={{
@@ -21,7 +23,10 @@ export default function Dashboard() {
       fontFamily: "'SF Pro Display',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif",
     }}>
       <Header tab={tab} setTab={setTab} />
-      <div style={{ padding: "24px", maxWidth: 1280, margin: "0 auto" }}>
+      <div style={{
+        padding: isMobile ? "12px" : isTablet ? "16px" : "24px",
+        maxWidth: 1280, margin: "0 auto",
+      }}>
         {tab === "distribucion" && <TabDistribucion />}
         {tab === "soberania" && <TabSoberania />}
         {tab === "ondas" && <TabOndas />}

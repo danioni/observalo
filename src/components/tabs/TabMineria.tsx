@@ -7,6 +7,7 @@ import {
 } from "recharts";
 import { useMempoolData } from "@/hooks/useMempoolData";
 import { useMineriaHistorica } from "@/hooks/useMineriaHistorica";
+import { useBreakpoint } from "@/hooks/useBreakpoint";
 import { fmt } from "@/utils/format";
 import Metrica from "@/components/ui/Metrica";
 import Senal from "@/components/ui/Senal";
@@ -50,6 +51,7 @@ export default function TabMineria() {
   const { vivo, cargando } = useMempoolData();
   const { datos, esReal, cargando: cargandoHistorico } = useMineriaHistorica();
   const [rango, setRango] = useState("todo");
+  const { isMobile, isDesktop } = useBreakpoint();
 
   /* ── Filtrado temporal ── */
   const filtrado = useMemo(() => {
@@ -90,15 +92,12 @@ export default function TabMineria() {
 
   return (
     <div>
-      <Concepto titulo="¿Qué mide la minería?">
-        La minería es el mecanismo de seguridad de Bitcoin. Los mineros compiten resolviendo problemas matemáticos y validando transacciones, gastando electricidad real a cambio de BTC.
-        El <strong style={{ color: "#e0e8f0" }}>hashrate</strong> mide el poder computacional total protegiendo la red — más hashrate = más caro atacarla.
-        La <strong style={{ color: "#e0e8f0" }}>dificultad</strong> se ajusta cada ~2 semanas para mantener bloques cada 10 minutos, sin importar cuántos mineros haya.
-        El <strong style={{ color: "#f0b429" }}>suministro</strong> sigue una curva logarítmica predecible: cada ~4 años se reduce a la mitad la emisión (halving), acercándose asintóticamente a 21 millones.
+      <Concepto titulo="Cada bloque cuesta electricidad real. Eso es lo que lo hace distinto.">
+        El dinero tradicional se crea con un clic — literalmente. Un banco central decide, un teclado ejecuta. Bitcoin invirtió la lógica: para crear un bloque, hay que gastar electricidad real. No hay atajo, no hay privilegio, no hay amigos del comité. El hashrate — el poder computacional total que protege la red — está en máximos históricos. Atacar Bitcoin hoy costaría más que el PIB de muchos países. Y cada ~4 años, la emisión se corta a la mitad — sin votación, sin excepciones. En Flujos viste el capital migrando a custodia propia. Aquí ves la fortaleza del sistema que eligieron.
       </Concepto>
 
       {/* ── Métricas ── */}
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(4,1fr)", gap: 12, marginBottom: 24 }}>
+      <div style={{ display: "grid", gridTemplateColumns: isMobile ? "repeat(2,1fr)" : "repeat(4,1fr)", gap: isMobile ? 8 : 12, marginBottom: 24 }}>
         <Metrica etiqueta={vivo?.hashrate ? "Hashrate (EN VIVO)" : "Hashrate"} valor={hashM + " EH/s"} sub="Poder computacional de la red" acento="#f0b429" />
         <Metrica etiqueta="Dificultad" valor={diffM + "T"} sub={vivo?.ajuste ? `Último ajuste: ${(vivo.ajuste.diffChange * 100).toFixed(2)}%` : "Ajuste automático cada ~2 semanas"} />
         <Metrica etiqueta="Suministro emitido" valor={fmt(supplyActual) + " BTC"} sub={`${pctMinado}% de 21M minados`} acento="#f0b429" />
@@ -107,9 +106,9 @@ export default function TabMineria() {
 
       {/* ── Señales ── */}
       <div style={{ display: "flex", gap: 8, marginBottom: 20, flexWrap: "wrap" }}>
-        <Senal etiqueta="HASHRATE" estado="Máximos históricos — seguridad máxima" color="#22c55e" />
-        <Senal etiqueta="4to HALVING" estado="Recompensa: 3,125 BTC por bloque" color="#f0b429" />
-        <Senal etiqueta="SUMINISTRO" estado={`${pctMinado}% emitido de 21M`} color="#f0b429" />
+        <Senal etiqueta="HASHRATE" estado="Nunca fue más caro atacar Bitcoin" color="#22c55e" />
+        <Senal etiqueta="4to HALVING" estado="3,125 BTC por bloque. En 2028, la mitad." color="#f0b429" />
+        <Senal etiqueta="SUMINISTRO" estado={`${pctMinado}% emitido de 21M — queda menos del 6% para los próximos 114 años`} color="#f0b429" />
         {cargando && <Senal etiqueta="DATOS EN VIVO" estado="Cargando desde mempool.space..." color="#8899aa" />}
         {cargandoHistorico && <Senal etiqueta="HISTÓRICO" estado="Cargando datos reales..." color="#8899aa" />}
         {!cargandoHistorico && <Senal etiqueta="FUENTE" estado={esReal ? "bitcoin-data.com (datos reales)" : "Datos estimados (fallback)"} color={esReal ? "#f0b429" : "#667788"} />}
@@ -117,14 +116,14 @@ export default function TabMineria() {
 
       {/* ── Gráfico principal: SUMINISTRO ACUMULADO ── */}
       <div style={{ marginBottom: 24 }}>
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12 }}>
+        <div style={{ display: "flex", flexDirection: isMobile ? "column" : "row", alignItems: isMobile ? "flex-start" : "center", justifyContent: "space-between", marginBottom: 12, gap: isMobile ? 8 : 0 }}>
           <div style={{ fontSize: 12, color: "#8899aa", letterSpacing: "0.08em" }}>
             SUMINISTRO ACUMULADO — BTC MINADOS {rangoLabel && `(${rangoLabel})`}
           </div>
           <Btn items={RANGOS} val={rango} set={setRango} color="#f0b429" />
         </div>
-        <ResponsiveContainer width="100%" height={340}>
-          <AreaChart data={filtrado} margin={{ top: 10, right: 20, bottom: 10, left: 20 }}>
+        <ResponsiveContainer width="100%" height={isMobile ? 280 : 340}>
+          <AreaChart data={filtrado} margin={{ top: 10, right: 20, bottom: 10, left: isMobile ? 10 : 20 }}>
             <defs>
               <linearGradient id="gS" x1="0" y1="0" x2="0" y2="1">
                 <stop offset="0%" stopColor="#f0b429" stopOpacity={0.35} />
@@ -186,11 +185,11 @@ export default function TabMineria() {
       </div>
 
       {/* ── Hashrate + Dificultad ── */}
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 20, marginBottom: 24 }}>
+      <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr", gap: 20, marginBottom: 24 }}>
         <div>
           <div style={{ fontSize: 12, color: "#8899aa", marginBottom: 12, letterSpacing: "0.08em" }}>HASHRATE — EH/s</div>
-          <ResponsiveContainer width="100%" height={260}>
-            <AreaChart data={filtrado} margin={{ top: 10, right: 20, bottom: 10, left: 20 }}>
+          <ResponsiveContainer width="100%" height={isMobile ? 220 : 260}>
+            <AreaChart data={filtrado} margin={{ top: 10, right: 20, bottom: 10, left: isMobile ? 10 : 20 }}>
               <defs>
                 <linearGradient id="gH" x1="0" y1="0" x2="0" y2="1">
                   <stop offset="0%" stopColor="#f0b429" stopOpacity={0.35} />
@@ -217,8 +216,8 @@ export default function TabMineria() {
         </div>
         <div>
           <div style={{ fontSize: 12, color: "#8899aa", marginBottom: 12, letterSpacing: "0.08em" }}>DIFICULTAD — BILLONES</div>
-          <ResponsiveContainer width="100%" height={260}>
-            <AreaChart data={filtrado} margin={{ top: 10, right: 20, bottom: 10, left: 20 }}>
+          <ResponsiveContainer width="100%" height={isMobile ? 220 : 260}>
+            <AreaChart data={filtrado} margin={{ top: 10, right: 20, bottom: 10, left: isMobile ? 10 : 20 }}>
               <defs>
                 <linearGradient id="gD" x1="0" y1="0" x2="0" y2="1">
                   <stop offset="0%" stopColor="#06b6d4" stopOpacity={0.3} />
@@ -246,11 +245,11 @@ export default function TabMineria() {
       </div>
 
       {/* ── Comisiones + Recompensa ── */}
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 20 }}>
+      <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr", gap: 20 }}>
         <div>
           <div style={{ fontSize: 12, color: "#8899aa", marginBottom: 12, letterSpacing: "0.08em" }}>COMISIONES — % DEL INGRESO MINERO</div>
-          <ResponsiveContainer width="100%" height={220}>
-            <ComposedChart data={filtrado} margin={{ top: 10, right: 20, bottom: 10, left: 20 }}>
+          <ResponsiveContainer width="100%" height={isMobile ? 180 : 220}>
+            <ComposedChart data={filtrado} margin={{ top: 10, right: 20, bottom: 10, left: isMobile ? 10 : 20 }}>
               <CartesianGrid strokeDasharray="3 3" stroke="#1a2332" />
               <XAxis dataKey="fecha" tick={{ fill: "#667788", fontSize: 9 }} interval={intTick} />
               <YAxis tick={{ fill: "#667788", fontSize: 10 }} tickFormatter={v => v + "%"} />
@@ -272,8 +271,8 @@ export default function TabMineria() {
         </div>
         <div>
           <div style={{ fontSize: 12, color: "#8899aa", marginBottom: 12, letterSpacing: "0.08em" }}>RECOMPENSA POR BLOQUE — BTC</div>
-          <ResponsiveContainer width="100%" height={220}>
-            <AreaChart data={filtrado} margin={{ top: 10, right: 20, bottom: 10, left: 20 }}>
+          <ResponsiveContainer width="100%" height={isMobile ? 180 : 220}>
+            <AreaChart data={filtrado} margin={{ top: 10, right: 20, bottom: 10, left: isMobile ? 10 : 20 }}>
               <defs>
                 <linearGradient id="gR" x1="0" y1="0" x2="0" y2="1">
                   <stop offset="0%" stopColor="#22c55e" stopOpacity={0.3} />
@@ -306,11 +305,14 @@ export default function TabMineria() {
         </div>
       </div>
 
-      <PanelEdu icono="⛏" titulo="La política monetaria de Bitcoin" color="#f0b429">
-        <strong style={{ color: "#f0b429" }}>Emisión predecible:</strong> Bitcoin es el único activo monetario con una política de emisión completamente transparente y predecible. Cada ~4 años, la recompensa por bloque se reduce a la mitad (halving), creando una curva de suministro logarítmica que se acerca asintóticamente a 21 millones.<br /><br />
-        <strong style={{ color: "#e0e8f0" }}>Los 4 halvings:</strong> 50 → 25 BTC (nov. 2012) → 12,5 (jul. 2016) → 6,25 (may. 2020) → 3,125 (abr. 2024). El próximo halving (~2028) reducirá la emisión a 1,5625 BTC por bloque.<br /><br />
-        <strong style={{ color: "#e0e8f0" }}>Seguridad:</strong> El hashrate en máximos históricos significa que atacar la red nunca ha sido más caro. La dificultad se auto-ajusta para mantener bloques cada ~10 minutos, sin importar cuántos mineros participen.<br /><br />
-        <strong style={{ color: "#e0e8f0" }}>Sustentabilidad:</strong> A medida que la recompensa por bloque disminuye, las comisiones de transacción se vuelven una fracción cada vez más importante del ingreso minero — garantizando la seguridad de la red a perpetuidad.
+      <PanelEdu icono="⛏" titulo="Reglas escritas en código, no en decretos" color="#f0b429">
+        <strong style={{ color: "#f0b429" }}>La emisión no se discute. Se ejecuta.</strong> Cada ~4 años el código reduce la recompensa a la mitad. No hubo voto. No hubo lobby. No hubo excepción. 50 → 25 → 12,5 → 6,25 → 3,125 BTC por bloque. En 2028 será 1,5625. Compara esto con cualquier banco central del mundo: ¿cuándo publicaron su calendario de emisión para los próximos 100 años?
+        <br /><br />
+        <strong style={{ color: "#e0e8f0" }}>Seguridad:</strong> Cada segundo, la red procesa cientos de millones de billones de cálculos. Revertir un solo bloque requeriría más energía que la producción anual de países enteros. Y la dificultad se ajusta sola — sin comité, sin votación.
+        <br /><br />
+        <strong style={{ color: "#e0e8f0" }}>Sustentabilidad:</strong> Cuando la recompensa baja, las comisiones suben proporcionalmente. El incentivo se recalibra con cada bloque.
+        <br /><br />
+        <span style={{ color: "#8899aa", fontStyle: "italic" }}>Es el único sistema monetario donde la seguridad no depende de la buena fe de nadie — depende de la física y las matemáticas.</span>
         <br /><br />
         <span style={{ color: "#667788", fontSize: 11 }}>
           Este análisis es informativo y no constituye asesoría financiera de ningún tipo. Datos de minería provienen de mempool.space y bitcoin-data.com.

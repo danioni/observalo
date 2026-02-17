@@ -11,23 +11,29 @@ import Senal from "@/components/ui/Senal";
 import PanelEdu from "@/components/ui/PanelEdu";
 import Concepto from "@/components/ui/Concepto";
 import CustomTooltip from "@/components/ui/CustomTooltip";
+import { useBreakpoint } from "@/hooks/useBreakpoint";
+import { NARRATIVA } from "@/data/narrativa";
 
 export default function TabDistribucion() {
+  const { isMobile, isDesktop } = useBreakpoint();
+
   const totalBTC = DATOS_DISTRIBUCION.reduce((s, d) => s + d.btcRetenido, 0);
   const totalDir = DATOS_DISTRIBUCION.reduce((s, d) => s + d.direcciones, 0);
   const concTop = DATOS_DISTRIBUCION.filter(d => ["Ballena", "Jorobada", "Mega"].includes(d.cohorte)).reduce((s, d) => s + d.pctSupply, 0);
   const partRetail = DATOS_DISTRIBUCION.filter(d => ["Plancton", "Camarón", "Cangrejo"].includes(d.cohorte)).reduce((s, d) => s + d.pctSupply, 0);
   const barras = DATOS_DISTRIBUCION.map(d => ({ ...d, dirLog: Math.log10(Math.max(d.direcciones, 1)) }));
 
+  const chartHeight = isMobile ? 280 : 340;
+  const chartLeftMargin = isMobile ? 45 : 75;
+
   return (
     <div>
-      <Concepto titulo="¿Qué muestra esta sección?">
-        La distribución de Bitcoin entre direcciones de distintos tamaños. Cada &quot;cohorte&quot; agrupa direcciones por la cantidad de BTC que contienen.
-        Una distribución más equitativa indica descentralización creciente. Si las cohortes pequeñas crecen en participación, más personas están acumulando directamente.
+      <Concepto titulo="¿De quién es realmente la red?">
+        El dinero tradicional no publica quién tiene cuánto. Bitcoin sí. Cada dirección tiene un saldo público, verificable, en tiempo real. Al clasificarlas por tamaño — desde las más pequeñas hasta las ballenas — se revela un patrón que se repite ciclo tras ciclo: las cohortes pequeñas y medianas crecen, las mega-direcciones se comprimen. En un sistema donde nadie coordina la distribución, la propiedad se dispersa por millones de decisiones individuales. En Soberanía viste cuánto BTC queda disponible. Aquí ves cómo se reparte.
         <br /><strong style={{ color: "#f0b429" }}>Importante:</strong> una dirección no es una persona. Un exchange puede tener una sola dirección con millones de BTC que representan a miles de usuarios. Las direcciones de los ETF también aparecen como &quot;Mega&quot; pero son vehículos colectivos.
       </Concepto>
 
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(4,1fr)", gap: 12, marginBottom: 24 }}>
+      <div style={{ display: "grid", gridTemplateColumns: isMobile ? "repeat(2,1fr)" : "repeat(4,1fr)", gap: isMobile ? 8 : 12, marginBottom: 24 }}>
         <Metrica etiqueta="Total de direcciones" valor={fmt(totalDir)} sub="con saldo mayor a 0" />
         <Metrica etiqueta="Oferta rastreada" valor={fmt(totalBTC) + " BTC"} sub="de 19,82M en circulación" />
         <Metrica etiqueta="Concentración grandes" valor={concTop.toFixed(1) + "%"} sub="Ballena + Jorobada + Mega" acento="#f0b429" />
@@ -35,19 +41,19 @@ export default function TabDistribucion() {
       </div>
 
       <div style={{ display: "flex", gap: 8, marginBottom: 20, flexWrap: "wrap" }}>
-        <Senal etiqueta="DISTRIBUCIÓN" estado="Descentralización gradual" color="#22c55e" />
-        <Senal etiqueta="GRANDES TENEDORES" estado="Acumulación activa post-halving" color="#f0b429" />
-        <Senal etiqueta="MINORISTAS" estado="Crecimiento sostenido" color="#06b6d4" />
+        <Senal etiqueta="DISTRIBUCIÓN" estado="La propiedad se dispersa — sin que nadie lo ordene" color="#22c55e" />
+        <Senal etiqueta="GRANDES TENEDORES" estado="Las ballenas pesan menos ciclo tras ciclo" color="#f0b429" />
+        <Senal etiqueta="MINORISTAS" estado="Más billeteras individuales que nunca" color="#06b6d4" />
       </div>
 
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 20 }}>
+      <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr", gap: 20 }}>
         <div>
           <div style={{ fontSize: 12, color: "#8899aa", marginBottom: 12, letterSpacing: "0.08em" }}>% DE LA OFERTA POR COHORTE</div>
-          <ResponsiveContainer width="100%" height={340}>
-            <BarChart data={DATOS_DISTRIBUCION} layout="vertical" margin={{ left: 75, right: 20 }}>
+          <ResponsiveContainer width="100%" height={chartHeight}>
+            <BarChart data={DATOS_DISTRIBUCION} layout="vertical" margin={{ left: chartLeftMargin, right: 20 }}>
               <CartesianGrid strokeDasharray="3 3" stroke="#1a2332" horizontal={false} />
               <XAxis type="number" domain={[0, 25]} tick={{ fill: "#667788", fontSize: 10 }} tickFormatter={v => v + "%"} />
-              <YAxis type="category" dataKey="cohorte" tick={{ fill: "#8899aa", fontSize: 11 }} width={70} />
+              <YAxis type="category" dataKey="cohorte" tick={{ fill: "#8899aa", fontSize: 11 }} width={isMobile ? 40 : 70} />
               <Tooltip content={({ active, payload }) => (
                 <CustomTooltip active={active} payload={payload} render={(d) => (
                   <>
@@ -65,11 +71,11 @@ export default function TabDistribucion() {
         </div>
         <div>
           <div style={{ fontSize: 12, color: "#8899aa", marginBottom: 12, letterSpacing: "0.08em" }}>DIRECCIONES POR COHORTE (ESCALA LOG)</div>
-          <ResponsiveContainer width="100%" height={340}>
-            <BarChart data={barras} layout="vertical" margin={{ left: 75, right: 20 }}>
+          <ResponsiveContainer width="100%" height={chartHeight}>
+            <BarChart data={barras} layout="vertical" margin={{ left: chartLeftMargin, right: 20 }}>
               <CartesianGrid strokeDasharray="3 3" stroke="#1a2332" horizontal={false} />
               <XAxis type="number" tick={{ fill: "#667788", fontSize: 10 }} tickFormatter={v => v <= 0 ? "1" : fmt(Math.pow(10, v))} />
-              <YAxis type="category" dataKey="cohorte" tick={{ fill: "#8899aa", fontSize: 11 }} width={70} />
+              <YAxis type="category" dataKey="cohorte" tick={{ fill: "#8899aa", fontSize: 11 }} width={isMobile ? 40 : 70} />
               <Tooltip content={({ active, payload }) => (
                 <CustomTooltip active={active} payload={payload} render={(d) => (
                   <>
@@ -127,12 +133,17 @@ export default function TabDistribucion() {
         </div>
       </div>
 
-      <PanelEdu icono="◆" titulo="Cómo interpretar la distribución" color="#06b6d4">
-        Las cohortes con nombres de animales marinos son una convención de análisis de la cadena. El dato clave es la <strong style={{ color: "#e0e8f0" }}>concentración</strong>: si pocas direcciones controlan mucho de la oferta, existe riesgo de manipulación de precio.
-        Históricamente, Bitcoin se ha ido descentralizando — las direcciones &quot;Mega&quot; (más de 10.000 BTC, que incluyen exchanges y fondos) han reducido su participación mientras crecen las cohortes medianas.
+      <PanelEdu icono="◆" titulo="Lo que la distribución revela" color="#06b6d4">
+        Las mega-direcciones pierden peso. Las cohortes medianas y pequeñas ganan. No es un trimestre — es una tendencia de más de una década. Los exchanges acumulan menos, los ETF redistribuyen propiedad fraccional, y millones de billeteras individuales suman fracciones que, en conjunto, desplazan a los grandes tenedores.
+        <br /><br />
+        Una dirección no es una persona — un exchange puede tener millones de usuarios detrás de una sola dirección. Pero la dirección inversa es más reveladora: cada nueva billetera pequeña con saldo sí es una decisión individual.
+        <br /><br />
+        En ningún otro sistema monetario se puede verificar públicamente quién tiene cuánto. En el dinero tradicional, los balances son privados, las reglas cambian sin aviso, y la distribución es opaca por diseño.
+        <br /><br />
+        <strong style={{ color: "#e0e8f0" }}>Aquí, las decisiones se acumulan bloque a bloque — sin que nadie las coordine, sin que nadie las pueda revertir.</strong>
         <br /><br />
         <span style={{ color: "#667788", fontSize: 11 }}>
-          Este análisis es informativo y no constituye asesoría financiera de ningún tipo. Datos basados en información pública de la red Bitcoin.
+          Este análisis es informativo y no constituye asesoría financiera de ningún tipo.
         </span>
       </PanelEdu>
     </div>

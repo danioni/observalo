@@ -6,6 +6,7 @@ import {
   Tooltip, ResponsiveContainer, Cell, ReferenceLine,
 } from "recharts";
 import { useFlujosData } from "@/hooks/useFlujosData";
+import { useBreakpoint } from "@/hooks/useBreakpoint";
 import { fmt } from "@/utils/format";
 import Metrica from "@/components/ui/Metrica";
 import Senal from "@/components/ui/Senal";
@@ -35,6 +36,7 @@ export default function TabFlujos() {
   const { diarios: FLUJOS_DIARIOS, semanales: FLUJOS_SEMANALES, esReal, cargando: cargandoFlujos } = useFlujosData();
   const [gran, setGran] = useState("semanal");
   const [rango, setRango] = useState("todo");
+  const { isMobile, isDesktop } = useBreakpoint();
 
   const fuente = gran === "diario" ? FLUJOS_DIARIOS : FLUJOS_SEMANALES;
   const filtrado = (() => {
@@ -72,9 +74,8 @@ export default function TabFlujos() {
   if (cargandoFlujos && fuente.length === 0) {
     return (
       <div>
-        <Concepto titulo="¿Qué muestran los flujos de exchanges?">
-          Cuando BTC sale de los exchanges (salida neta), las personas retiran a billeteras propias — señal alcista, indica acumulación y custodia propia.
-          Cuando BTC entra a los exchanges (entrada neta), depositan para vender — señal bajista, indica presión de venta.
+        <Concepto titulo="Los exchanges se vacían. ¿A dónde va el Bitcoin?">
+          En el sistema bancario, tu dinero es una promesa del banco — un número en su base de datos. Cuando retiras BTC de un exchange, dejas de depender de promesas.
         </Concepto>
         <div style={{ display: "flex", alignItems: "center", justifyContent: "center", height: 300, color: "#667788", fontSize: 14 }}>
           <div style={{ textAlign: "center" }}>
@@ -88,13 +89,11 @@ export default function TabFlujos() {
 
   return (
     <div>
-      <Concepto titulo="¿Qué muestran los flujos de exchanges?">
-        Cuando BTC sale de los exchanges (salida neta), las personas retiran a billeteras propias — <strong style={{ color: "#22c55e" }}>señal alcista</strong>, indica acumulación y custodia propia.
-        Cuando BTC entra a los exchanges (entrada neta), depositan para vender — <strong style={{ color: "#ef4444" }}>señal bajista</strong>, indica presión de venta.
-        Las reservas totales son el &quot;tanque de combustible disponible para vender&quot;. Cuando se vacía, hay menos oferta y el precio tiende a subir.
+      <Concepto titulo="Los exchanges se vacían. ¿A dónde va el Bitcoin?">
+        En el sistema bancario, tu dinero es una promesa del banco — un número en su base de datos. Cuando retiras BTC de un exchange a tu propia billetera, dejas de depender de promesas. Después del colapso de FTX, millones aprendieron la diferencia entre custodiar y confiar. Las reservas en exchanges están en niveles no vistos desde 2018. Los ETFs al contado aceleran las salidas desde enero 2024. El patrón es estructural, no cíclico. En Ondas viste que la convicción crece — aquí ves cómo se materializa: el capital migra de custodios hacia soberanía individual.
       </Concepto>
 
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(4,1fr)", gap: 12, marginBottom: 24 }}>
+      <div style={{ display: "grid", gridTemplateColumns: isMobile ? "repeat(2,1fr)" : "repeat(4,1fr)", gap: isMobile ? 8 : 12, marginBottom: 24 }}>
         <Metrica etiqueta="Reservas en exchanges" valor={ult ? fmt(ult.reserva) : "—"} sub={`${cambioRes.toFixed(1)}% en el período`} acento={cambioRes < 0 ? "#22c55e" : "#ef4444"} />
         <Metrica etiqueta="Flujo neto del período" valor={fmt(netoTotal)} sub={netoTotal < 0 ? "Salida neta (alcista)" : "Entrada neta (bajista)"} acento={netoTotal < 0 ? "#22c55e" : "#ef4444"} />
         <Metrica etiqueta={`${etPer} con salida neta`} valor={`${perSalida}/${filtrado.length}`} sub={`${filtrado.length > 0 ? (perSalida / filtrado.length * 100).toFixed(0) : 0}% del período`} acento="#06b6d4" />
@@ -102,23 +101,23 @@ export default function TabFlujos() {
       </div>
 
       <div style={{ display: "flex", gap: 8, marginBottom: 20, flexWrap: "wrap" }}>
-        <Senal etiqueta="RESERVAS" estado="En mínimos no vistos desde 2018 — caída sostenida" color="#22c55e" />
-        <Senal etiqueta="EFECTO ETF" estado="Salidas aceleradas desde aprobación" color="#06b6d4" />
-        <Senal etiqueta="CUSTODIA PROPIA" estado="Tendencia dominante post-FTX" color="#a855f7" />
+        <Senal etiqueta="RESERVAS" estado="El tanque de venta se vacía. Mínimos de 7 años." color="#22c55e" />
+        <Senal etiqueta="EFECTO ETF" estado="Los ETFs drenan exchanges a ritmo industrial" color="#06b6d4" />
+        <Senal etiqueta="CUSTODIA PROPIA" estado="Después de FTX, la gente eligió sus propias llaves" color="#a855f7" />
         {cargandoFlujos && <Senal etiqueta="DATOS" estado="Cargando datos reales..." color="#8899aa" />}
         {!cargandoFlujos && <Senal etiqueta="FUENTE" estado={esReal ? "bitcoin-data.com + coinglass.com" : "Datos simulados (fallback)"} color={esReal ? "#f0b429" : "#667788"} />}
       </div>
 
       <div style={{ marginBottom: 24 }}>
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12 }}>
+        <div style={{ display: "flex", flexDirection: isMobile ? "column" : "row", alignItems: isMobile ? "flex-start" : "center", justifyContent: "space-between", marginBottom: 12, gap: isMobile ? 8 : 0 }}>
           <div style={{ fontSize: 12, color: "#8899aa", letterSpacing: "0.08em" }}>FLUJO NETO — {gran === "diario" ? "DIARIO" : "SEMANAL"} (BTC)</div>
-          <div style={{ display: "flex", gap: 8 }}>
+          <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
             <Btn items={[{ id: "3m", l: "3M" }, { id: "6m", l: "6M" }, { id: "1a", l: "1A" }, { id: "2a", l: "2A" }, { id: "5a", l: "5A" }, { id: "10a", l: "10A" }, { id: "todo", l: "TODO" }]} val={rango} set={setRango} color="#06b6d4" />
             <Btn items={[{ id: "diario", l: "DIARIO" }, { id: "semanal", l: "SEMANAL" }]} val={gran} set={setGran} color="#f0b429" />
           </div>
         </div>
-        <ResponsiveContainer width="100%" height={340}>
-          <BarChart data={filtrado} margin={{ top: 10, right: 20, bottom: 35, left: 20 }}>
+        <ResponsiveContainer width="100%" height={isMobile ? 280 : 340}>
+          <BarChart data={filtrado} margin={{ top: 10, right: 20, bottom: 35, left: isMobile ? 10 : 20 }}>
             <CartesianGrid strokeDasharray="3 3" stroke="#1a2332" />
             <XAxis dataKey="etCorta" tick={{ fill: "#667788", fontSize: 9 }} interval={intTick} angle={-40} textAnchor="end" height={55} />
             <YAxis tick={{ fill: "#667788", fontSize: 10 }} tickFormatter={v => fmt(v)} />
@@ -152,12 +151,12 @@ export default function TabFlujos() {
       </div>
 
       <div style={{ marginBottom: 24 }}>
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12 }}>
+        <div style={{ display: "flex", flexDirection: isMobile ? "column" : "row", alignItems: isMobile ? "flex-start" : "center", justifyContent: "space-between", marginBottom: 12, gap: isMobile ? 8 : 0 }}>
           <div style={{ fontSize: 12, color: "#8899aa", letterSpacing: "0.08em" }}>RESERVAS EN EXCHANGES — TENDENCIA ESTRUCTURAL</div>
           <div style={{ fontSize: 10, color: "#667788" }}>{pri?.etDia} → {ult?.etDia}</div>
         </div>
-        <ResponsiveContainer width="100%" height={260}>
-          <AreaChart data={filtrado} margin={{ top: 10, right: 20, bottom: 10, left: 20 }}>
+        <ResponsiveContainer width="100%" height={isMobile ? 220 : 260}>
+          <AreaChart data={filtrado} margin={{ top: 10, right: 20, bottom: 10, left: isMobile ? 10 : 20 }}>
             <defs>
               <linearGradient id="gRes" x1="0" y1="0" x2="0" y2="1">
                 <stop offset="0%" stopColor="#ef4444" stopOpacity={0.3} />
@@ -183,12 +182,18 @@ export default function TabFlujos() {
         </ResponsiveContainer>
       </div>
 
-      <PanelEdu icono="⇄" titulo="Narrativa del ciclo — 5 años de flujos" color="#06b6d4">
-        <strong style={{ color: "#ef4444" }}>2021 (Alcista):</strong> Entradas masivas por FOMO. Prohibición en China (mayo) generó crash. Máximo histórico de ~$69.000 en noviembre inició distribución.{" "}
-        <strong style={{ color: "#ef4444" }}>2022 (Bajista):</strong> Dos shocks: colapso de Luna/UST (mayo) y colapso de FTX (noviembre). Después de FTX, &quot;si no son tus llaves, no son tus monedas&quot; se volvió dominante.{" "}
-        <strong style={{ color: "#22c55e" }}>2023 (Recuperación):</strong> Éxodo sostenido de exchanges. Custodia propia se normaliza. Acumulación silenciosa.{" "}
-        <strong style={{ color: "#06b6d4" }}>2024 (Halving + ETF):</strong> ETF al contado aprobado en enero aceleró salidas institucionales. Halving en abril redujo emisión a 3,125 BTC por bloque.{" "}
-        <strong style={{ color: "#a855f7" }}>2025-26:</strong> Las reservas siguen cayendo y alcanzan niveles no vistos desde 2018. La custodia propia y los ETFs continúan absorbiendo oferta de los exchanges. Menos BTC disponible para vender = menor presión vendedora.
+      <PanelEdu icono="⇄" titulo="Cómo se vació la tubería — cinco años en datos" color="#06b6d4">
+        <strong style={{ color: "#ef4444" }}>2021:</strong> La euforia llenó los exchanges. Todo el mundo depositaba para vender en máximos.
+        <br /><br />
+        <strong style={{ color: "#ef4444" }}>2022:</strong> FTX demostró que &quot;confía en nosotros&quot; no es una garantía — es lo mismo que prometen los bancos, con la misma fragilidad. Las salidas se aceleraron.
+        <br /><br />
+        <strong style={{ color: "#22c55e" }}>2023:</strong> Silencio en los titulares. Éxodo constante en los datos. El mercado acumulaba mientras los medios lo ignoraban.
+        <br /><br />
+        <strong style={{ color: "#06b6d4" }}>2024:</strong> Los ETFs al contado empezaron a absorber oferta a escala industrial. El halving recortó la emisión a la mitad. Dos fuerzas convergiendo.
+        <br /><br />
+        <strong style={{ color: "#a855f7" }}>2025-26:</strong> Reservas en mínimos de 7 años. Compare esto con cualquier moneda fiduciaria: ¿cuándo fue la última vez que la oferta de dólares, euros o pesos disminuyó?
+        <br /><br />
+        <span style={{ color: "#8899aa", fontStyle: "italic" }}>El sistema diseñado para tener un suministro fijo está mostrando exactamente lo que pasa cuando la demanda es estructural y la oferta no negocia.</span>
         <br /><br />
         <span style={{ color: "#667788", fontSize: 11 }}>
           Este análisis es informativo y no constituye asesoría financiera de ningún tipo. Datos de flujos provienen de fuentes públicas y pueden contener estimaciones.

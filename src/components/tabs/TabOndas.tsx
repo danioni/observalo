@@ -10,16 +10,18 @@ import Metrica from "@/components/ui/Metrica";
 import Senal from "@/components/ui/Senal";
 import PanelEdu from "@/components/ui/PanelEdu";
 import Concepto from "@/components/ui/Concepto";
+import { useBreakpoint } from "@/hooks/useBreakpoint";
+import { NARRATIVA } from "@/data/narrativa";
 
 export default function TabOndas() {
   const { datos: DATOS_ONDAS, esReal, cargando } = useOndasData();
+  const { isMobile, isDesktop } = useBreakpoint();
 
   if (cargando && DATOS_ONDAS.length === 0) {
     return (
       <div>
-        <Concepto titulo="¿Qué son las Ondas HODL?">
-          Cada Bitcoin gastable (UTXO) tiene un registro de cuándo fue movido por última vez.
-          Las &quot;Ondas&quot; agrupan todos los BTC según su antigüedad — cuánto tiempo llevan sin moverse.
+        <Concepto titulo="El BTC que no se vende. Ni en crashes. Ni en máximos.">
+          En los mercados tradicionales, el pánico genera ventas masivas. En Bitcoin, algo distinto está ocurriendo. Cada UTXO registra cuándo se movió por última vez.
         </Concepto>
         <div style={{ display: "flex", alignItems: "center", justifyContent: "center", height: 300, color: "#667788", fontSize: 14 }}>
           <div style={{ textAlign: "center" }}>
@@ -39,15 +41,14 @@ export default function TabOndas() {
 
   return (
     <div>
-      <Concepto titulo="¿Qué son las Ondas HODL?">
-        Cada Bitcoin gastable (llamado UTXO) tiene un registro de cuándo fue movido por última vez.
-        Las &quot;Ondas&quot; agrupan todos los BTC según su <strong style={{ color: "#e0e8f0" }}>antigüedad</strong> — cuánto tiempo llevan sin moverse.
-        Cuando las bandas frías (azul/morado) crecen, más personas retienen a largo plazo.
-        Cuando las bandas calientes (rojo/naranja) crecen, hay distribución y ventas activas.
-        Es el indicador más directo de <strong style={{ color: "#e0e8f0" }}>convicción colectiva</strong> en la red.
+      <Concepto titulo="El BTC que no se vende. Ni en crashes. Ni en máximos.">
+        En los mercados tradicionales, el pánico genera ventas masivas — es la norma. En Bitcoin, algo distinto está ocurriendo. Cada UTXO registra públicamente cuándo se movió por última vez.
+        Cuando agrupas toda la oferta por antigüedad, aparece un patrón sin precedente: las bandas frías — BTC que lleva más de 3 años sin moverse — se expanden ciclo tras ciclo.
+        Ese capital sobrevivió caídas del 80%, quiebras de exchanges y pánico mediático sin venderse.
+        En Distribución viste quién tiene Bitcoin. Aquí ves quién decidió no soltarlo.
       </Concepto>
 
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(4,1fr)", gap: 12, marginBottom: 24 }}>
+      <div style={{ display: "grid", gridTemplateColumns: isMobile ? "repeat(2,1fr)" : "repeat(4,1fr)", gap: isMobile ? 8 : 12, marginBottom: 24 }}>
         <Metrica etiqueta="Tenedores a corto plazo" valor={corto + "%"} sub="menos de 6 meses" acento="#ef4444" />
         <Metrica etiqueta="Tenedores a medio plazo" valor={(100 - parseFloat(corto) - parseFloat(largo)).toFixed(1) + "%"} sub="6 meses a 3 años" acento="#eab308" />
         <Metrica etiqueta="Tenedores a largo plazo" valor={largo + "%"} sub="más de 3 años" acento="#22c55e" />
@@ -55,15 +56,15 @@ export default function TabOndas() {
       </div>
 
       <div style={{ display: "flex", gap: 8, marginBottom: 20, flexWrap: "wrap" }}>
-        <Senal etiqueta="CONVICCIÓN" estado="Máximos históricos en tenedores de largo plazo" color="#22c55e" />
-        <Senal etiqueta="FASE DEL CICLO" estado="Acumulación post-halving" color="#06b6d4" />
+        <Senal etiqueta="CONVICCIÓN" estado="Máxima convicción registrada en la historia de la red" color="#22c55e" />
+        <Senal etiqueta="FASE DEL CICLO" estado="Bandas calientes comprimidas — nadie vende" color="#06b6d4" />
         {cargando && <Senal etiqueta="DATOS" estado="Cargando datos reales..." color="#8899aa" />}
         {!cargando && <Senal etiqueta="FUENTE" estado={esReal ? "bitcoin-data.com (datos reales)" : "Datos simulados (fallback)"} color={esReal ? "#f0b429" : "#667788"} />}
       </div>
 
       <div style={{ fontSize: 12, color: "#8899aa", marginBottom: 12, letterSpacing: "0.08em" }}>DISTRIBUCIÓN DE ANTIGÜEDAD DE UTXO (2020–2026)</div>
-      <ResponsiveContainer width="100%" height={420}>
-        <AreaChart data={DATOS_ONDAS} margin={{ top: 10, right: 20, bottom: 20, left: 20 }} stackOffset="expand">
+      <ResponsiveContainer width="100%" height={isMobile ? 320 : 420}>
+        <AreaChart data={DATOS_ONDAS} margin={{ top: 10, right: 20, bottom: isMobile ? 12 : 20, left: 20 }} stackOffset="expand">
           <CartesianGrid strokeDasharray="3 3" stroke="#1a2332" />
           <XAxis dataKey="fecha" tick={{ fill: "#667788", fontSize: 9 }} interval={6} angle={-30} textAnchor="end" />
           <YAxis tick={{ fill: "#667788", fontSize: 10 }} tickFormatter={v => (v * 100).toFixed(0) + "%"} />
@@ -98,13 +99,15 @@ export default function TabOndas() {
         ))}
       </div>
 
-      <PanelEdu icono="◈" titulo="Patrones clave en las Ondas" color="#a855f7">
-        <strong style={{ color: "#ef4444" }}>Bandas calientes (rojo/naranja — menos de 6 meses):</strong> Se expanden en picos de mercado cuando nuevos compradores entran y tenedores antiguos distribuyen. Cuando se comprimen, el BTC recién comprado no se está vendiendo — señal de acumulación.<br /><br />
-        <strong style={{ color: "#3b82f6" }}>Bandas frías (azul/morado — más de 3 años):</strong> Representan BTC que ha sobrevivido al menos un ciclo completo sin moverse. Su expansión constante es la evidencia más fuerte de convicción. El Bitcoin que entra en estas bandas rara vez sale.<br /><br />
-        <strong style={{ color: "#f0b429" }}>Post-halving 2024:</strong> El patrón muestra compresión de bandas calientes y expansión de frías — consistente con acumulación institucional y minorista. Históricamente, los 12-18 meses después de cada halving han sido los períodos más explosivos en precio.
+      <PanelEdu icono="◈" titulo="Lo que las ondas revelan sobre la convicción" color="#a855f7">
+        <strong style={{ color: "#ef4444" }}>Bandas calientes (menos de 6 meses):</strong> Cuando se expanden, es dinero nuevo entrando — compradores de último momento. Cuando se comprimen, nadie está vendiendo lo que acaba de comprar. Hoy están comprimidas.<br /><br />
+        <strong style={{ color: "#3b82f6" }}>Bandas frías (más de 3 años):</strong> Capital que sobrevivió a caídas del 80%, a la quiebra de FTX, al pánico de Luna/UST — y no se movió. Cada ciclo, estas bandas crecen. Nunca se han contraído.<br /><br />
+        En los mercados tradicionales, los crashes generan capitulación masiva. En Bitcoin, cada crash deja una base más grande de tenedores que no vendieron.
+        <br /><br />
+        <strong style={{ color: "#e0e8f0" }}>No tiene precedente en ningún otro activo: un mercado donde, después de cada pánico, más gente decide retener en lugar de huir.</strong>
         <br /><br />
         <span style={{ color: "#667788", fontSize: 11 }}>
-          Este análisis es informativo y no constituye asesoría financiera de ningún tipo. Datos de antigüedad de UTXO provienen de fuentes públicas de la red Bitcoin.
+          Este análisis es informativo y no constituye asesoría financiera de ningún tipo.
         </span>
       </PanelEdu>
     </div>

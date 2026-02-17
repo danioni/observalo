@@ -33,3 +33,6 @@ html, body {
 button {
   font-family: inherit;
 }
+
+.tabs-scroll::-webkit-scrollbar { display: none; }
+.tabs-scroll { -ms-overflow-style: none; scrollbar-width: none; }

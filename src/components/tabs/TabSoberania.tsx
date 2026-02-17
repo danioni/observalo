@@ -15,11 +15,15 @@ import Senal from "@/components/ui/Senal";
 import PanelEdu from "@/components/ui/PanelEdu";
 import Concepto from "@/components/ui/Concepto";
 import CustomTooltip from "@/components/ui/CustomTooltip";
+import { useBreakpoint } from "@/hooks/useBreakpoint";
+import { NARRATIVA } from "@/data/narrativa";
 
 const pct = (n: number, total: number = BTC_CAP) => (n / total * 100).toFixed(1);
 const btcPorAdulto = BTC_SOBERANO / ADULTOS_MUNDIAL;
 
 export default function TabSoberania() {
+  const { isMobile, isDesktop } = useBreakpoint();
+
   // Datos para stacked bar (un solo registro con todos los bloques)
   const stackData = [
     BLOQUES_SUPPLY.reduce((obj, b) => {
@@ -30,14 +34,12 @@ export default function TabSoberania() {
 
   return (
     <div>
-      <Concepto titulo="El sistema monetario basado en reglas">
-        Bitcoin es el primer dinero de la historia con una oferta fija e inmutable: exactamente 21 millones de unidades, sin excepciones, sin rescates, sin impresión.
-        Pero no todos están disponibles. De esos 21 millones, hay que descontar lo que se perdió para siempre, lo que aún no se minó, y lo que ya acumularon instituciones, gobiernos y exchanges.
-        <br /><strong style={{ color: "#22c55e" }}>¿Cuánto queda para quienes eligen la soberanía financiera?</strong>
+      <Concepto titulo={NARRATIVA.tabs.soberania.concepto.titulo}>
+        En el sistema tradicional, la oferta de dinero cambia cada vez que un banco central lo decide — y lo decide a puertas cerradas. Bitcoin eliminó esa puerta. Son 21 millones de unidades, escritas en código abierto, verificables por cualquiera en cualquier momento. Pero de esos 21 millones, hay que restar lo perdido para siempre, lo que aún no se minó, y lo que ya acapararon ETFs, corporaciones y gobiernos. Lo que queda — la oferta soberana — se achica cada día. Esta sección muestra exactamente cuánto.
       </Concepto>
 
       {/* Métricas principales */}
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(4,1fr)", gap: 12, marginBottom: 24 }}>
+      <div style={{ display: "grid", gridTemplateColumns: isMobile ? "repeat(2,1fr)" : "repeat(4,1fr)", gap: isMobile ? 8 : 12, marginBottom: 24 }}>
         <Metrica
           etiqueta="Oferta soberana"
           valor={fmt(BTC_SOBERANO) + " BTC"}
@@ -65,9 +67,9 @@ export default function TabSoberania() {
 
       {/* Señales */}
       <div style={{ display: "flex", gap: 8, marginBottom: 24, flexWrap: "wrap" }}>
-        <Senal etiqueta="OFERTA SOBERANA" estado={`${pct(BTC_SOBERANO)}% disponible para autocustodia`} color="#22c55e" />
-        <Senal etiqueta="PRESIÓN INSTITUCIONAL" estado={`ETFs + treasuries: ${fmt(BTC_ETFS + BTC_TREASURIES)} BTC acumulados`} color="#818cf8" />
-        <Senal etiqueta="ESCASEZ" estado={`Solo ${btcPorAdulto.toFixed(4)} BTC por adulto en el planeta`} color="#f0b429" />
+        <Senal etiqueta="OFERTA SOBERANA" estado="Solo el 22% queda para individuos soberanos" color="#22c55e" />
+        <Senal etiqueta="PRESIÓN INSTITUCIONAL" estado="Cada ETF que compra reduce lo que queda" color="#818cf8" />
+        <Senal etiqueta="ESCASEZ" estado="Si todos quisieran, no alcanza" color="#f0b429" />
       </div>
 
       {/* Stacked horizontal bar — Desglose completo de 21M */}
@@ -127,7 +129,7 @@ export default function TabSoberania() {
                 {i > 0 && (
                   <div style={{
                     display: "flex", alignItems: "center", gap: 12,
-                    padding: "4px 0 4px 20px", fontSize: 11,
+                    padding: "4px 0 4px 20px", fontSize: isMobile ? 9 : 11,
                   }}>
                     <span style={{ color: paso.color, fontWeight: 600 }}>−</span>
                     <span style={{ color: "#667788" }}>{EMBUDO[i].etiqueta}</span>
@@ -151,7 +153,7 @@ export default function TabSoberania() {
                     transition: "all 0.3s ease",
                   }}>
                     <span style={{
-                      fontSize: esUltimo ? 14 : 12,
+                      fontSize: esUltimo ? (isMobile ? 12 : 14) : (isMobile ? 10 : 12),
                       fontWeight: 700,
                       color: esUltimo ? "#fff" : "#94a3b8",
                       fontFamily: "'JetBrains Mono',monospace",
@@ -161,7 +163,7 @@ export default function TabSoberania() {
                     </span>
                   </div>
                   <span style={{
-                    fontSize: esUltimo ? 12 : 10,
+                    fontSize: esUltimo ? (isMobile ? 10 : 12) : (isMobile ? 9 : 10),
                     color: esUltimo ? "#22c55e" : "#667788",
                     fontWeight: esUltimo ? 700 : 400,
                     whiteSpace: "nowrap",
@@ -177,12 +179,12 @@ export default function TabSoberania() {
 
       {/* Dato potente */}
       <div style={{
-        padding: 20, borderRadius: 10, marginBottom: 28,
+        padding: isMobile ? 14 : 20, borderRadius: 10, marginBottom: 28,
         background: "linear-gradient(135deg, rgba(34,197,94,0.06) 0%, rgba(34,197,94,0.02) 100%)",
         border: "1px solid rgba(34,197,94,0.15)",
       }}>
         <div style={{ fontSize: 13, color: "#22c55e", fontWeight: 700, marginBottom: 8 }}>
-          ⚡ La matemática de la escasez
+          ⚡ Las matemáticas que nadie te enseñó
         </div>
         <div style={{ fontSize: 12, color: "#c0c8d0", lineHeight: 1.7 }}>
           Si cada adulto del planeta (~{fmt(ADULTOS_MUNDIAL)}) quisiera Bitcoin, solo hay <strong style={{ color: "#22c55e" }}>{fmt(BTC_SOBERANO)}</strong> disponibles en autocustodia.
@@ -193,22 +195,22 @@ export default function TabSoberania() {
           La oferta soberana se reduce con cada compra institucional.
           <br /><br />
           <span style={{ color: "#22c55e", fontWeight: 600 }}>
-            Acumular Bitcoin hoy es asegurarse un lugar en el sistema monetario del futuro.
+            No es una opinión — es aritmética verificable en cada bloque que se mina.
           </span>
         </div>
       </div>
 
-      <PanelEdu icono="⚡" titulo="Soberanía financiera" color="#22c55e">
-        <strong style={{ color: "#22c55e" }}>Autocustodia</strong> significa que tú — y solo tú — controlas tus llaves privadas.
-        Bitcoin es el único activo monetario en la historia que permite soberanía total sin intermediarios: no necesita un banco, un gobierno, ni una empresa para funcionar.
+      <PanelEdu icono="⚡" titulo="Las matemáticas que nadie te enseñó" color="#f0b429">
+        Cada sistema monetario de la historia ha funcionado igual: alguien controla la emisión, y ese alguien eventualmente imprime más de lo prometido. Bitcoin eliminó ese rol. La oferta es fija. Las reglas son código. La auditoría es pública.
         <br /><br />
-        Cuando compras Bitcoin en un exchange pero no lo retiras, tu BTC forma parte de las reservas del exchange — no eres soberano aún.
-        La verdadera soberanía financiera comienza cuando mueves tus satoshis a tu propia billetera.
+        <strong style={{ color: "#f0b429" }}>Autocustodia</strong> significa que tú — y solo tú — controlas tus llaves privadas. Es la diferencia entre tener un número en la base de datos de un banco y tener un activo que ningún tercero puede congelar, confiscar o diluir.
         <br /><br />
-        <strong style={{ color: "#e0e8f0" }}>21 millones. Sin excepciones. Sin rescates. Reglas, no gobernantes.</strong>
+        Si los 5.500 millones de adultos del planeta quisieran una fracción, la cuenta no da. Y cada día da menos: los ETFs, corporaciones y gobiernos absorben oferta a un ritmo que se acelera.
+        <br /><br />
+        <strong style={{ color: "#e0e8f0" }}>No es una opinión — es aritmética verificable en cada bloque que se mina.</strong>
         <br /><br />
         <span style={{ color: "#667788", fontSize: 11 }}>
-          Este análisis es informativo y no constituye asesoría financiera de ningún tipo. Datos basados en estimaciones públicas y pueden variar según la fuente.
+          Este análisis es informativo y no constituye asesoría financiera de ningún tipo.
         </span>
       </PanelEdu>
     </div>

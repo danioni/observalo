@@ -6,6 +6,7 @@ import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Cell,
 } from "recharts";
 import { useHoldersData } from "@/hooks/useHoldersData";
+import { useBreakpoint } from "@/hooks/useBreakpoint";
 import { fmt } from "@/utils/format";
 import type { CategoriaHolder } from "@/types";
 import {
@@ -106,6 +107,7 @@ function TreemapContent(props: {
 export default function TabHolders() {
   const { datos, esReal, cargando } = useHoldersData();
   const [filtro, setFiltro] = useState<string>("todos");
+  const { isMobile, isDesktop } = useBreakpoint();
 
   const filtrados = useMemo(() =>
     filtro === "todos" ? datos : datos.filter(h => h.categoria === filtro),
@@ -159,12 +161,11 @@ export default function TabHolders() {
 
   return (
     <div>
-      <Concepto titulo="¿Qué muestra esta sección?">
-        Los mayores holders identificados de Bitcoin, organizados por categoría: empresas públicas que acumulan BTC en su tesorería, ETFs al contado, exchanges, mineros públicos, gobiernos y protocolos.
-        <br /><strong style={{ color: "#f0b429" }}>Importante:</strong> estos datos representan solo entidades identificadas públicamente. La mayoría del Bitcoin está en manos de holders anónimos no rastreables.
+      <Concepto titulo="ETFs, corporaciones, gobiernos. Todos acumulando.">
+        Durante décadas, las instituciones financieras ignoraron Bitcoin. Ahora compiten por acumularlo. BlackRock lanzó un ETF y en meses acumuló más BTC que la mayoría de los países. Strategy lleva años convirtiendo su tesorería. Los gobiernos incautan pero no venden. Lo que antes era &quot;activo especulativo&quot; ahora aparece en balances corporativos auditados y prospectos regulados. Esta tabla muestra solo la fracción visible — la mayoría del Bitcoin está en manos de tenedores anónimos que no responden ante ningún regulador. La asimetría de información se está cerrando.
       </Concepto>
 
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(4,1fr)", gap: 12, marginBottom: 24 }}>
+      <div style={{ display: "grid", gridTemplateColumns: isMobile ? "repeat(2,1fr)" : "repeat(4,1fr)", gap: isMobile ? 8 : 12, marginBottom: 24 }}>
         <Metrica etiqueta="BTC identificado" valor={fmt(totalBtc) + " BTC"} sub={`${pctSupply.toFixed(1)}% de la oferta`} acento="#f0b429" />
         <Metrica etiqueta="Entidades" valor={String(totalEntidades)} sub="holders identificados" />
         <Metrica etiqueta="ETFs Spot US" valor={fmt(totalEtf) + " BTC"} sub={`${(totalEtf / BTC_SUPPLY * 100).toFixed(1)}% de la oferta`} acento="#818cf8" />
@@ -177,27 +178,30 @@ export default function TabHolders() {
           estado={cargando ? "Cargando datos reales…" : esReal ? "ETFs actualizados vía API" : "Datos curados estáticos"}
           color={cargando ? "#667788" : esReal ? "#f0b429" : "#667788"}
         />
+        <Senal etiqueta="ETFs" estado="BlackRock + Fidelity: los nuevos mega-tenedores" color="#818cf8" />
+        <Senal etiqueta="TREASURIES" estado="Las corporaciones convierten efectivo en Bitcoin" color="#f0b429" />
+        <Senal etiqueta="GOBIERNOS" estado="Incautan pero no venden — incluso ellos retienen" color="#ef4444" />
         <Senal etiqueta="EXCHANGES" estado={fmt(totalExchange) + " BTC en custodia"} color="#06b6d4" />
-        <Senal etiqueta="TREASURIES" estado={fmt(totalTreasury) + " BTC corporativo"} color="#f0b429" />
-        <Senal etiqueta="GOBIERNOS" estado={(porCategoria.find(c => c.categoria === "gobierno")?.btc || 0) > 0 ? fmt(porCategoria.find(c => c.categoria === "gobierno")?.btc || 0) + " BTC soberanos" : "—"} color="#ef4444" />
       </div>
 
       {/* Treemap — ancho completo */}
       <div style={{ marginBottom: 24 }}>
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
+        <div style={{ display: "flex", flexDirection: isMobile ? "column" : "row", justifyContent: "space-between", alignItems: isMobile ? "flex-start" : "center", marginBottom: 12, gap: isMobile ? 8 : 0 }}>
           <div style={{ fontSize: 12, color: "#8899aa", letterSpacing: "0.08em" }}>MAPA DE ACUMULADORES (PROPORCIONAL A BTC)</div>
-          <Btn
-            items={[
-              { id: "todos", l: "TODOS" },
-              ...TODAS.map(c => ({ id: c, l: NOMBRES_CATEGORIA[c].toUpperCase() })),
-            ]}
-            val={filtro}
-            set={setFiltro}
-            color="#f0b429"
-          />
+          <div style={{ display: "flex", flexWrap: isMobile ? "wrap" : undefined }}>
+            <Btn
+              items={[
+                { id: "todos", l: "TODOS" },
+                ...TODAS.map(c => ({ id: c, l: NOMBRES_CATEGORIA[c].toUpperCase() })),
+              ]}
+              val={filtro}
+              set={setFiltro}
+              color="#f0b429"
+            />
+          </div>
         </div>
         <div>
-          <ResponsiveContainer width="100%" height={520}>
+          <ResponsiveContainer width="100%" height={isMobile ? 350 : 520}>
             <Treemap
               data={treemapData}
               dataKey="size"
@@ -222,11 +226,11 @@ export default function TabHolders() {
       {/* BarChart por categoría — debajo del treemap */}
       <div style={{ marginBottom: 24 }}>
         <div style={{ fontSize: 12, color: "#8899aa", marginBottom: 12, letterSpacing: "0.08em" }}>BTC POR CATEGORÍA</div>
-        <ResponsiveContainer width="100%" height={220}>
-          <BarChart data={barData} layout="vertical" margin={{ left: 80, right: 30 }}>
+        <ResponsiveContainer width="100%" height={isMobile ? 180 : 220}>
+          <BarChart data={barData} layout="vertical" margin={{ left: isMobile ? 65 : 80, right: 30 }}>
             <CartesianGrid strokeDasharray="3 3" stroke="#1a2332" horizontal={false} />
             <XAxis type="number" tick={{ fill: "#667788", fontSize: 10 }} tickFormatter={v => fmt(v)} />
-            <YAxis type="category" dataKey="nombre" tick={{ fill: "#8899aa", fontSize: 11 }} width={75} />
+            <YAxis type="category" dataKey="nombre" tick={{ fill: "#8899aa", fontSize: 11 }} width={isMobile ? 60 : 75} />
             <Tooltip content={({ active, payload }) => (
               <CustomTooltip active={active} payload={payload} render={(d) => (
                 <>
@@ -317,12 +321,14 @@ export default function TabHolders() {
         </div>
       </div>
 
-      <PanelEdu icono="⬡" titulo="Concentración institucional de Bitcoin" color="#818cf8">
-        Los holders institucionales identificados controlan una fracción significativa de la oferta circulante.
-        Los <strong style={{ color: "#818cf8" }}>ETFs al contado</strong> aprobados en enero 2024 se convirtieron en uno de los mayores acumuladores, con BlackRock (IBIT) a la cabeza.
-        Los <strong style={{ color: "#06b6d4" }}>exchanges</strong> custodian BTC de millones de usuarios — su saldo no implica propiedad propia.
-        Las <strong style={{ color: "#f0b429" }}>treasuries corporativas</strong>, lideradas por Strategy (ex MicroStrategy), representan la adopción institucional directa.
-        Los <strong style={{ color: "#ef4444" }}>gobiernos</strong> poseen BTC principalmente por incautaciones a actividades ilícitas.
+      <PanelEdu icono="⬡" titulo="La carrera que no sale en los titulares" color="#818cf8">
+        En enero 2024, BlackRock lanzó un ETF de Bitcoin. En meses, acumuló más BTC que la mayoría de los países. Fidelity le sigue. Strategy lleva años convirtiendo su tesorería. Hasta los gobiernos — que incautan Bitcoin a criminales — prefieren retenerlo antes que venderlo.
+        <br /><br />
+        Mientras tanto, los bancos centrales siguen repitiendo que Bitcoin &quot;no tiene valor intrínseco&quot; — mientras las instituciones que ellos regulan lo acumulan a ritmo récord.
+        <br /><br />
+        Esta tabla muestra solo la fracción identificable. La mayoría del Bitcoin está en billeteras anónimas de individuos que acumulan sin comunicar a regulador alguno.
+        <br /><br />
+        <span style={{ color: "#8899aa", fontStyle: "italic" }}>Los datos institucionales son la punta visible de un fenómeno mucho más profundo — y ambas fuerzas, la visible y la silenciosa, comprimen la oferta desde los dos lados.</span>
         <br /><br />
         <span style={{ color: "#667788", fontSize: 11 }}>
           Este análisis es informativo y no constituye asesoría financiera de ningún tipo. Datos basados en informes públicos (SEC, bitcointreasuries.net) y pueden contener estimaciones.
