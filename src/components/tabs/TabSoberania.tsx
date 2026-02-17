@@ -184,7 +184,7 @@ export default function TabSoberania() {
         border: "1px solid rgba(34,197,94,0.15)",
       }}>
         <div style={{ fontSize: 13, color: "#22c55e", fontWeight: 700, marginBottom: 8 }}>
-          ⚡ Las matemáticas que nadie te enseñó
+          📐 La cuenta que nadie hace
         </div>
         <div style={{ fontSize: 12, color: "#c0c8d0", lineHeight: 1.7 }}>
           Si cada adulto del planeta (~{fmt(ADULTOS_MUNDIAL)}) quisiera Bitcoin, solo hay <strong style={{ color: "#22c55e" }}>{fmt(BTC_SOBERANO)}</strong> disponibles en autocustodia.
@@ -200,14 +200,14 @@ export default function TabSoberania() {
         </div>
       </div>
 
-      <PanelEdu icono="⚡" titulo="Las matemáticas que nadie te enseñó" color="#f0b429">
-        Cada sistema monetario de la historia ha funcionado igual: alguien controla la emisión, y ese alguien eventualmente imprime más de lo prometido. Bitcoin eliminó ese rol. La oferta es fija. Las reglas son código. La auditoría es pública.
+      <PanelEdu icono="🔑" titulo="Tus llaves, tu Bitcoin. Sin llaves, no es tuyo." color="#f0b429">
+        Cuando tu dinero está en un banco, lo que tienes es una promesa: un número en su base de datos. Si el banco quiebra, congela cuentas o el gobierno interviene — ese número puede desaparecer. Ha pasado antes. Pasará de nuevo.
         <br /><br />
-        <strong style={{ color: "#f0b429" }}>Autocustodia</strong> significa que tú — y solo tú — controlas tus llaves privadas. Es la diferencia entre tener un número en la base de datos de un banco y tener un activo que ningún tercero puede congelar, confiscar o diluir.
+        <strong style={{ color: "#f0b429" }}>Autocustodia</strong> cambia esa ecuación. Significa que tú controlas las llaves criptográficas, y nadie más puede mover tus fondos — ni un banco, ni un gobierno, ni un exchange. Es la diferencia entre poseer y que te deban.
         <br /><br />
-        Si los 5.500 millones de adultos del planeta quisieran una fracción, la cuenta no da. Y cada día da menos: los ETFs, corporaciones y gobiernos absorben oferta a un ritmo que se acelera.
+        Cada Bitcoin que sale de un exchange hacia una billetera personal es un voto por la soberanía financiera. Y cada uno que entra a un ETF o treasury corporativa es oferta que deja de estar disponible para individuos.
         <br /><br />
-        <strong style={{ color: "#e0e8f0" }}>No es una opinión — es aritmética verificable en cada bloque que se mina.</strong>
+        <strong style={{ color: "#e0e8f0" }}>La pregunta no es si Bitcoin es escaso — eso ya está resuelto. La pregunta es cuánto queda para quienes decidan tomar control.</strong>
         <br /><br />
         <span style={{ color: "#667788", fontSize: 11 }}>
           Este análisis es informativo y no constituye asesoría financiera de ningún tipo.
