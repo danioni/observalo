@@ -119,20 +119,18 @@ export default function TabSoberania() {
         <div style={{ fontSize: 12, color: "var(--text-secondary)", marginBottom: 16, letterSpacing: "0.08em" }}>
           EMBUDO DE ESCASEZ — DE 21M A LA OFERTA SOBERANA
         </div>
-        <div style={{ display: "flex", flexDirection: "column", gap: 0, alignItems: "center" }}>
+        <div style={{ display: "flex", flexDirection: "column", gap: 0 }}>
           {EMBUDO.map((paso, i) => {
-            // Proporcional real (btc/21M * 100%) — centrado crea el efecto embudo
+            // Proporcional real (btc/21M * 100%)
             const ancho = (paso.btc / BTC_CAP) * 100;
             const esUltimo = i === EMBUDO.length - 1;
-            const labelTexto = i === 0 ? "Cap máximo" : esUltimo ? "⚡ OFERTA SOBERANA" : `${pct(paso.btc)}%`;
             return (
-              <div key={i} style={{ width: "100%" }}>
+              <div key={i}>
                 {/* Resta (entre pasos) */}
                 {i > 0 && (
                   <div style={{
-                    display: "flex", alignItems: "center", justifyContent: "center",
-                    gap: isMobile ? 6 : 10,
-                    padding: isMobile ? "3px 0" : "4px 0", fontSize: isMobile ? 9 : 11,
+                    display: "flex", alignItems: "center", gap: isMobile ? 6 : 12,
+                    padding: isMobile ? "3px 0 3px 8px" : "4px 0 4px 20px", fontSize: isMobile ? 9 : 11,
                   }}>
                     <span style={{ color: paso.color, fontWeight: 600 }}>−</span>
                     <span style={{ color: "var(--text-muted)" }}>{EMBUDO[i].etiqueta}</span>
@@ -141,18 +139,18 @@ export default function TabSoberania() {
                     </span>
                   </div>
                 )}
-                {/* Barra centrada */}
-                <div style={{ display: "flex", justifyContent: "center", width: "100%" }}>
+                {/* Barra + label al lado */}
+                <div style={{ display: "flex", alignItems: "center", gap: isMobile ? 8 : 12 }}>
                   <div style={{
-                    height: esUltimo ? (isMobile ? 36 : 42) : (isMobile ? 26 : 30),
+                    height: esUltimo ? (isMobile ? 36 : 40) : (isMobile ? 26 : 28),
                     width: `${Math.max(ancho, 20)}%`,
+                    flexShrink: 0,
                     background: esUltimo
                       ? "linear-gradient(90deg, #22c55e 0%, #16a34a 100%)"
                       : `linear-gradient(90deg, ${i === 0 ? "var(--bg-embudo)" : "var(--bg-embudo-mid)"} 0%, ${i === 0 ? "var(--bg-embudo-mid)" : "var(--bg-embudo-deep)"} 100%)`,
                     borderRadius: 6,
                     display: "flex", alignItems: "center", justifyContent: "center",
-                    gap: isMobile ? 6 : 12,
-                    padding: "0 10px",
+                    padding: "0 8px",
                     border: esUltimo ? "1px solid #22c55e44" : "1px solid var(--border-embudo)",
                     boxShadow: esUltimo ? "0 0 20px rgba(34,197,94,0.15)" : "none",
                     transition: "all 0.3s ease",
@@ -163,18 +161,19 @@ export default function TabSoberania() {
                       color: esUltimo ? "#fff" : "var(--text-embudo)",
                       fontFamily: "'JetBrains Mono',monospace",
                       letterSpacing: "-0.01em",
+                      whiteSpace: "nowrap",
                     }}>
                       {isMobile ? fmt(paso.btc) : paso.btc.toLocaleString("es-CL")} BTC
                     </span>
-                    <span style={{
-                      fontSize: esUltimo ? (isMobile ? 9 : 11) : (isMobile ? 8 : 10),
-                      color: esUltimo ? "rgba(255,255,255,0.8)" : "var(--text-muted)",
-                      fontWeight: esUltimo ? 600 : 400,
-                      whiteSpace: "nowrap",
-                    }}>
-                      {labelTexto}
-                    </span>
                   </div>
+                  <span style={{
+                    fontSize: esUltimo ? (isMobile ? 10 : 12) : (isMobile ? 9 : 10),
+                    color: esUltimo ? "#22c55e" : "var(--text-muted)",
+                    fontWeight: esUltimo ? 700 : 400,
+                    whiteSpace: "nowrap",
+                  }}>
+                    {i === 0 ? "Cap máximo" : esUltimo ? `⚡ OFERTA SOBERANA · ${pct(paso.btc)}%` : `${pct(paso.btc)}%`}
+                  </span>
                 </div>
               </div>
             );
