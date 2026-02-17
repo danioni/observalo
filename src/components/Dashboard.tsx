@@ -11,7 +11,7 @@ import TabHolders from "@/components/tabs/TabHolders";
 import TabSoberania from "@/components/tabs/TabSoberania";
 
 export default function Dashboard() {
-  const [tab, setTab] = useState("distribucion");
+  const [tab, setTab] = useState("soberania");
 
   return (
     <div style={{

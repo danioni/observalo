@@ -4,8 +4,8 @@ import { useState, useEffect } from "react";
 import { Pestana } from "@/types";
 
 const PESTANAS: Pestana[] = [
-  { id: "distribucion", etiqueta: "DISTRIBUCIÓN", icono: "◆" },
   { id: "soberania", etiqueta: "SOBERANÍA", icono: "⚡" },
+  { id: "distribucion", etiqueta: "DISTRIBUCIÓN", icono: "◆" },
   { id: "ondas", etiqueta: "ONDAS HODL", icono: "◈" },
   { id: "flujos", etiqueta: "FLUJOS EXCHANGES", icono: "⇄" },
   { id: "mineria", etiqueta: "MINERÍA", icono: "⛏" },
