@@ -1,36 +1,42 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Observalo — Observatorio de Bitcoin
 
-## Getting Started
+Análisis de la red Bitcoin, educativo, en español para la comunidad hispanohablante global.
 
-First, run the development server:
+> [observalo.com](https://observalo.com)
+
+<!-- Screenshot placeholder -->
+<!-- ![Observalo Dashboard](./screenshot.png) -->
+
+## Qué muestra
+
+El dashboard se divide en 4 secciones:
+
+- **Distribución** — Cómo se reparte el supply de Bitcoin entre direcciones de distintos tamaños (cohortes marinas: Plancton, Camarón, Ballena, etc.)
+- **Ondas HODL** — Antigüedad de los UTXO en la red. Muestra cuánto BTC lleva meses o años sin moverse — indicador de convicción colectiva
+- **Flujos de Exchanges** — Entradas y salidas de BTC de exchanges centralizados. Salida neta = acumulación. Incluye eventos históricos como el colapso de FTX y la aprobación del ETF
+- **Minería** — Hashrate, dificultad, comisiones y recompensa por bloque. Incluye datos en vivo de mempool.space
+
+## Stack tecnológico
+
+- [Next.js](https://nextjs.org/) — Framework React con App Router
+- [TypeScript](https://www.typescriptlang.org/) — Tipos estáticos
+- [Recharts](https://recharts.org/) — Gráficos
+- [mempool.space API](https://mempool.space/docs/api) — Datos en vivo de minería
+
+## Cómo correr localmente
 
 ```bash
+npm install
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Abre [http://localhost:3000](http://localhost:3000) en tu navegador.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Fuentes de datos
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+- **Datos de minería en vivo**: [mempool.space](https://mempool.space) (hashrate, dificultad, comisiones, último bloque)
+- **Distribución, ondas HODL y flujos**: Datos simulados como placeholder — se conectarán a APIs reales en futuras versiones
 
-## Learn More
+## Licencia
 
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+MIT
