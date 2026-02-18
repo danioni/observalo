@@ -122,7 +122,7 @@ export default function Header({ tab, setTab }: HeaderProps) {
             }}
           >
             <span aria-hidden="true" style={{ marginRight: isMobile ? 4 : 6 }}>{t2.icono}</span>
-            {isMobile ? t2.etiqueta.split(" ")[0] : t2.etiqueta}
+            {t2.etiqueta}
           </a>
         ))}
       </nav>
