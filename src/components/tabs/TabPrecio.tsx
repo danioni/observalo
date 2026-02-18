@@ -57,8 +57,9 @@ function rainbowBase(ts: number): number {
 }
 
 // Band multipliers (9 bands + top boundary)
-// These create even spacing in log space from ~0.1x to ~8x of base
-const BAND_MULTIPLIERS = [0.1, 0.2, 0.35, 0.55, 0.85, 1.3, 2.0, 3.2, 5.0, 8.0];
+// Wide spacing to match historical cycles: peaks in hot bands, bottoms in cold bands.
+// Calibrated against 2013/2017/2021/2025 peaks and 2015/2018/2022 bottoms.
+const BAND_MULTIPLIERS = [0.05, 0.12, 0.28, 0.55, 0.85, 1.25, 1.85, 3.0, 5.5, 12.0];
 
 function calcularBandas(ts: number) {
   const base = rainbowBase(ts);
@@ -329,7 +330,11 @@ export default function TabPrecio() {
     const hace7d = datos.find(d => d.ts >= ult.ts - 7 * 86_400_000) ?? datos[datos.length - 8];
     const hace30d = datos.find(d => d.ts >= ult.ts - 30 * 86_400_000) ?? datos[datos.length - 5];
     const hace1a = datos.find(d => d.ts >= ult.ts - 365 * 86_400_000);
-    const ath = Math.max(...datos.map(d => d.precio));
+    const athData = Math.max(...datos.map(d => d.precio));
+    // blockchain.info reports daily averages which understate exchange ATHs.
+    // Known ATH: $126,211 (6 Oct 2025). Update when new ATH is reached.
+    const ATH_KNOWN = 126211;
+    const ath = Math.max(athData, ATH_KNOWN);
 
     return {
       cambio7d: hace7d ? ((ult.precio - hace7d.precio) / hace7d.precio * 100) : null,
@@ -575,6 +580,50 @@ export default function TabPrecio() {
         <span style={{ color: "var(--text-muted)", fontSize: 11 }}>
           Este análisis es informativo. No constituye asesoría financiera. Precio promedio de mercados vía blockchain.info.
         </span>
+      </PanelEdu>
+
+      {/* Technical coefficients detail for nerds */}
+      <PanelEdu icono="🔢" titulo="Detalle técnico del modelo" color="#a855f7">
+        <details style={{ cursor: "pointer" }}>
+          <summary style={{ fontSize: 11, color: "#a855f7", fontWeight: 600, marginBottom: 8 }}>
+            Ver coeficientes de regresión y bandas
+          </summary>
+          <div style={{ marginTop: 10, fontFamily: "monospace", fontSize: 11, lineHeight: 1.8 }}>
+            <strong style={{ color: "var(--text-primary)" }}>Modelo:</strong>{" "}
+            <code>log₁₀(precio) = A × ln(días) + B</code>
+            <br />
+            <strong style={{ color: "var(--text-primary)" }}>Génesis:</strong> 3 enero 2009 (día 0)
+            <br />
+            <strong style={{ color: "var(--text-primary)" }}>A =</strong> {A} &nbsp;|&nbsp;{" "}
+            <strong style={{ color: "var(--text-primary)" }}>B =</strong> {B}
+            <br /><br />
+            <strong style={{ color: "var(--text-primary)" }}>Multiplicadores de banda</strong> (sobre la curva base):
+            <table style={{ marginTop: 6, borderCollapse: "collapse", width: "100%", maxWidth: 480 }}>
+              <thead>
+                <tr style={{ borderBottom: "1px solid var(--border-subtle)" }}>
+                  <th style={{ textAlign: "left", padding: "4px 8px", fontSize: 10, color: "var(--text-muted)" }}>#</th>
+                  <th style={{ textAlign: "left", padding: "4px 8px", fontSize: 10, color: "var(--text-muted)" }}>Banda</th>
+                  <th style={{ textAlign: "left", padding: "4px 8px", fontSize: 10, color: "var(--text-muted)" }}>Desde</th>
+                  <th style={{ textAlign: "left", padding: "4px 8px", fontSize: 10, color: "var(--text-muted)" }}>Hasta</th>
+                </tr>
+              </thead>
+              <tbody>
+                {BANDAS_RAINBOW.map((b, i) => (
+                  <tr key={b.id} style={{ borderBottom: "1px solid var(--border-subtle)" }}>
+                    <td style={{ padding: "3px 8px", color: b.color, fontWeight: 700 }}>{i + 1}</td>
+                    <td style={{ padding: "3px 8px", color: b.color }}>{b.nombre}</td>
+                    <td style={{ padding: "3px 8px" }}>{BAND_MULTIPLIERS[i].toFixed(2)}×</td>
+                    <td style={{ padding: "3px 8px" }}>{BAND_MULTIPLIERS[i + 1].toFixed(2)}×</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+            <br />
+            <span style={{ color: "var(--text-muted)", fontSize: 10 }}>
+              Curva base hoy: ${ultimo ? "$" + Math.round(rainbowBase(ultimo.ts)).toLocaleString("es-CL") : "—"} · Ratio actual: {ultimo ? (precioActual / rainbowBase(ultimo.ts)).toFixed(2) + "×" : "—"}
+            </span>
+          </div>
+        </details>
       </PanelEdu>
 
       {!esSimulado && (
