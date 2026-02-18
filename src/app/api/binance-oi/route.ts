@@ -19,19 +19,40 @@ interface BinanceOIData {
   actual: OIActual;
 }
 
+const HEADERS = {
+  "User-Agent": "Mozilla/5.0 (compatible; Observalo/1.0)",
+  Accept: "application/json",
+};
+
+async function fetchWithRetry(url: string, retries = 2): Promise<Response> {
+  let lastErr: Error | null = null;
+  for (let i = 0; i <= retries; i++) {
+    try {
+      const res = await fetch(url, {
+        signal: AbortSignal.timeout(TIMEOUT),
+        headers: HEADERS,
+      });
+      if (res.ok) return res;
+      // 403/451 = geo-block, don't retry
+      if (res.status === 403 || res.status === 451) throw new Error(`HTTP ${res.status} (blocked)`);
+      lastErr = new Error(`HTTP ${res.status}`);
+    } catch (err) {
+      lastErr = err instanceof Error ? err : new Error(String(err));
+    }
+    if (i < retries) await new Promise(r => setTimeout(r, 500 * (i + 1)));
+  }
+  throw lastErr ?? new Error("fetch failed");
+}
+
 async function fetchBinanceOI(): Promise<BinanceOIData> {
   const [histRes, actualRes] = await Promise.all([
-    fetch(
-      "https://fapi.binance.com/futures/data/openInterestHist?symbol=BTCUSDT&period=1d&limit=90",
-      { signal: AbortSignal.timeout(TIMEOUT) }
+    fetchWithRetry(
+      "https://fapi.binance.com/futures/data/openInterestHist?symbol=BTCUSDT&period=1d&limit=90"
     ),
-    fetch(
-      "https://fapi.binance.com/fapi/v1/openInterest?symbol=BTCUSDT",
-      { signal: AbortSignal.timeout(TIMEOUT) }
+    fetchWithRetry(
+      "https://fapi.binance.com/fapi/v1/openInterest?symbol=BTCUSDT"
     ),
   ]);
-
-  if (!histRes.ok || !actualRes.ok) throw new Error("HTTP error");
 
   const hist: OIHistEntry[] = await histRes.json();
   const actual: OIActual = await actualRes.json();

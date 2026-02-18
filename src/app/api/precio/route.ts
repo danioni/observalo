@@ -13,12 +13,33 @@ interface BlockchainResponse {
   values: PricePoint[];
 }
 
+const HEADERS = {
+  "User-Agent": "Mozilla/5.0 (compatible; Observalo/1.0)",
+  Accept: "application/json",
+};
+
+async function fetchWithRetry(url: string, retries = 2): Promise<Response> {
+  let lastErr: Error | null = null;
+  for (let i = 0; i <= retries; i++) {
+    try {
+      const res = await fetch(url, {
+        signal: AbortSignal.timeout(TIMEOUT),
+        headers: HEADERS,
+      });
+      if (res.ok) return res;
+      lastErr = new Error(`HTTP ${res.status}`);
+    } catch (err) {
+      lastErr = err instanceof Error ? err : new Error(String(err));
+    }
+    if (i < retries) await new Promise(r => setTimeout(r, 500 * (i + 1)));
+  }
+  throw lastErr ?? new Error("fetch failed");
+}
+
 async function fetchPrecio(): Promise<PricePoint[]> {
-  const res = await fetch(
-    "https://api.blockchain.info/charts/market-price?timespan=all&format=json&sampled=false",
-    { signal: AbortSignal.timeout(TIMEOUT) }
+  const res = await fetchWithRetry(
+    "https://api.blockchain.info/charts/market-price?timespan=all&format=json&sampled=false"
   );
-  if (!res.ok) throw new Error(`HTTP ${res.status}`);
   const json: BlockchainResponse = await res.json();
   return json.values || [];
 }

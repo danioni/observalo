@@ -11,12 +11,33 @@ interface DeribitInstrument {
   mark_price?: number;
 }
 
+const HEADERS = {
+  "User-Agent": "Mozilla/5.0 (compatible; Observalo/1.0)",
+  Accept: "application/json",
+};
+
+async function fetchWithRetry(url: string, retries = 2): Promise<Response> {
+  let lastErr: Error | null = null;
+  for (let i = 0; i <= retries; i++) {
+    try {
+      const res = await fetch(url, {
+        signal: AbortSignal.timeout(TIMEOUT),
+        headers: HEADERS,
+      });
+      if (res.ok) return res;
+      lastErr = new Error(`HTTP ${res.status}`);
+    } catch (err) {
+      lastErr = err instanceof Error ? err : new Error(String(err));
+    }
+    if (i < retries) await new Promise(r => setTimeout(r, 500 * (i + 1)));
+  }
+  throw lastErr ?? new Error("fetch failed");
+}
+
 async function fetchDeribit(): Promise<DeribitInstrument[]> {
-  const res = await fetch(
-    "https://deribit.com/api/v2/public/get_book_summary_by_currency?currency=BTC&kind=option",
-    { signal: AbortSignal.timeout(TIMEOUT) }
+  const res = await fetchWithRetry(
+    "https://www.deribit.com/api/v2/public/get_book_summary_by_currency?currency=BTC&kind=option"
   );
-  if (!res.ok) throw new Error(`HTTP ${res.status}`);
   const json = await res.json();
   const result: DeribitInstrument[] = (json.result || []).map(
     (item: { instrument_name: string; open_interest: number; underlying_price?: number; mark_price?: number }) => ({
