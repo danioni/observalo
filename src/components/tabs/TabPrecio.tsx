@@ -58,8 +58,9 @@ function rainbowBase(ts: number): number {
 
 // Band multipliers (9 bands + top boundary)
 // Wide spacing to match historical cycles: peaks in hot bands, bottoms in cold bands.
-// Calibrated against 2013/2017/2021/2025 peaks and 2015/2018/2022 bottoms.
-const BAND_MULTIPLIERS = [0.05, 0.12, 0.28, 0.55, 0.85, 1.25, 1.85, 3.0, 5.5, 12.0];
+// Calibrated against 2013/2017/2021/2025 peaks, Oct-2025 ATH, and 2015/2018/2022 bottoms.
+// HODL!/¿Burbuja? boundary at 1.65× ensures recent ATH ($126k) reaches hot zone.
+const BAND_MULTIPLIERS = [0.05, 0.12, 0.28, 0.55, 0.85, 1.25, 1.65, 2.8, 5.0, 12.0];
 
 function calcularBandas(ts: number) {
   const base = rainbowBase(ts);
