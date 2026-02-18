@@ -10,6 +10,7 @@ import TabMineria from "@/components/tabs/TabMineria";
 import TabHolders from "@/components/tabs/TabHolders";
 import TabSoberania from "@/components/tabs/TabSoberania";
 import TabDerivados from "@/components/tabs/TabDerivados";
+import TabPrecio from "@/components/tabs/TabPrecio";
 import { useBreakpoint } from "@/hooks/useBreakpoint";
 
 export default function Dashboard() {
@@ -34,6 +35,7 @@ export default function Dashboard() {
         {tab === "flujos" && <TabFlujos />}
         {tab === "acumuladores" && <TabHolders />}
         {tab === "escasez" && <TabSoberania />}
+        {tab === "precio" && <TabPrecio />}
         {tab === "derivados" && <TabDerivados />}
       </div>
       <Footer />

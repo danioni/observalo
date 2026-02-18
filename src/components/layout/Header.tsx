@@ -13,6 +13,7 @@ const PESTANAS: Pestana[] = [
   { id: "flujos", etiqueta: "FLUJOS", icono: "⇄" },
   { id: "acumuladores", etiqueta: "ACUMULADORES", icono: "⬡" },
   { id: "escasez", etiqueta: "ESCASEZ", icono: "⚡" },
+  { id: "precio", etiqueta: "PRECIO", icono: "₿" },
   { id: "derivados", etiqueta: "DERIVADOS", icono: "⟐" },
 ];
 
