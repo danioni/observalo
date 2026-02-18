@@ -2,7 +2,8 @@
 
 import { useState, useMemo } from "react";
 import {
-  BarChart, Bar, AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip,
+  BarChart, Bar, AreaChart, Area, LineChart, Line,
+  XAxis, YAxis, CartesianGrid, Tooltip,
   ResponsiveContainer, Cell, ReferenceLine,
 } from "recharts";
 import { DATOS_DISTRIBUCION } from "@/data/distribucion";
@@ -309,25 +310,29 @@ export default function TabDistribucion() {
               </div>
             )}
 
-            {/* ── Chart de direcciones ── */}
+            {/* ── Chart de direcciones (líneas, escala log) ── */}
             <div style={{ marginTop: 32 }}>
-              <div style={{ fontSize: 12, color: "var(--text-secondary)", marginBottom: 12, letterSpacing: "0.08em" }}>DIRECCIONES POR COHORTE (2020–2026)</div>
+              <div style={{ fontSize: 12, color: "var(--text-secondary)", marginBottom: 12, letterSpacing: "0.08em" }}>DIRECCIONES POR COHORTE — ESCALA LOG (2020–2026)</div>
               <ResponsiveContainer width="100%" height={isMobile ? 280 : 360}>
-                <AreaChart data={filtrado} margin={{ top: 10, right: 20, bottom: isMobile ? 12 : 20, left: isMobile ? 10 : 20 }}>
+                <LineChart data={filtrado} margin={{ top: 10, right: 20, bottom: isMobile ? 12 : 20, left: isMobile ? 10 : 20 }}>
                   <CartesianGrid strokeDasharray="3 3" stroke="var(--border-grid)" />
                   <XAxis dataKey="fecha" tick={{ fill: "var(--text-muted)", fontSize: 9 }} interval={Math.max(1, Math.floor(filtrado.length / (isMobile ? 6 : 10)))} angle={-30} textAnchor="end" />
-                  <YAxis tick={{ fill: "var(--text-muted)", fontSize: 10 }} tickFormatter={v => fmt(v)} width={isMobile ? 45 : 55} />
+                  <YAxis
+                    scale="log" domain={["auto", "auto"]} allowDataOverflow
+                    tick={{ fill: "var(--text-muted)", fontSize: 10 }}
+                    tickFormatter={v => fmt(v)} width={isMobile ? 50 : 60}
+                  />
                   <Tooltip content={({ active, payload, label }) => {
                     if (!active || !payload?.length) return null;
                     return (
                       <div style={{ background: "var(--tooltip-bg)", border: "1px solid var(--border-subtle)", borderRadius: 8, padding: "10px 14px", backdropFilter: "blur(12px)" }}>
                         <div style={{ fontSize: 11, color: "var(--text-tooltip)", marginBottom: 6 }}>{label}</div>
-                        {payload.slice().reverse().map((p, i) => (
+                        {payload.map((p, i) => (
                           <div key={i} style={{ fontSize: 11, display: "flex", gap: 6, alignItems: "center" }}>
-                            <div style={{ width: 8, height: 8, borderRadius: 2, background: p.fill || p.color }} />
+                            <div style={{ width: 8, height: 8, borderRadius: 2, background: p.stroke || p.color }} />
                             <span style={{ color: "var(--text-secondary)", width: 90 }}>{NOMBRES_DIST[p.name as string] || p.name}</span>
                             <span style={{ color: "var(--text-primary)", fontFamily: "monospace" }}>
-                              {typeof p.value === "number" ? fmt(p.value) : p.value}
+                              {typeof p.value === "number" ? fmt(Math.round(p.value)) : p.value}
                             </span>
                           </div>
                         ))}
@@ -335,12 +340,12 @@ export default function TabDistribucion() {
                     );
                   }} />
                   {BANDAS_DIR.map((b, i) => (
-                    <Area key={b} type="monotone" dataKey={b} stackId="1" fill={COLORES_DIST[i]} stroke="none" fillOpacity={0.85} name={b} />
+                    <Line key={b} type="monotone" dataKey={b} stroke={COLORES_DIST[i]} strokeWidth={2} dot={false} name={b} />
                   ))}
                   {puntoActual && (
                     <ReferenceLine x={puntoActual.fecha} stroke="#f0b42980" strokeDasharray="5 5" />
                   )}
-                </AreaChart>
+                </LineChart>
               </ResponsiveContainer>
             </div>
 
