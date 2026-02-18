@@ -443,14 +443,6 @@ export default function TabPrecio() {
 
         <ResponsiveContainer width="100%" height={isMobile ? 340 : 440}>
           <ComposedChart data={filtrado} margin={{ top: 10, right: 20, bottom: 10, left: isMobile ? 10 : 20 }}>
-            <defs>
-              {BANDAS_RAINBOW.map((banda) => (
-                <linearGradient key={banda.id} id={`grad_${banda.id}`} x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stopColor={banda.color} stopOpacity={0.4} />
-                  <stop offset="100%" stopColor={banda.color} stopOpacity={0.15} />
-                </linearGradient>
-              ))}
-            </defs>
             <CartesianGrid strokeDasharray="3 3" stroke="var(--border-grid)" />
             <XAxis
               dataKey="fecha"
@@ -484,15 +476,15 @@ export default function TabPrecio() {
               }} />
             )} />
 
-            {/* Rainbow bands — rendered bottom to top */}
-            {BANDAS_RAINBOW.map((banda) => (
+            {/* Rainbow bands — top band first so lower bands paint over it */}
+            {[...BANDAS_RAINBOW].reverse().map((banda) => (
               <Area
                 key={banda.id}
                 type="monotone"
                 dataKey={`${banda.id}_top`}
                 stroke="none"
-                fill={`url(#grad_${banda.id})`}
-                fillOpacity={1}
+                fill={banda.color}
+                fillOpacity={0.7}
                 baseLine={0}
                 dot={false}
                 isAnimationActive={false}
