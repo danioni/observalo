@@ -88,6 +88,19 @@ export interface Pestana {
 
 export type BandaOndas = "<1m" | "1-3m" | "3-6m" | "6-12m" | "1-2a" | "2-3a" | "3-5a" | "5-7a" | "7-10a" | "10a+";
 
+export type BandaDistribucion = "<1" | "1-10" | "10-100" | "100-1K" | "1K-10K" | ">10K";
+
+export interface DatosDistribucionHistorica {
+  fecha: string;
+  idx: number;
+  "<1": number;
+  "1-10": number;
+  "10-100": number;
+  "100-1K": number;
+  "1K-10K": number;
+  ">10K": number;
+}
+
 export type CategoriaHolder = "treasury" | "minero" | "etf" | "exchange" | "gobierno" | "protocolo";
 
 export interface Holder {

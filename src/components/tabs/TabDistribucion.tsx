@@ -1,10 +1,13 @@
 "use client";
 
+import { useState, useMemo } from "react";
 import {
-  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip,
-  ResponsiveContainer, Cell,
+  BarChart, Bar, AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip,
+  ResponsiveContainer, Cell, ReferenceLine,
 } from "recharts";
 import { DATOS_DISTRIBUCION } from "@/data/distribucion";
+import { BANDAS_DIST, COLORES_DIST, NOMBRES_DIST } from "@/data/distribucion-historica";
+import { useDistribucionHistorica } from "@/hooks/useDistribucionHistorica";
 import { fmt } from "@/utils/format";
 import Metrica from "@/components/ui/Metrica";
 import Senal from "@/components/ui/Senal";
@@ -14,9 +17,29 @@ import CustomTooltip from "@/components/ui/CustomTooltip";
 import { useBreakpoint } from "@/hooks/useBreakpoint";
 import { NARRATIVA } from "@/data/narrativa";
 
+function Btn({ items, val, set, color }: {
+  items: { id: string; l: string }[];
+  val: string;
+  set: (v: string) => void;
+  color: string;
+}) {
+  return (
+    <div style={{ display: "flex", gap: 0, background: "var(--bg-surface)", borderRadius: 6, border: "1px solid var(--border-subtle)", overflow: "hidden" }}>
+      {items.map(r => (
+        <button key={r.id} onClick={() => set(r.id)} style={{
+          padding: "6px 12px", border: "none", cursor: "pointer", fontSize: 10, fontWeight: 600, letterSpacing: "0.06em",
+          background: val === r.id ? `${color}22` : "transparent", color: val === r.id ? color : "var(--text-muted)", transition: "all 0.15s ease",
+        }}>{r.l}</button>
+      ))}
+    </div>
+  );
+}
+
 export default function TabDistribucion() {
   const { isMobile, isDesktop } = useBreakpoint();
+  const { datos: datosHist, esReal, cargando, error, stale, reintentar } = useDistribucionHistorica();
 
+  // ── Snapshot estático (sección original) ──
   const totalBTC = DATOS_DISTRIBUCION.reduce((s, d) => s + d.btcRetenido, 0);
   const totalDir = DATOS_DISTRIBUCION.reduce((s, d) => s + d.direcciones, 0);
   const concTop = DATOS_DISTRIBUCION.filter(d => ["Ballena", "Jorobada", "Mega"].includes(d.cohorte)).reduce((s, d) => s + d.pctSupply, 0);
@@ -25,6 +48,40 @@ export default function TabDistribucion() {
 
   const chartHeight = isMobile ? 280 : 340;
   const chartLeftMargin = isMobile ? 45 : 75;
+
+  // ── Histórico ──
+  const [rango, setRango] = useState("todo");
+  const [posSlider, setPosSlider] = useState(-1); // -1 = último
+
+  const filtrado = useMemo(() => {
+    if (rango === "todo" || datosHist.length === 0) return datosHist;
+    const corte = new Date();
+    if (rango === "1a") corte.setFullYear(corte.getFullYear() - 1);
+    else if (rango === "2a") corte.setFullYear(corte.getFullYear() - 2);
+    else if (rango === "5a") corte.setFullYear(corte.getFullYear() - 5);
+    // Estimar el índice de corte basado en meses
+    const mesesAtras = rango === "1a" ? 12 : rango === "2a" ? 24 : 60;
+    const inicio = Math.max(0, datosHist.length - mesesAtras);
+    return datosHist.slice(inicio);
+  }, [datosHist, rango]);
+
+  const sliderMax = filtrado.length - 1;
+  const sliderVal = posSlider < 0 || posSlider > sliderMax ? sliderMax : posSlider;
+  const puntoActual = filtrado[sliderVal];
+
+  // Calcular % normalizados del punto actual para el panel de detalle
+  const detalleActual = useMemo(() => {
+    if (!puntoActual) return [];
+    const total = BANDAS_DIST.reduce((s, b) => s + puntoActual[b], 0);
+    if (total === 0) return [];
+    return BANDAS_DIST.map((b, i) => ({
+      banda: b,
+      nombre: NOMBRES_DIST[b],
+      btc: puntoActual[b],
+      pct: (puntoActual[b] / total) * 100,
+      color: COLORES_DIST[i],
+    }));
+  }, [puntoActual]);
 
   return (
     <div>
@@ -93,6 +150,7 @@ export default function TabDistribucion() {
         </div>
       </div>
 
+      {/* ── Tabla de detalle (snapshot) ── */}
       <div style={{ marginTop: 24 }}>
         <div style={{ fontSize: 12, color: "var(--text-secondary)", marginBottom: 12, letterSpacing: "0.08em" }}>DETALLE POR COHORTE</div>
         <div style={{ overflowX: "auto" }}>
@@ -131,6 +189,147 @@ export default function TabDistribucion() {
             </tbody>
           </table>
         </div>
+      </div>
+
+      {/* ════════════════════════════════════════════════════════════
+           SECCIÓN HISTÓRICA — Evolución de distribución por cohorte
+         ════════════════════════════════════════════════════════════ */}
+      <div style={{ marginTop: 40, paddingTop: 32, borderTop: "1px solid var(--border-subtle)" }}>
+        <div style={{ display: "flex", flexDirection: isMobile ? "column" : "row", justifyContent: "space-between", alignItems: isMobile ? "flex-start" : "center", marginBottom: 16, gap: isMobile ? 10 : 0 }}>
+          <div style={{ fontSize: 12, color: "var(--text-secondary)", letterSpacing: "0.08em" }}>EVOLUCIÓN HISTÓRICA POR COHORTE (2020–2026)</div>
+          <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
+            <Btn
+              items={[
+                { id: "1a", l: "1A" }, { id: "2a", l: "2A" },
+                { id: "5a", l: "5A" }, { id: "todo", l: "TODO" },
+              ]}
+              val={rango}
+              set={(v) => { setRango(v); setPosSlider(-1); }}
+              color="#f0b429"
+            />
+          </div>
+        </div>
+
+        {/* Estado de carga / error / fuente */}
+        <div style={{ display: "flex", gap: 8, marginBottom: 16, flexWrap: "wrap" }}>
+          {cargando && <Senal etiqueta="DATOS" estado="Cargando datos reales..." color="var(--text-secondary)" />}
+          {error && !cargando && (
+            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+              <Senal etiqueta="ERROR" estado={error} color="#ef4444" />
+              <button onClick={reintentar} style={{ padding: "4px 12px", borderRadius: 4, border: "1px solid var(--border-subtle)", background: "var(--bg-surface)", color: "#f0b429", fontSize: 10, fontWeight: 600, cursor: "pointer" }}>Reintentar</button>
+            </div>
+          )}
+          {!cargando && !error && <Senal etiqueta="FUENTE" estado={esReal ? "bitcoin-data.com (datos reales)" : "Datos simulados (fallback)"} color={esReal ? "#f0b429" : "var(--text-muted)"} />}
+          {stale && (
+            <span style={{ display: "inline-flex", alignItems: "center", padding: "2px 8px", borderRadius: 4, fontSize: 10, fontWeight: 600, background: "rgba(234,179,8,0.15)", color: "#eab308" }}>
+              desactualizado
+            </span>
+          )}
+        </div>
+
+        {/* Chart de áreas apiladas al 100% */}
+        {filtrado.length > 0 && (
+          <>
+            <ResponsiveContainer width="100%" height={isMobile ? 320 : 420}>
+              <AreaChart data={filtrado} margin={{ top: 10, right: 20, bottom: isMobile ? 12 : 20, left: 20 }} stackOffset="expand">
+                <CartesianGrid strokeDasharray="3 3" stroke="var(--border-grid)" />
+                <XAxis dataKey="fecha" tick={{ fill: "var(--text-muted)", fontSize: 9 }} interval={Math.max(1, Math.floor(filtrado.length / (isMobile ? 6 : 10)))} angle={-30} textAnchor="end" />
+                <YAxis tick={{ fill: "var(--text-muted)", fontSize: 10 }} tickFormatter={v => (v * 100).toFixed(0) + "%"} />
+                <Tooltip content={({ active, payload, label }) => {
+                  if (!active || !payload?.length) return null;
+                  return (
+                    <div style={{ background: "var(--tooltip-bg)", border: "1px solid var(--border-subtle)", borderRadius: 8, padding: "10px 14px", backdropFilter: "blur(12px)" }}>
+                      <div style={{ fontSize: 11, color: "var(--text-tooltip)", marginBottom: 6 }}>{label}</div>
+                      {payload.slice().reverse().map((p, i) => (
+                        <div key={i} style={{ fontSize: 11, display: "flex", gap: 6, alignItems: "center" }}>
+                          <div style={{ width: 8, height: 8, borderRadius: 2, background: p.fill || p.color }} />
+                          <span style={{ color: "var(--text-secondary)", width: 90 }}>{NOMBRES_DIST[p.name as string] || p.name}</span>
+                          <span style={{ color: "var(--text-primary)", fontFamily: "monospace" }}>
+                            {typeof p.value === "number" ? fmt(p.value) : p.value} BTC
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  );
+                }} />
+                {BANDAS_DIST.map((b, i) => (
+                  <Area key={b} type="monotone" dataKey={b} stackId="1" fill={COLORES_DIST[i]} stroke="none" fillOpacity={0.85} name={b} />
+                ))}
+                {puntoActual && (
+                  <ReferenceLine x={puntoActual.fecha} stroke="#f0b42980" strokeDasharray="5 5" />
+                )}
+              </AreaChart>
+            </ResponsiveContainer>
+
+            {/* Slider temporal */}
+            <div style={{ margin: "12px 0 8px", padding: "0 20px" }}>
+              <input
+                type="range"
+                min={0}
+                max={sliderMax}
+                value={sliderVal}
+                onChange={(e) => setPosSlider(Number(e.target.value))}
+                style={{
+                  width: "100%", cursor: "pointer",
+                  accentColor: "#f0b429",
+                }}
+              />
+              <div style={{ display: "flex", justifyContent: "space-between", fontSize: 10, color: "var(--text-muted)", marginTop: 2 }}>
+                <span>{filtrado[0]?.fecha}</span>
+                <span style={{ color: "#f0b429", fontWeight: 600, fontSize: 11 }}>
+                  {puntoActual?.fecha ?? "—"}
+                </span>
+                <span>{filtrado[sliderMax]?.fecha}</span>
+              </div>
+            </div>
+
+            {/* Panel de detalle del punto seleccionado */}
+            {detalleActual.length > 0 && (
+              <div style={{
+                display: "grid",
+                gridTemplateColumns: isMobile ? "repeat(2, 1fr)" : "repeat(3, 1fr)",
+                gap: 8, marginTop: 12,
+                background: "var(--bg-surface)", borderRadius: 8,
+                border: "1px solid var(--border-subtle)", padding: 12,
+              }}>
+                {detalleActual.map((d) => (
+                  <div key={d.banda} style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                    <div style={{ width: 10, height: 10, borderRadius: 2, background: d.color, flexShrink: 0 }} />
+                    <div style={{ minWidth: 0 }}>
+                      <div style={{ fontSize: 10, color: "var(--text-muted)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{d.nombre}</div>
+                      <div style={{ fontSize: 12, color: "var(--text-primary)", fontFamily: "monospace", fontWeight: 600 }}>
+                        {d.pct.toFixed(1)}%
+                      </div>
+                      <div style={{ fontSize: 10, color: "var(--text-secondary)", fontFamily: "monospace" }}>
+                        {fmt(Math.round(d.btc))} BTC
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {/* Leyenda */}
+            <div style={{ display: "flex", justifyContent: "center", gap: 12, flexWrap: "wrap", marginTop: 16 }}>
+              {BANDAS_DIST.map((b, i) => (
+                <div key={b} style={{ display: "flex", alignItems: "center", gap: 4 }}>
+                  <div style={{ width: 10, height: 10, borderRadius: 2, background: COLORES_DIST[i] }} />
+                  <span style={{ fontSize: 10, color: "var(--text-secondary)" }}>{NOMBRES_DIST[b]}</span>
+                </div>
+              ))}
+            </div>
+          </>
+        )}
+
+        {/* Estado vacío mientras carga */}
+        {filtrado.length === 0 && cargando && (
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "center", height: 300, color: "var(--text-muted)", fontSize: 14 }}>
+            <div style={{ textAlign: "center" }}>
+              <div style={{ fontSize: 24, marginBottom: 8 }}>◈</div>
+              Cargando datos históricos de distribución...
+            </div>
+          </div>
+        )}
       </div>
 
       <PanelEdu icono={NARRATIVA.tabs.distribucion.panelEdu.icono} titulo={NARRATIVA.tabs.distribucion.panelEdu.titulo} color={NARRATIVA.tabs.distribucion.panelEdu.color}>
