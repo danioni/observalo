@@ -18,16 +18,17 @@ import CustomTooltip from "@/components/ui/CustomTooltip";
    ══════════════════════════════════════════════════════════════════ */
 
 // Rainbow bands from bottom (cold) to top (hot)
+// Colors matched to BlockchainCenter.net original rainbow
 const BANDAS_RAINBOW = [
-  { id: "b0", nombre: "Básicamente una ganga", color: "#0d47a1" },
-  { id: "b1", nombre: "Compra", color: "#1565c0" },
-  { id: "b2", nombre: "Acumula", color: "#00897b" },
-  { id: "b3", nombre: "Precio justo", color: "#2e7d32" },
-  { id: "b4", nombre: "Todavía barato", color: "#9e9d24" },
-  { id: "b5", nombre: "HODL!", color: "#f9a825" },
-  { id: "b6", nombre: "¿Es una burbuja?", color: "#ef6c00" },
-  { id: "b7", nombre: "FOMO intenso", color: "#d84315" },
-  { id: "b8", nombre: "Burbuja máxima", color: "#b71c1c" },
+  { id: "b0", nombre: "Básicamente una ganga", color: "#4527A0" },  // deep purple
+  { id: "b1", nombre: "Compra", color: "#1565C0" },                 // blue
+  { id: "b2", nombre: "Acumula", color: "#00897B" },                // teal
+  { id: "b3", nombre: "Precio justo", color: "#2E7D32" },           // green
+  { id: "b4", nombre: "Todavía barato", color: "#9ACD32" },         // yellow-green
+  { id: "b5", nombre: "HODL!", color: "#FFD600" },                  // yellow
+  { id: "b6", nombre: "¿Es una burbuja?", color: "#FF9800" },       // orange
+  { id: "b7", nombre: "FOMO intenso", color: "#F44336" },           // red
+  { id: "b8", nombre: "Burbuja máxima", color: "#B71C1C" },         // dark red
 ];
 
 /* ══════════════════════════════════════════════════════════════════
@@ -484,7 +485,7 @@ export default function TabPrecio() {
                 dataKey={`${banda.id}_top`}
                 stroke="none"
                 fill={banda.color}
-                fillOpacity={0.7}
+                fillOpacity={0.85}
                 baseLine={0}
                 dot={false}
                 isAnimationActive={false}
