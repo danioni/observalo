@@ -4,26 +4,45 @@ import type { ApiEnvelope } from "@/types";
 
 export interface DistHistApiItem {
   fecha: string;
+  // BTC held per cohort
   "<1": number;
   "1-10": number;
   "10-100": number;
   "100-1K": number;
   "1K-10K": number;
   ">10K": number;
+  // Address count per cohort
+  "dir_<1": number;
+  "dir_1-10": number;
+  "dir_10-100": number;
+  "dir_100-1K": number;
+  "dir_1K-10K": number;
+  "dir_>10K": number;
 }
 
 interface RawEntry { d: string; [key: string]: string }
 
-const ENDPOINTS: { key: keyof Omit<DistHistApiItem, "fecha">; url: string; field: string }[] = [
-  { key: "<1",     url: "/v1/coins-addr-1-BTC",       field: "coinsAddr1btc" },
-  { key: "1-10",   url: "/v1/coins-addr-10-1-BTC",    field: "coinsAddr101btc" },
-  { key: "10-100", url: "/v1/coins-addr-100-10-BTC",   field: "coinsAddr10010btc" },
-  { key: "100-1K", url: "/v1/coins-addr-1K-100-BTC",   field: "coinsAddr1k100btc" },
-  { key: "1K-10K", url: "/v1/coins-addr-10K-1K-BTC",   field: "coinsAddr10k1kbtc" },
-  { key: ">10K",   url: "/v1/coins-addr-10K-BTC",      field: "coinsAddr10Kbtc" },
+interface EndpointDef { url: string; field: string }
+
+const COINS_ENDPOINTS: EndpointDef[] = [
+  { url: "/v1/coins-addr-1-BTC",       field: "coinsAddr1btc" },
+  { url: "/v1/coins-addr-10-1-BTC",    field: "coinsAddr101btc" },
+  { url: "/v1/coins-addr-100-10-BTC",  field: "coinsAddr10010btc" },
+  { url: "/v1/coins-addr-1K-100-BTC",  field: "coinsAddr1k100btc" },
+  { url: "/v1/coins-addr-10K-1K-BTC",  field: "coinsAddr10k1kbtc" },
+  { url: "/v1/coins-addr-10K-BTC",     field: "coinsAddr10Kbtc" },
 ];
 
-async function fetchOne(endpoint: typeof ENDPOINTS[number]): Promise<Map<string, number>> {
+const BALANCE_ENDPOINTS: EndpointDef[] = [
+  { url: "/v1/balance-addr-1-BTC",       field: "balanceAddr1btc" },
+  { url: "/v1/balance-addr-10-1-BTC",    field: "balanceAddr101btc" },
+  { url: "/v1/balance-addr-100-10-BTC",  field: "balanceAddr10010btc" },
+  { url: "/v1/balance-addr-1K-100-BTC",  field: "balanceAddr1k100btc" },
+  { url: "/v1/balance-addr-10K-1K-BTC",  field: "balanceAddr10k1kbtc" },
+  { url: "/v1/balance-addr-10K-BTC",     field: "balanceAddr10Kbtc" },
+];
+
+async function fetchOne(endpoint: EndpointDef): Promise<Map<string, number>> {
   const res = await fetch(
     `https://bitcoin-data.com${endpoint.url}?startday=2020-01-01&size=2200`,
     { signal: AbortSignal.timeout(15000) }
@@ -47,9 +66,8 @@ async function fetchOne(endpoint: typeof ENDPOINTS[number]): Promise<Map<string,
   return map;
 }
 
-function combine(maps: Map<string, number>[]): DistHistApiItem[] {
-  // Collect all dates present in at least the first endpoint
-  const dates = [...maps[0].keys()].sort();
+function combine(coinsMaps: Map<string, number>[], balanceMaps: Map<string, number>[]): DistHistApiItem[] {
+  const dates = [...coinsMaps[0].keys()].sort();
 
   // Sample to ~1 per month
   const monthly: string[] = [];
@@ -66,15 +84,20 @@ function combine(maps: Map<string, number>[]): DistHistApiItem[] {
     const fecha = new Date(d).toLocaleDateString("es-CL", { year: "2-digit", month: "short" });
     return {
       fecha,
-      "<1":     maps[0].get(d) ?? 0,
-      "1-10":   maps[1].get(d) ?? 0,
-      "10-100": maps[2].get(d) ?? 0,
-      "100-1K": maps[3].get(d) ?? 0,
-      "1K-10K": maps[4].get(d) ?? 0,
-      ">10K":   maps[5].get(d) ?? 0,
+      "<1":     coinsMaps[0].get(d) ?? 0,
+      "1-10":   coinsMaps[1].get(d) ?? 0,
+      "10-100": coinsMaps[2].get(d) ?? 0,
+      "100-1K": coinsMaps[3].get(d) ?? 0,
+      "1K-10K": coinsMaps[4].get(d) ?? 0,
+      ">10K":   coinsMaps[5].get(d) ?? 0,
+      "dir_<1":     balanceMaps[0].get(d) ?? 0,
+      "dir_1-10":   balanceMaps[1].get(d) ?? 0,
+      "dir_10-100": balanceMaps[2].get(d) ?? 0,
+      "dir_100-1K": balanceMaps[3].get(d) ?? 0,
+      "dir_1K-10K": balanceMaps[4].get(d) ?? 0,
+      "dir_>10K":   balanceMaps[5].get(d) ?? 0,
     };
   }).filter(item => {
-    // Discard entries where total is 0 (missing data)
     const total = item["<1"] + item["1-10"] + item["10-100"]
       + item["100-1K"] + item["1K-10K"] + item[">10K"];
     return total > 0;
@@ -82,8 +105,11 @@ function combine(maps: Map<string, number>[]): DistHistApiItem[] {
 }
 
 async function fetchDistribucion(): Promise<DistHistApiItem[]> {
-  const maps = await Promise.all(ENDPOINTS.map(fetchOne));
-  return combine(maps);
+  const [coinsMaps, balanceMaps] = await Promise.all([
+    Promise.all(COINS_ENDPOINTS.map(fetchOne)),
+    Promise.all(BALANCE_ENDPOINTS.map(fetchOne)),
+  ]);
+  return combine(coinsMaps, balanceMaps);
 }
 
 export async function GET() {

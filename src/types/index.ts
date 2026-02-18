@@ -93,12 +93,20 @@ export type BandaDistribucion = "<1" | "1-10" | "10-100" | "100-1K" | "1K-10K" |
 export interface DatosDistribucionHistorica {
   fecha: string;
   idx: number;
+  // BTC held
   "<1": number;
   "1-10": number;
   "10-100": number;
   "100-1K": number;
   "1K-10K": number;
   ">10K": number;
+  // Address count
+  "dir_<1": number;
+  "dir_1-10": number;
+  "dir_10-100": number;
+  "dir_100-1K": number;
+  "dir_1K-10K": number;
+  "dir_>10K": number;
 }
 
 export type CategoriaHolder = "treasury" | "minero" | "etf" | "exchange" | "gobierno" | "protocolo";
