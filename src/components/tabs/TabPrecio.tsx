@@ -6,7 +6,7 @@ import {
   Tooltip, ResponsiveContainer, ReferenceLine,
 } from "recharts";
 import { useBreakpoint } from "@/hooks/useBreakpoint";
-import { fmt } from "@/utils/format";
+import { fmt, fmtNum } from "@/utils/format";
 import Metrica from "@/components/ui/Metrica";
 import Senal from "@/components/ui/Senal";
 import PanelEdu from "@/components/ui/PanelEdu";
@@ -408,7 +408,7 @@ export default function TabPrecio() {
       <div style={{ display: "grid", gridTemplateColumns: isMobile ? "repeat(2,1fr)" : "repeat(4,1fr)", gap: isMobile ? 8 : 12, marginBottom: 20 }}>
         <Metrica
           etiqueta="Precio BTC"
-          valor={precioActual ? "$" + Math.round(precioActual).toLocaleString("es-CL") : "—"}
+          valor={precioActual ? "$" + fmtNum(Math.round(precioActual)) : "—"}
           sub="Promedio mercados principales"
           acento="#f0b429"
         />
@@ -426,7 +426,7 @@ export default function TabPrecio() {
         />
         <Metrica
           etiqueta="Máximo histórico"
-          valor={stats?.ath ? "$" + Math.round(stats.ath).toLocaleString("es-CL") : "—"}
+          valor={stats?.ath ? "$" + fmtNum(Math.round(stats.ath)) : "—"}
           sub={stats?.distanciaAth != null ? `${stats.distanciaAth.toFixed(1)}% del ATH` : ""}
           acento="#a855f7"
         />
@@ -487,7 +487,7 @@ export default function TabPrecio() {
                   <>
                     <div style={{ fontSize: 11, color: "var(--text-tooltip)" }}>{d.fechaRaw}</div>
                     <div style={{ fontSize: 15, color: "#f0b429", fontFamily: "monospace", fontWeight: 700, marginTop: 4 }}>
-                      ${Math.round(d.precio).toLocaleString("es-CL")}
+                      ${fmtNum(Math.round(d.precio))}
                     </div>
                     {banda && (
                       <div style={{ fontSize: 11, color: banda.color, marginTop: 4, fontWeight: 600 }}>
@@ -613,7 +613,7 @@ export default function TabPrecio() {
             })}
           </div>
           <div style={{ fontSize: 9, color: "var(--text-muted)", marginTop: 10, lineHeight: 1.5 }}>
-            Basado en {datos.length.toLocaleString("es-CL")} puntos semanales desde 2010.
+            Basado en {fmtNum(datos.length)} puntos semanales desde 2010.
             Los extremos (ganga y burbuja) son eventos raros — si no aparecen, el modelo necesita ajuste.
           </div>
         </div>
@@ -643,7 +643,7 @@ export default function TabPrecio() {
           <Metrica
             etiqueta="Desde el ATH"
             valor={stats.distanciaAth.toFixed(1) + "%"}
-            sub={`ATH: $${Math.round(stats.ath).toLocaleString("es-CL")}`}
+            sub={`ATH: $${fmtNum(Math.round(stats.ath))}`}
             acento={stats.distanciaAth >= -5 ? "#22c55e" : "#ef4444"}
           />
         </div>
@@ -702,7 +702,7 @@ export default function TabPrecio() {
             </table>
             <br />
             <span style={{ color: "var(--text-muted)", fontSize: 10 }}>
-              Curva base hoy: ${ultimo ? "$" + Math.round(rainbowBase(ultimo.ts)).toLocaleString("es-CL") : "—"} · Ratio actual: {ultimo ? (precioActual / rainbowBase(ultimo.ts)).toFixed(2) + "×" : "—"}
+              Curva base hoy: ${ultimo ? "$" + fmtNum(Math.round(rainbowBase(ultimo.ts))) : "—"} · Ratio actual: {ultimo ? (precioActual / rainbowBase(ultimo.ts)).toFixed(2) + "×" : "—"}
             </span>
           </div>
         </details>

@@ -6,7 +6,7 @@ import {
   Tooltip, ResponsiveContainer, ReferenceLine, BarChart,
 } from "recharts";
 import { useBreakpoint } from "@/hooks/useBreakpoint";
-import { fmt } from "@/utils/format";
+import { fmt, fmtNum } from "@/utils/format";
 import Metrica from "@/components/ui/Metrica";
 import Senal from "@/components/ui/Senal";
 import PanelEdu from "@/components/ui/PanelEdu";
@@ -558,10 +558,10 @@ function SeccionInteresAbierto() {
                 <>
                   <div style={{ fontSize: 11, color: "var(--text-tooltip)" }}>{d?.fecha}</div>
                   <div style={{ fontSize: 13, color: "#f0b429", fontFamily: "monospace", fontWeight: 600, marginTop: 4 }}>
-                    {d?.oiBtc?.toLocaleString("es-CL", { maximumFractionDigits: 0 })} BTC
+                    {d?.oiBtc != null ? fmtNum(Math.round(d.oiBtc)) : "—"} BTC
                   </div>
                   <div style={{ fontSize: 12, color: "#06b6d4", fontFamily: "monospace" }}>
-                    ${d?.oiUsd?.toLocaleString("es-CL", { maximumFractionDigits: 0 })}
+                    ${d?.oiUsd != null ? fmtNum(Math.round(d.oiUsd)) : "—"}
                   </div>
                 </>
               )} />
@@ -651,20 +651,20 @@ function SeccionMaxPain() {
       <div style={{ display: "grid", gridTemplateColumns: isMobile ? "repeat(2,1fr)" : "repeat(4,1fr)", gap: isMobile ? 8 : 12, marginBottom: 20 }}>
         <Metrica
           etiqueta="Precio de Dolor"
-          valor={data ? "$" + data.maxPain.toLocaleString("es-CL") : "—"}
+          valor={data ? "$" + fmtNum(data.maxPain) : "—"}
           sub={data ? `Expiración: ${data.expiracionLabel}` : ""}
           acento="#a855f7"
         />
         <Metrica
           etiqueta="Precio actual BTC"
-          valor={precioBtc ? "$" + Math.round(precioBtc).toLocaleString("es-CL") : "—"}
+          valor={precioBtc ? "$" + fmtNum(Math.round(precioBtc)) : "—"}
           sub="Precio forward en Deribit"
           acento="#f0b429"
         />
         <Metrica
           etiqueta="Distancia"
           valor={data ? (distanciaPct >= 0 ? "+" : "") + distanciaPct.toFixed(1) + "%" : "—"}
-          sub={data ? (distanciaUsd >= 0 ? "+" : "") + "$" + Math.round(Math.abs(distanciaUsd)).toLocaleString("es-CL") : ""}
+          sub={data ? (distanciaUsd >= 0 ? "+" : "") + "$" + fmtNum(Math.round(Math.abs(distanciaUsd))) : ""}
           acento={distanciaPct >= 0 ? "#22c55e" : "#ef4444"}
         />
         <Metrica
@@ -683,8 +683,8 @@ function SeccionMaxPain() {
               Math.abs(distanciaPct) < 2
                 ? "Precio cerca del max pain — zona de equilibrio, posible lateralización hasta el vencimiento"
                 : distanciaPct > 0
-                  ? `Precio $${Math.round(Math.abs(distanciaUsd)).toLocaleString("es-CL")} por debajo del max pain — presión compradora probable antes del vencimiento`
-                  : `Precio $${Math.round(Math.abs(distanciaUsd)).toLocaleString("es-CL")} por encima del max pain — presión vendedora probable antes del vencimiento`
+                  ? `Precio $${fmtNum(Math.round(Math.abs(distanciaUsd)))} por debajo del max pain — presión compradora probable antes del vencimiento`
+                  : `Precio $${fmtNum(Math.round(Math.abs(distanciaUsd)))} por encima del max pain — presión vendedora probable antes del vencimiento`
             }
             color={Math.abs(distanciaPct) < 2 ? "#06b6d4" : distanciaPct > 0 ? "#22c55e" : "#ef4444"}
           />
@@ -719,12 +719,12 @@ function SeccionMaxPain() {
               <Tooltip content={({ active, payload }) => (
                 <CustomTooltip active={active} payload={payload} render={(d) => (
                   <>
-                    <div style={{ fontSize: 11, color: "var(--text-tooltip)" }}>Strike: ${d?.strike?.toLocaleString("es-CL")}</div>
+                    <div style={{ fontSize: 11, color: "var(--text-tooltip)" }}>Strike: ${d?.strike != null ? fmtNum(d.strike) : "—"}</div>
                     <div style={{ fontSize: 12, color: "#22c55e", fontFamily: "monospace", fontWeight: 600, marginTop: 4 }}>
-                      Calls: {d?.callOI?.toLocaleString("es-CL", { maximumFractionDigits: 1 })} BTC
+                      Calls: {d?.callOI != null ? d.callOI.toFixed(1) : "—"} BTC
                     </div>
                     <div style={{ fontSize: 12, color: "#ef4444", fontFamily: "monospace", fontWeight: 600 }}>
-                      Puts: {d?.putOI?.toLocaleString("es-CL", { maximumFractionDigits: 1 })} BTC
+                      Puts: {d?.putOI != null ? d.putOI.toFixed(1) : "—"} BTC
                     </div>
                   </>
                 )} />
@@ -735,7 +735,7 @@ function SeccionMaxPain() {
                 stroke="#a855f7"
                 strokeWidth={2}
                 strokeDasharray="6 3"
-                label={{ value: `Max Pain $${data.maxPain.toLocaleString("es-CL")}`, fill: "#a855f7", fontSize: 10, position: "top" }}
+                label={{ value: `Max Pain $${fmtNum(data.maxPain)}`, fill: "#a855f7", fontSize: 10, position: "top" }}
               />
               {/* BTC price reference line */}
               {precioBtc > 0 && nearestStrikeToBtc && (
@@ -744,7 +744,7 @@ function SeccionMaxPain() {
                   stroke="#f0b429"
                   strokeWidth={2}
                   strokeDasharray="3 3"
-                  label={{ value: `BTC $${Math.round(precioBtc).toLocaleString("es-CL")}`, fill: "#f0b429", fontSize: 10, position: "top" }}
+                  label={{ value: `BTC $${fmtNum(Math.round(precioBtc))}`, fill: "#f0b429", fontSize: 10, position: "top" }}
                 />
               )}
               <Bar dataKey="callOI" name="Calls" fill="#22c55e" opacity={0.8} radius={[2, 2, 0, 0]} maxBarSize={20} />

@@ -20,38 +20,39 @@ interface BinanceOIData {
 }
 
 const HEADERS = {
-  "User-Agent": "Mozilla/5.0 (compatible; Observalo/1.0)",
+  "User-Agent":
+    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36",
   Accept: "application/json",
 };
 
-async function fetchWithRetry(url: string, retries = 2): Promise<Response> {
+/** Try multiple Binance endpoints — fapi often blocked from cloud IPs */
+async function fetchUrl(urls: string[]): Promise<Response> {
   let lastErr: Error | null = null;
-  for (let i = 0; i <= retries; i++) {
+  for (const url of urls) {
     try {
       const res = await fetch(url, {
         signal: AbortSignal.timeout(TIMEOUT),
         headers: HEADERS,
       });
       if (res.ok) return res;
-      // 403/451 = geo-block, don't retry
-      if (res.status === 403 || res.status === 451) throw new Error(`HTTP ${res.status} (blocked)`);
       lastErr = new Error(`HTTP ${res.status}`);
     } catch (err) {
       lastErr = err instanceof Error ? err : new Error(String(err));
     }
-    if (i < retries) await new Promise(r => setTimeout(r, 500 * (i + 1)));
   }
-  throw lastErr ?? new Error("fetch failed");
+  throw lastErr ?? new Error("all endpoints failed");
 }
 
 async function fetchBinanceOI(): Promise<BinanceOIData> {
   const [histRes, actualRes] = await Promise.all([
-    fetchWithRetry(
-      "https://fapi.binance.com/futures/data/openInterestHist?symbol=BTCUSDT&period=1d&limit=90"
-    ),
-    fetchWithRetry(
-      "https://fapi.binance.com/fapi/v1/openInterest?symbol=BTCUSDT"
-    ),
+    fetchUrl([
+      "https://fapi.binance.com/futures/data/openInterestHist?symbol=BTCUSDT&period=1d&limit=90",
+      "https://www.binance.com/futures/data/openInterestHist?symbol=BTCUSDT&period=1d&limit=90",
+    ]),
+    fetchUrl([
+      "https://fapi.binance.com/fapi/v1/openInterest?symbol=BTCUSDT",
+      "https://www.binance.com/fapi/v1/openInterest?symbol=BTCUSDT",
+    ]),
   ]);
 
   const hist: OIHistEntry[] = await histRes.json();
@@ -59,6 +60,10 @@ async function fetchBinanceOI(): Promise<BinanceOIData> {
 
   return { hist, actual };
 }
+
+// Force Vercel to run this in a specific region (US-East, less likely to be blocked)
+export const runtime = "nodejs";
+export const preferredRegion = "iad1";
 
 export async function GET() {
   const result = await cachedFetch("binance-oi", fetchBinanceOI);
