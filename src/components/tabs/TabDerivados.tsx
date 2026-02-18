@@ -140,21 +140,19 @@ function useOpenInterest() {
 
     try {
       const controller = new AbortController();
-      const timeout = setTimeout(() => controller.abort(), 8000);
+      const timeout = setTimeout(() => controller.abort(), 12000);
 
-      const [histRes, actualRes] = await Promise.all([
-        fetch("https://fapi.binance.com/futures/data/openInterestHist?symbol=BTCUSDT&period=1d&limit=90", { signal: controller.signal }),
-        fetch("https://fapi.binance.com/fapi/v1/openInterest?symbol=BTCUSDT", { signal: controller.signal }),
-      ]);
-
+      const res = await fetch("/api/binance-oi", { signal: controller.signal });
       clearTimeout(timeout);
 
-      if (!histRes.ok || !actualRes.ok) throw new Error("HTTP error");
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
 
-      const histJson = await histRes.json();
-      const actualJson = await actualRes.json();
-
+      const envelope = await res.json();
       if (!mountedRef.current) return;
+
+      if (!envelope.data) throw new Error(envelope.message ?? "Sin datos");
+
+      const { hist: histJson, actual: actualJson } = envelope.data;
 
       const histData: OIHistItem[] = histJson.map((item: { timestamp: number; sumOpenInterest: string; sumOpenInterestValue: string }) => {
         const d = new Date(item.timestamp);
@@ -241,30 +239,19 @@ function useMaxPain() {
 
     try {
       const controller = new AbortController();
-      const timeout = setTimeout(() => controller.abort(), 10000);
+      const timeout = setTimeout(() => controller.abort(), 15000);
 
-      const res = await fetch(
-        "https://deribit.com/api/v2/public/get_book_summary_by_currency?currency=BTC&kind=option",
-        { signal: controller.signal }
-      );
+      const res = await fetch("/api/deribit", { signal: controller.signal });
       clearTimeout(timeout);
 
-      if (!res.ok) throw new Error("HTTP error");
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
 
-      const json = await res.json();
+      const envelope = await res.json();
       if (!mountedRef.current) return;
 
-      const instruments: DeribitInstrument[] = (json.result || []).map((item: {
-        instrument_name: string;
-        open_interest: number;
-        underlying_price?: number;
-        mark_price?: number;
-      }) => ({
-        instrument_name: item.instrument_name,
-        open_interest: item.open_interest || 0,
-        underlying_price: item.underlying_price,
-        mark_price: item.mark_price,
-      }));
+      if (!envelope.data) throw new Error(envelope.message ?? "Sin datos");
+
+      const instruments: DeribitInstrument[] = envelope.data;
 
       allInstrumentsRef.current = instruments;
 
