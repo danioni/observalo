@@ -359,6 +359,22 @@ export default function TabPrecio() {
     });
   }, [filtrado]);
 
+  // Band distribution: % of time the price spent in each band
+  const distribucion = useMemo(() => {
+    if (datos.length < 10) return null;
+    const counts = new Array(BANDAS_RAINBOW.length).fill(0);
+    for (const d of datos) {
+      const info = bandaActual(d.precio, d.ts);
+      if (info) counts[info.idx]++;
+    }
+    const total = datos.length;
+    return BANDAS_RAINBOW.map((b, i) => ({
+      ...b,
+      count: counts[i],
+      pct: (counts[i] / total) * 100,
+    }));
+  }, [datos]);
+
   const intTick = Math.max(1, Math.floor(filtrado.length / (isMobile ? 8 : 16)));
 
   if (cargando) {
@@ -536,6 +552,71 @@ export default function TabPrecio() {
           </div>
         </div>
       </div>
+
+      {/* Band time distribution tracker */}
+      {distribucion && (
+        <div style={{
+          marginBottom: 24, padding: isMobile ? 12 : 16,
+          background: "var(--bg-surface)", borderRadius: 8,
+          border: "1px solid var(--border-subtle)",
+        }}>
+          <div style={{ fontSize: 11, color: "var(--text-secondary)", letterSpacing: "0.08em", marginBottom: 12, fontWeight: 600 }}>
+            TIEMPO EN CADA ZONA — DISTRIBUCIÓN HISTÓRICA
+          </div>
+          <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+            {distribucion.map((b) => {
+              const maxPct = Math.max(...distribucion.map(d => d.pct));
+              const barWidth = maxPct > 0 ? (b.pct / maxPct) * 100 : 0;
+              const isActive = bandaInfo?.idx === distribucion.indexOf(b);
+              return (
+                <div key={b.id} style={{
+                  display: "grid",
+                  gridTemplateColumns: isMobile ? "90px 1fr 38px" : "140px 1fr 50px",
+                  alignItems: "center", gap: 8,
+                  opacity: b.pct === 0 ? 0.4 : 1,
+                }}>
+                  <div style={{
+                    fontSize: isMobile ? 9 : 10, color: b.color, fontWeight: isActive ? 700 : 500,
+                    display: "flex", alignItems: "center", gap: 4,
+                    whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis",
+                  }}>
+                    <div style={{
+                      width: 8, height: 8, borderRadius: 2, background: b.color, flexShrink: 0,
+                      boxShadow: isActive ? `0 0 6px ${b.color}` : "none",
+                    }} />
+                    {b.nombre}
+                    {isActive && <span style={{ fontSize: 7, verticalAlign: "super" }}>◄</span>}
+                  </div>
+                  <div style={{
+                    height: 14, background: "var(--bg-base)", borderRadius: 3,
+                    overflow: "hidden", position: "relative",
+                  }}>
+                    <div style={{
+                      height: "100%",
+                      width: `${barWidth}%`,
+                      background: `linear-gradient(90deg, ${b.color}cc, ${b.color}88)`,
+                      borderRadius: 3,
+                      transition: "width 0.5s ease",
+                      minWidth: b.pct > 0 ? 3 : 0,
+                    }} />
+                  </div>
+                  <div style={{
+                    fontSize: isMobile ? 9 : 10,
+                    color: b.pct === 0 ? "var(--text-muted)" : "var(--text-secondary)",
+                    fontFamily: "monospace", fontWeight: 600, textAlign: "right",
+                  }}>
+                    {b.pct.toFixed(1)}%
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+          <div style={{ fontSize: 9, color: "var(--text-muted)", marginTop: 10, lineHeight: 1.5 }}>
+            Basado en {datos.length.toLocaleString("es-CL")} puntos semanales desde 2010.
+            Los extremos (ganga y burbuja) son eventos raros — si no aparecen, el modelo necesita ajuste.
+          </div>
+        </div>
+      )}
 
       {/* ATH distance context */}
       {stats && (
