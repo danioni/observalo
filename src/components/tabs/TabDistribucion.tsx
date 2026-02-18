@@ -196,7 +196,7 @@ export default function TabDistribucion() {
          ════════════════════════════════════════════════════════════ */}
       <div style={{ marginTop: 40, paddingTop: 32, borderTop: "1px solid var(--border-subtle)" }}>
         <div style={{ display: "flex", flexDirection: isMobile ? "column" : "row", justifyContent: "space-between", alignItems: isMobile ? "flex-start" : "center", marginBottom: 16, gap: isMobile ? 10 : 0 }}>
-          <div style={{ fontSize: 12, color: "var(--text-secondary)", letterSpacing: "0.08em" }}>EVOLUCIÓN HISTÓRICA POR COHORTE (2020–2026)</div>
+          <div style={{ fontSize: 12, color: "var(--text-secondary)", letterSpacing: "0.08em" }}>BTC ACUMULADO POR COHORTE (2020–2026)</div>
           <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
             <Btn
               items={[
@@ -227,14 +227,14 @@ export default function TabDistribucion() {
           )}
         </div>
 
-        {/* Chart de áreas apiladas al 100% */}
+        {/* Chart de áreas apiladas (valores absolutos BTC) */}
         {filtrado.length > 0 && (
           <>
             <ResponsiveContainer width="100%" height={isMobile ? 320 : 420}>
-              <AreaChart data={filtrado} margin={{ top: 10, right: 20, bottom: isMobile ? 12 : 20, left: 20 }} stackOffset="expand">
+              <AreaChart data={filtrado} margin={{ top: 10, right: 20, bottom: isMobile ? 12 : 20, left: isMobile ? 10 : 20 }}>
                 <CartesianGrid strokeDasharray="3 3" stroke="var(--border-grid)" />
                 <XAxis dataKey="fecha" tick={{ fill: "var(--text-muted)", fontSize: 9 }} interval={Math.max(1, Math.floor(filtrado.length / (isMobile ? 6 : 10)))} angle={-30} textAnchor="end" />
-                <YAxis tick={{ fill: "var(--text-muted)", fontSize: 10 }} tickFormatter={v => (v * 100).toFixed(0) + "%"} />
+                <YAxis tick={{ fill: "var(--text-muted)", fontSize: 10 }} tickFormatter={v => fmt(v)} width={isMobile ? 45 : 55} />
                 <Tooltip content={({ active, payload, label }) => {
                   if (!active || !payload?.length) return null;
                   return (
