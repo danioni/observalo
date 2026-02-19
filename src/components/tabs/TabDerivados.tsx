@@ -72,6 +72,7 @@ function useMaxPain() {
   const [expiraciones, setExpiraciones] = useState<{ value: string; label: string }[]>([]);
   const [expiracionSel, setExpiracionSel] = useState<string>("");
   const [precioBtc, setPrecioBtc] = useState<number>(0);
+  const [oiTotal, setOiTotal] = useState<{ calls: number; puts: number } | null>(null);
   const [cargando, setCargando] = useState(true);
   const [esSimulado, setEsSimulado] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -202,6 +203,7 @@ function useMaxPain() {
 
     if (instruments.length === 0) {
       setData(null);
+      setOiTotal(null);
       return;
     }
 
@@ -222,6 +224,11 @@ function useMaxPain() {
     const strikesArr: MaxPainStrike[] = Array.from(strikeMap.entries())
       .map(([strike, { callOI, putOI }]) => ({ strike, callOI, putOI }))
       .sort((a, b) => a.strike - b.strike);
+
+    // Total OI for this expiration
+    const totalCalls = strikesArr.reduce((sum, s) => sum + s.callOI, 0);
+    const totalPuts = strikesArr.reduce((sum, s) => sum + s.putOI, 0);
+    setOiTotal({ calls: totalCalls, puts: totalPuts });
 
     // Calculate max pain
     let minDolor = Infinity;
@@ -269,7 +276,7 @@ function useMaxPain() {
     fetchInstruments();
   }, [cacheInstruments, fetchInstruments]);
 
-  return { data, expiraciones, expiracionSel, setExpiracionSel, precioBtc, cargando, esSimulado, error, reintentar };
+  return { data, expiraciones, expiracionSel, setExpiracionSel, precioBtc, oiTotal, cargando, esSimulado, error, reintentar };
 }
 
 /* ══════════════════════════════════════════════════════════════════
@@ -293,7 +300,7 @@ function BadgeSimulado() {
    ══════════════════════════════════════════════════════════════════ */
 
 export default function TabDerivados() {
-  const { data, expiraciones, expiracionSel, setExpiracionSel, precioBtc, cargando, esSimulado, error, reintentar } = useMaxPain();
+  const { data, expiraciones, expiracionSel, setExpiracionSel, precioBtc, oiTotal, cargando, esSimulado, error, reintentar } = useMaxPain();
   const { isMobile } = useBreakpoint();
 
   if (cargando) {
@@ -376,9 +383,10 @@ export default function TabDerivados() {
           acento={distanciaPct >= 0 ? "#22c55e" : "#ef4444"}
         />
         <Metrica
-          etiqueta="Opciones activas"
-          valor={data ? data.strikes.length.toString() + " strikes" : "—"}
-          sub="Con interés abierto significativo"
+          etiqueta="OI en juego"
+          valor={oiTotal ? fmtNum(Math.round(oiTotal.calls + oiTotal.puts)) + " BTC" : "—"}
+          sub={oiTotal ? `Calls ${fmtNum(Math.round(oiTotal.calls))} · Puts ${fmtNum(Math.round(oiTotal.puts))}` : ""}
+          acento="#06b6d4"
         />
       </div>
 
