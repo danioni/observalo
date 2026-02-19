@@ -101,9 +101,9 @@ export default function Header({ tab, setTab }: HeaderProps) {
 
       <nav aria-label="Secciones del observatorio" className="tabs-scroll" style={{
         display: "flex", gap: isMobile ? 2 : 4,
-        overflowX: isDesktop ? "visible" : "auto",
+        overflowX: "auto",
       }}>
-        {PESTANAS.map((t2, idx) => (
+        {PESTANAS.map((t2) => (
           <a
             key={t2.id}
             href={`#${t2.id}`}
@@ -111,7 +111,7 @@ export default function Header({ tab, setTab }: HeaderProps) {
             aria-selected={tab === t2.id}
             onClick={(e) => { e.preventDefault(); setTab(t2.id); }}
             style={{
-              padding: isMobile ? "6px 10px" : "8px 16px",
+              padding: isMobile ? "6px 10px" : "8px 14px",
               borderRadius: 6, border: "none", cursor: "pointer",
               fontSize: isMobile ? 10 : 11, fontWeight: 600,
               letterSpacing: "0.06em", transition: "all 0.2s ease",
