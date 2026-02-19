@@ -133,12 +133,35 @@ function useMaxPain() {
         }
       }
 
-      // Sort by date, take next 5 future expirations
+      // Pick meaningful expirations: nearest + highest OI (monthly/quarterly)
       const ahora = Date.now();
-      const exps = Array.from(expSet.entries())
+      const futureExps = Array.from(expSet.entries())
         .filter(([, ts]) => ts > ahora)
+        .sort((a, b) => a[1] - b[1]);
+
+      // Calculate total OI per expiration for ranking
+      const oiPorExp = new Map<string, number>();
+      for (const inst of instruments) {
+        const parts = inst.instrument_name.split("-");
+        if (parts.length >= 4) {
+          const expStr = parts[1];
+          oiPorExp.set(expStr, (oiPorExp.get(expStr) ?? 0) + inst.open_interest);
+        }
+      }
+
+      // Always include the nearest expiration, then top 4 by OI
+      const nearest = futureExps[0];
+      const restByOI = futureExps
+        .slice(1)
+        .sort((a, b) => (oiPorExp.get(b[0]) ?? 0) - (oiPorExp.get(a[0]) ?? 0))
+        .slice(0, 4);
+
+      // Combine and sort chronologically, deduplicate
+      const seleccionadas = nearest ? [nearest, ...restByOI] : restByOI;
+      const vistos = new Set<string>();
+      const exps = seleccionadas
+        .filter(([str]) => { if (vistos.has(str)) return false; vistos.add(str); return true; })
         .sort((a, b) => a[1] - b[1])
-        .slice(0, 5)
         .map(([str, ts]) => ({
           value: str,
           label: new Date(ts).toLocaleDateString("es-CL", { day: "numeric", month: "short", year: "numeric" }),
@@ -385,7 +408,7 @@ export default function TabDerivados() {
           <ResponsiveContainer width="100%" height={isMobile ? 320 : 400}>
             <BarChart
               data={data.strikes}
-              margin={{ top: 10, right: 20, bottom: 10, left: isMobile ? 10 : 20 }}
+              margin={{ top: 30, right: 20, bottom: 10, left: isMobile ? 10 : 20 }}
             >
               <CartesianGrid strokeDasharray="3 3" stroke="var(--border-grid)" />
               <XAxis
@@ -420,7 +443,7 @@ export default function TabDerivados() {
                 stroke="#a855f7"
                 strokeWidth={2}
                 strokeDasharray="6 3"
-                label={{ value: `Max Pain $${fmtNum(data.maxPain)}`, fill: "#a855f7", fontSize: 10, position: "top" }}
+                label={{ value: `Max Pain $${fmtNum(data.maxPain)}`, fill: "#a855f7", fontSize: 9, position: "top", offset: 8 }}
               />
               {/* BTC price reference line */}
               {precioBtc > 0 && nearestStrikeToBtc && (
@@ -429,7 +452,7 @@ export default function TabDerivados() {
                   stroke="#f0b429"
                   strokeWidth={2}
                   strokeDasharray="3 3"
-                  label={{ value: `BTC $${fmtNum(Math.round(precioBtc))}`, fill: "#f0b429", fontSize: 10, position: "top" }}
+                  label={{ value: `BTC $${fmtNum(Math.round(precioBtc))}`, fill: "#f0b429", fontSize: 9, position: "insideTopRight", offset: 4 }}
                 />
               )}
               <Bar dataKey="callOI" name="Calls" fill="#22c55e" opacity={0.8} radius={[2, 2, 0, 0]} maxBarSize={20} />
