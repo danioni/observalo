@@ -238,8 +238,8 @@ export default function TabMineria() {
             EMISIÓN PROGRAMADA — SUMINISTRO ACUMULADO DE BITCOIN (2009–2044)
           </div>
         </div>
-        <ResponsiveContainer width="100%" height={isMobile ? 300 : 380}>
-          <AreaChart data={SUMINISTRO_PROYECTADO} margin={{ top: 10, right: 20, bottom: 10, left: isMobile ? 10 : 20 }}>
+        <ResponsiveContainer width="100%" height={isMobile ? 320 : 400}>
+          <AreaChart data={SUMINISTRO_PROYECTADO} margin={{ top: 30, right: 20, bottom: 10, left: isMobile ? 10 : 20 }}>
             <defs>
               <linearGradient id="gSReal" x1="0" y1="0" x2="0" y2="1">
                 <stop offset="0%" stopColor="#f0b429" stopOpacity={0.35} />
@@ -255,7 +255,8 @@ export default function TabMineria() {
             <YAxis
               tick={{ fill: "var(--text-muted)", fontSize: 10 }}
               tickFormatter={v => fmt(v)}
-              domain={[0, 21_000_000]}
+              domain={[0, 21_500_000]}
+              ticks={[0, 5_000_000, 10_000_000, 15_000_000, 21_000_000]}
             />
             <Tooltip content={({ active, payload }) => (
               <CustomTooltip active={active} payload={payload} render={(d) => {
@@ -281,9 +282,9 @@ export default function TabMineria() {
             )} />
             <ReferenceLine
               y={21_000_000}
-              stroke="#f0b42950"
+              stroke="#f0b42960"
               strokeDasharray="5 5"
-              label={{ value: "21M — tope absoluto", fill: "#f0b429", fontSize: 10, position: "left" }}
+              label={{ value: "21M", fill: "#f0b429", fontSize: 9, position: "insideTopLeft" }}
             />
             {hoyLabelSuministro && (
               <ReferenceLine
@@ -291,16 +292,16 @@ export default function TabMineria() {
                 stroke="#f0b429"
                 strokeDasharray="6 3"
                 strokeWidth={1.5}
-                label={{ value: "Hoy ▸ Proyección", fill: "#f0b429", fontSize: isMobile ? 8 : 10, position: "top" }}
+                label={{ value: "Hoy ▸", fill: "#f0b429", fontSize: isMobile ? 8 : 10, position: "insideTopRight" }}
               />
             )}
             {halvingsSuministro.map((h, i) => (
               <ReferenceLine
                 key={i}
                 x={h.fechaLabel}
-                stroke="#f0b42940"
+                stroke="#f0b42930"
                 strokeDasharray="4 4"
-                label={!isMobile ? { value: h.label, fill: "#f0b429", fontSize: 8, position: "top" } : undefined}
+                label={!isMobile ? { value: h.label, fill: "var(--text-muted)", fontSize: 7, position: i % 2 === 0 ? "insideTopLeft" : "insideTopRight" } : undefined}
               />
             ))}
             <Area type="monotone" dataKey="suministroReal" stroke="#f0b429" fill="url(#gSReal)" strokeWidth={2} dot={false} connectNulls={false} />
