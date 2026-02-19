@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { cachedFetch } from "@/lib/cache";
+import { cachedFetch, cdnHeaders } from "@/lib/cache";
 import type { ApiEnvelope } from "@/types";
 
 const TIMEOUT = 10_000;
@@ -88,5 +88,5 @@ export async function GET() {
     source: "binance.com",
   };
 
-  return NextResponse.json(envelope);
+  return NextResponse.json(envelope, { headers: cdnHeaders(60, 300) });
 }

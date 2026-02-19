@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { cachedFetch } from "@/lib/cache";
+import { cachedFetch, cdnHeaders } from "@/lib/cache";
 import type { ApiEnvelope } from "@/types";
 
 const TIMEOUT = 12_000;
@@ -73,5 +73,5 @@ export async function GET() {
     source: "deribit.com",
   };
 
-  return NextResponse.json(envelope);
+  return NextResponse.json(envelope, { headers: cdnHeaders(60, 300) });
 }

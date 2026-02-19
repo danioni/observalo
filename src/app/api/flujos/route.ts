@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { cachedFetch } from "@/lib/cache";
+import { cachedFetch, cdnHeaders } from "@/lib/cache";
 import type { ApiEnvelope } from "@/types";
 
 // --- CoinGlass types ---
@@ -193,5 +193,5 @@ export async function GET(request: Request) {
     data: result.data, status: result.status, stale: result.stale,
     lastSuccessAt: result.lastSuccessAt, source: "bitcoin-data.com + coinglass.com",
   };
-  return NextResponse.json(envelope);
+  return NextResponse.json(envelope, { headers: cdnHeaders(300, 600) });
 }

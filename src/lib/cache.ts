@@ -55,6 +55,15 @@ export function setCache<T>(key: string, data: T): void {
   store.set(key, { data, timestamp: Date.now() });
 }
 
+/* ── CDN Cache Headers (Vercel Edge / L2 cache) ── */
+
+export function cdnHeaders(sMaxAge: number, staleWhileRevalidate: number): HeadersInit {
+  return {
+    "Cache-Control": `s-maxage=${sMaxAge}, stale-while-revalidate=${staleWhileRevalidate}`,
+    "CDN-Cache-Control": `s-maxage=${sMaxAge}, stale-while-revalidate=${staleWhileRevalidate}`,
+  };
+}
+
 export async function cachedFetch<T>(
   key: string,
   fetcher: () => Promise<T>,

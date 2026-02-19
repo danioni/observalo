@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { cachedFetch } from "@/lib/cache";
+import { cachedFetch, cdnHeaders } from "@/lib/cache";
 import type { ApiEnvelope } from "@/types";
 
 interface BGeometricsEtf {
@@ -78,5 +78,5 @@ export async function GET() {
     data: result.data, status: result.status, stale: result.stale,
     lastSuccessAt: result.lastSuccessAt, source: "bitcoin-data.com",
   };
-  return NextResponse.json(envelope);
+  return NextResponse.json(envelope, { headers: cdnHeaders(3600, 7200) });
 }

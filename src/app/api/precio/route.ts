@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { cachedFetch } from "@/lib/cache";
+import { cachedFetch, cdnHeaders } from "@/lib/cache";
 import type { ApiEnvelope } from "@/types";
 
 const TIMEOUT = 15_000;
@@ -67,5 +67,5 @@ export async function GET() {
     source: "blockchain.info",
   };
 
-  return NextResponse.json(envelope);
+  return NextResponse.json(envelope, { headers: cdnHeaders(60, 300) });
 }
