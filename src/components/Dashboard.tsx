@@ -11,12 +11,13 @@ import TabHolders from "@/components/tabs/TabHolders";
 import TabSoberania from "@/components/tabs/TabSoberania";
 import TabDerivados from "@/components/tabs/TabDerivados";
 import TabPrecio from "@/components/tabs/TabPrecio";
+import TabValoracion from "@/components/tabs/TabValoracion";
 import ErrorBoundary from "@/components/ErrorBoundary";
 import { useBreakpoint } from "@/hooks/useBreakpoint";
 
 const VALID_TABS = new Set([
   "lared", "distribucion", "conviccion", "flujos",
-  "acumuladores", "escasez", "precio", "derivados",
+  "acumuladores", "escasez", "valoracion", "precio", "derivados",
 ]);
 
 function getTabFromHash(): string {
@@ -90,6 +91,7 @@ export default function Dashboard() {
           {tab === "flujos" && <TabFlujos />}
           {tab === "acumuladores" && <TabHolders />}
           {tab === "escasez" && <TabSoberania />}
+          {tab === "valoracion" && <TabValoracion />}
           {tab === "precio" && <TabPrecio />}
           {tab === "derivados" && <TabDerivados />}
         </ErrorBoundary>
