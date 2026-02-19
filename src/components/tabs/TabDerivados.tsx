@@ -1,9 +1,9 @@
 "use client";
 
-import { useState, useEffect, useMemo, useCallback, useRef } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import {
-  ComposedChart, Bar, Line, XAxis, YAxis, CartesianGrid,
-  Tooltip, ResponsiveContainer, ReferenceLine, BarChart,
+  XAxis, YAxis, CartesianGrid,
+  Tooltip, ResponsiveContainer, ReferenceLine, BarChart, Bar,
 } from "recharts";
 import { useBreakpoint } from "@/hooks/useBreakpoint";
 import { useLocalCache } from "@/hooks/useLocalCache";
@@ -17,13 +17,6 @@ import CustomTooltip from "@/components/ui/CustomTooltip";
 /* ══════════════════════════════════════════════════════════════════
    TYPES
    ══════════════════════════════════════════════════════════════════ */
-
-interface OIHistItem {
-  fecha: string;
-  fechaRaw: string;
-  oiBtc: number;
-  oiUsd: number;
-}
 
 interface MaxPainStrike {
   strike: number;
@@ -48,25 +41,8 @@ interface DeribitInstrument {
 const DERIVADOS_CACHE_TTL = 5 * 60 * 1000; // 5 min
 
 /* ══════════════════════════════════════════════════════════════════
-   SIMULATED DATA (fallback when APIs fail)
+   SIMULATED DATA (fallback when Deribit API fails)
    ══════════════════════════════════════════════════════════════════ */
-
-function generarOISimulado(): OIHistItem[] {
-  const items: OIHistItem[] = [];
-  const hoy = new Date();
-  for (let i = 89; i >= 0; i--) {
-    const d = new Date(hoy);
-    d.setDate(d.getDate() - i);
-    const base = 75000 + Math.sin(i * 0.07) * 15000 + Math.random() * 5000;
-    items.push({
-      fecha: d.toLocaleDateString("es-CL", { day: "2-digit", month: "short" }),
-      fechaRaw: d.toISOString().slice(0, 10),
-      oiBtc: Math.round(base),
-      oiUsd: Math.round(base * 96500),
-    });
-  }
-  return items;
-}
 
 function generarMaxPainSimulado(): MaxPainData {
   const strikes: MaxPainStrike[] = [];
@@ -88,105 +64,8 @@ function generarMaxPainSimulado(): MaxPainData {
 }
 
 /* ══════════════════════════════════════════════════════════════════
-   HOOKS
+   HOOK: useMaxPain (Deribit options data)
    ══════════════════════════════════════════════════════════════════ */
-
-function useOpenInterest() {
-  const [hist, setHist] = useState<OIHistItem[]>([]);
-  const [oiActual, setOiActual] = useState<{ btc: number; usd: number } | null>(null);
-  const [cargando, setCargando] = useState(true);
-  const [esSimulado, setEsSimulado] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const mountedRef = useRef(true);
-  const cacheHist = useLocalCache<OIHistItem[]>("obs_oi_hist", DERIVADOS_CACHE_TTL);
-  const cacheActual = useLocalCache<{ btc: number; usd: number }>("obs_oi_actual", DERIVADOS_CACHE_TTL);
-
-  const fetchData = useCallback(async () => {
-    setCargando(true);
-    setError(null);
-
-    // Check cache first
-    const cachedHist = cacheHist.get();
-    const cachedActual = cacheActual.get();
-    if (cachedHist && cachedActual) {
-      setHist(cachedHist);
-      setOiActual(cachedActual);
-      setEsSimulado(false);
-      setCargando(false);
-      return;
-    }
-
-    try {
-      const controller = new AbortController();
-      const timeout = setTimeout(() => controller.abort(), 12000);
-
-      const res = await fetch("/api/binance-oi", { signal: controller.signal });
-      clearTimeout(timeout);
-
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
-
-      const envelope = await res.json();
-      if (!mountedRef.current) return;
-
-      if (!envelope.data) throw new Error(envelope.message ?? "Sin datos");
-
-      const { hist: histJson, actual: actualJson } = envelope.data;
-
-      const histData: OIHistItem[] = histJson.map((item: { timestamp: number; sumOpenInterest: string; sumOpenInterestValue: string }) => {
-        const d = new Date(item.timestamp);
-        return {
-          fecha: d.toLocaleDateString("es-CL", { day: "2-digit", month: "short" }),
-          fechaRaw: d.toISOString().slice(0, 10),
-          oiBtc: parseFloat(item.sumOpenInterest),
-          oiUsd: parseFloat(item.sumOpenInterestValue),
-        };
-      });
-
-      const actual = {
-        btc: parseFloat(actualJson.openInterest),
-        usd: parseFloat(actualJson.openInterest) * (histData.length > 0 ? histData[histData.length - 1].oiUsd / histData[histData.length - 1].oiBtc : 96500),
-      };
-
-      setHist(histData);
-      setOiActual(actual);
-      setEsSimulado(false);
-      cacheHist.set(histData);
-      cacheActual.set(actual);
-    } catch (err) {
-      if (!mountedRef.current) return;
-      setEsSimulado(true);
-      setError(err instanceof Error ? err.message : "Error de conexión");
-      const sim = generarOISimulado();
-      setHist(sim);
-      const ult = sim[sim.length - 1];
-      setOiActual({ btc: ult.oiBtc, usd: ult.oiUsd });
-    } finally {
-      if (mountedRef.current) setCargando(false);
-    }
-  }, [cacheHist, cacheActual]);
-
-  useEffect(() => {
-    mountedRef.current = true;
-    fetchData();
-    return () => { mountedRef.current = false; };
-  }, [fetchData]);
-
-  const reintentar = useCallback(() => {
-    cacheHist.clear();
-    cacheActual.clear();
-    fetchData();
-  }, [cacheHist, cacheActual, fetchData]);
-
-  // Cambio 24h
-  const cambio24h = useMemo(() => {
-    if (hist.length < 2) return null;
-    const hoy = hist[hist.length - 1].oiBtc;
-    const ayer = hist[hist.length - 2].oiBtc;
-    return ((hoy - ayer) / ayer * 100);
-  }, [hist]);
-
-  return { hist, oiActual, cargando, esSimulado, error, cambio24h, reintentar };
-}
 
 function useMaxPain() {
   const [data, setData] = useState<MaxPainData | null>(null);
@@ -241,7 +120,6 @@ function useMaxPain() {
         if (parts.length >= 4) {
           const expStr = parts[1]; // e.g. "27MAR26"
           if (!expSet.has(expStr)) {
-            // Parse date for sorting
             const dateStr = expStr;
             const day = parseInt(dateStr.slice(0, 2));
             const monStr = dateStr.slice(2, 5);
@@ -329,11 +207,9 @@ function useMaxPain() {
     for (const candidate of strikesArr) {
       let dolorTotal = 0;
       for (const s of strikesArr) {
-        // Calls: ITM when candidate price > strike
         if (candidate.strike > s.strike) {
           dolorTotal += (candidate.strike - s.strike) * s.callOI;
         }
-        // Puts: ITM when candidate price < strike
         if (candidate.strike < s.strike) {
           dolorTotal += (s.strike - candidate.strike) * s.putOI;
         }
@@ -389,198 +265,24 @@ function BadgeSimulado() {
   );
 }
 
-function SubSelector({ items, val, set }: {
-  items: { id: string; l: string }[];
-  val: string;
-  set: (v: string) => void;
-}) {
-  const { isMobile } = useBreakpoint();
-  return (
-    <div style={{
-      display: "flex", gap: 0, background: "var(--bg-surface)", borderRadius: 8,
-      border: "1px solid var(--border-subtle)", overflow: "hidden", marginBottom: 20,
-    }}>
-      {items.map(r => (
-        <button key={r.id} onClick={() => set(r.id)} style={{
-          padding: isMobile ? "10px 16px" : "10px 24px", border: "none", cursor: "pointer",
-          fontSize: isMobile ? 11 : 12, fontWeight: 700, letterSpacing: "0.06em",
-          background: val === r.id ? "rgba(240,180,41,0.15)" : "transparent",
-          color: val === r.id ? "#f0b429" : "var(--text-muted)",
-          borderBottom: val === r.id ? "2px solid #f0b429" : "2px solid transparent",
-          transition: "all 0.15s ease",
-        }}>{r.l}</button>
-      ))}
-    </div>
-  );
-}
-
 /* ══════════════════════════════════════════════════════════════════
-   SECTION: INTERÉS ABIERTO
+   MAIN TAB COMPONENT
    ══════════════════════════════════════════════════════════════════ */
 
-function SeccionInteresAbierto() {
-  const { hist, oiActual, cargando, esSimulado, error, cambio24h, reintentar } = useOpenInterest();
-  const { isMobile } = useBreakpoint();
-
-  // Señal interpretativa
-  const senal = useMemo(() => {
-    if (hist.length < 3) return null;
-    const ult = hist[hist.length - 1];
-    const prev = hist[hist.length - 3];
-    const oiSube = ult.oiBtc > prev.oiBtc;
-    const oiBaja = ult.oiBtc < prev.oiBtc;
-
-    // We don't have price in the OI data from Binance, so base signal on OI trend
-    if (oiSube) {
-      return {
-        texto: "Interés abierto en aumento — los operadores están tomando nuevas posiciones apalancadas",
-        color: "#f0b429",
-      };
-    }
-    if (oiBaja) {
-      return {
-        texto: "Interés abierto en descenso — desapalancamiento en curso, menor riesgo de liquidaciones masivas",
-        color: "#06b6d4",
-      };
-    }
-    return { texto: "Interés abierto estable", color: "var(--text-muted)" };
-  }, [hist]);
-
-  if (cargando) {
-    return (
-      <div style={{ textAlign: "center", padding: 40, color: "var(--text-muted)" }}>
-        <div style={{ fontSize: 14, marginBottom: 8 }}>Consultando datos de Binance Futures...</div>
-        <div style={{ fontSize: 11 }}>Interés abierto de BTCUSDT perpetuo</div>
-      </div>
-    );
-  }
-
-  const intTick = Math.max(1, Math.floor(hist.length / (isMobile ? 8 : 14)));
-
-  return (
-    <div>
-      {esSimulado && (
-        <div style={{ marginBottom: 12, display: "flex", alignItems: "center", gap: 8 }}>
-          <BadgeSimulado />
-          <button onClick={reintentar} style={{
-            padding: "4px 12px", borderRadius: 4, border: "1px solid var(--border-subtle)",
-            background: "var(--bg-surface)", color: "#f0b429", fontSize: 10, fontWeight: 600, cursor: "pointer",
-          }}>Reintentar</button>
-          {error && <span style={{ fontSize: 10, color: "#ef4444" }}>{error}</span>}
-        </div>
-      )}
-
-      {/* Métricas */}
-      <div style={{ display: "grid", gridTemplateColumns: isMobile ? "repeat(2,1fr)" : "repeat(4,1fr)", gap: isMobile ? 8 : 12, marginBottom: 20 }}>
-        <Metrica
-          etiqueta="Interés Abierto (BTC)"
-          valor={oiActual ? fmt(Math.round(oiActual.btc)) + " BTC" : "—"}
-          sub="Posiciones abiertas en Binance"
-          acento="#f0b429"
-        />
-        <Metrica
-          etiqueta="Interés Abierto (USD)"
-          valor={oiActual ? "$" + fmt(Math.round(oiActual.usd)) : "—"}
-          sub="Valor notional total"
-          acento="#06b6d4"
-        />
-        <Metrica
-          etiqueta="Cambio 24h"
-          valor={cambio24h !== null ? (cambio24h >= 0 ? "+" : "") + cambio24h.toFixed(2) + "%" : "—"}
-          sub="Variación del interés abierto"
-          acento={cambio24h !== null ? (cambio24h >= 0 ? "#22c55e" : "#ef4444") : undefined}
-        />
-        <Metrica
-          etiqueta="Fuente"
-          valor="Binance"
-          sub="Futuros BTCUSDT perpetuo"
-        />
-      </div>
-
-      {/* Señal interpretativa */}
-      {senal && (
-        <div style={{ marginBottom: 16 }}>
-          <Senal etiqueta="SEÑAL" estado={senal.texto} color={senal.color} />
-        </div>
-      )}
-
-      {/* Gráfico: OI histórico */}
-      <div style={{ marginBottom: 24 }}>
-        <div style={{ fontSize: 12, color: "var(--text-secondary)", letterSpacing: "0.08em", marginBottom: 12 }}>
-          INTERÉS ABIERTO HISTÓRICO — BTCUSDT (90 días)
-        </div>
-        <ResponsiveContainer width="100%" height={isMobile ? 280 : 340}>
-          <ComposedChart data={hist} margin={{ top: 10, right: 20, bottom: 10, left: isMobile ? 10 : 20 }}>
-            <defs>
-              <linearGradient id="gOI" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stopColor="#f0b429" stopOpacity={0.3} />
-                <stop offset="100%" stopColor="#f0b429" stopOpacity={0.02} />
-              </linearGradient>
-            </defs>
-            <CartesianGrid strokeDasharray="3 3" stroke="var(--border-grid)" />
-            <XAxis dataKey="fecha" tick={{ fill: "var(--text-muted)", fontSize: 9 }} interval={intTick} />
-            <YAxis
-              yAxisId="left"
-              tick={{ fill: "var(--text-muted)", fontSize: 10 }}
-              tickFormatter={v => fmt(v)}
-              label={{ value: "BTC", angle: -90, position: "insideLeft", fill: "var(--text-muted)", fontSize: 10 }}
-            />
-            <YAxis
-              yAxisId="right"
-              orientation="right"
-              tick={{ fill: "var(--text-muted)", fontSize: 10 }}
-              tickFormatter={v => "$" + fmt(v)}
-              label={{ value: "USD", angle: 90, position: "insideRight", fill: "var(--text-muted)", fontSize: 10 }}
-            />
-            <Tooltip content={({ active, payload }) => (
-              <CustomTooltip active={active} payload={payload} render={(d) => (
-                <>
-                  <div style={{ fontSize: 11, color: "var(--text-tooltip)" }}>{d?.fecha}</div>
-                  <div style={{ fontSize: 13, color: "#f0b429", fontFamily: "monospace", fontWeight: 600, marginTop: 4 }}>
-                    {d?.oiBtc != null ? fmtNum(Math.round(d.oiBtc)) : "—"} BTC
-                  </div>
-                  <div style={{ fontSize: 12, color: "#06b6d4", fontFamily: "monospace" }}>
-                    ${d?.oiUsd != null ? fmtNum(Math.round(d.oiUsd)) : "—"}
-                  </div>
-                </>
-              )} />
-            )} />
-            <Line yAxisId="right" type="monotone" dataKey="oiUsd" stroke="#06b6d4" strokeWidth={1.5} dot={false} strokeDasharray="4 4" />
-            <Bar yAxisId="left" dataKey="oiBtc" fill="url(#gOI)" stroke="#f0b429" strokeWidth={0.5} radius={[2, 2, 0, 0]} maxBarSize={12} />
-          </ComposedChart>
-        </ResponsiveContainer>
-        <div style={{ display: "flex", justifyContent: "center", gap: 20, marginTop: 8 }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 11, color: "var(--text-secondary)" }}>
-            <div style={{ width: 10, height: 10, borderRadius: 2, background: "#f0b429" }} /> OI en BTC
-          </div>
-          <div style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 11, color: "var(--text-secondary)" }}>
-            <div style={{ width: 10, height: 2, background: "#06b6d4", borderRadius: 1 }} /> OI en USD
-          </div>
-        </div>
-      </div>
-
-      {!esSimulado && (
-        <div style={{ fontSize: 10, color: "var(--text-muted)", textAlign: "center", marginTop: 8 }}>
-          Fuente: Binance Futures API (solo posiciones en Binance, no agregado multi-exchange)
-        </div>
-      )}
-    </div>
-  );
-}
-
-/* ══════════════════════════════════════════════════════════════════
-   SECTION: PRECIO DE DOLOR (MAX PAIN)
-   ══════════════════════════════════════════════════════════════════ */
-
-function SeccionMaxPain() {
+export default function TabDerivados() {
   const { data, expiraciones, expiracionSel, setExpiracionSel, precioBtc, cargando, esSimulado, error, reintentar } = useMaxPain();
   const { isMobile } = useBreakpoint();
 
   if (cargando) {
     return (
-      <div style={{ textAlign: "center", padding: 40, color: "var(--text-muted)" }}>
-        <div style={{ fontSize: 14, marginBottom: 8 }}>Consultando opciones en Deribit...</div>
-        <div style={{ fontSize: 11 }}>Calculando precio de dolor para opciones BTC</div>
+      <div>
+        <Concepto titulo="El precio de dolor revela dónde los market makers tienen ventaja">
+          Las opciones de Bitcoin permiten apostar al precio futuro. El precio de dolor (max pain) es el nivel donde más opciones expiran sin valor — es decir, donde los vendedores de opciones ganan más. Es una referencia clave para anticipar zonas de gravedad del precio antes de cada vencimiento.
+        </Concepto>
+        <div style={{ textAlign: "center", padding: 40, color: "var(--text-muted)" }}>
+          <div style={{ fontSize: 14, marginBottom: 8 }}>Consultando opciones en Deribit...</div>
+          <div style={{ fontSize: 11 }}>Calculando precio de dolor para opciones BTC</div>
+        </div>
       </div>
     );
   }
@@ -595,6 +297,10 @@ function SeccionMaxPain() {
 
   return (
     <div>
+      <Concepto titulo="El precio de dolor revela dónde los market makers tienen ventaja">
+        Las opciones de Bitcoin permiten apostar al precio futuro. El precio de dolor (max pain) es el nivel donde más opciones expiran sin valor — es decir, donde los vendedores de opciones ganan más. Es una referencia clave para anticipar zonas de gravedad del precio antes de cada vencimiento.
+      </Concepto>
+
       {esSimulado && (
         <div style={{ marginBottom: 12, display: "flex", alignItems: "center", gap: 8 }}>
           <BadgeSimulado />
@@ -764,50 +470,6 @@ function SeccionMaxPain() {
         <div style={{ fontSize: 10, color: "var(--text-muted)", textAlign: "center", marginTop: 12 }}>
           Fuente: Deribit Public API · Opciones BTC activas con interés abierto {"> "}0
         </div>
-      )}
-    </div>
-  );
-}
-
-/* ══════════════════════════════════════════════════════════════════
-   MAIN TAB COMPONENT
-   ══════════════════════════════════════════════════════════════════ */
-
-const SUB_TABS = [
-  { id: "oi", l: "INTERÉS ABIERTO" },
-  { id: "maxpain", l: "PRECIO DE DOLOR" },
-];
-
-export default function TabDerivados() {
-  const [sub, setSub] = useState("oi");
-
-  return (
-    <div>
-      <Concepto titulo="Los derivados amplifican los movimientos — aquí puedes ver las posiciones abiertas">
-        Los derivados financieros de Bitcoin (futuros y opciones) permiten apostar al precio con apalancamiento. El interés abierto muestra cuánto capital está comprometido en estas apuestas. El precio de dolor revela dónde los market makers tienen ventaja. Juntos, estos datos ayudan a anticipar zonas de volatilidad y posibles liquidaciones.
-      </Concepto>
-
-      <SubSelector items={SUB_TABS} val={sub} set={setSub} />
-
-      {sub === "oi" && <SeccionInteresAbierto />}
-      {sub === "maxpain" && <SeccionMaxPain />}
-
-      {sub === "oi" && (
-        <PanelEdu icono="📈" titulo="¿Cómo leer el Interés Abierto?" color="#f0b429">
-          <strong style={{ color: "#f0b429" }}>El interés abierto (Open Interest) mide el total de contratos de futuros activos.</strong> Cada contrato tiene un comprador y un vendedor — el OI cuenta las posiciones que aún no se han cerrado.
-          <br /><br />
-          <strong style={{ color: "var(--text-primary)" }}>OI sube + precio sube</strong> = dinero nuevo entrando a posiciones largas (alcista). Confirma la tendencia.
-          <br /><br />
-          <strong style={{ color: "var(--text-primary)" }}>OI sube + precio baja</strong> = acumulación de posiciones cortas apalancadas. <span style={{ color: "#ef4444" }}>Riesgo de short squeeze</span> si el precio rebota.
-          <br /><br />
-          <strong style={{ color: "var(--text-primary)" }}>OI baja + precio baja</strong> = desapalancamiento. Los operadores están cerrando posiciones. Menos peligroso — el mercado se limpia.
-          <br /><br />
-          <strong style={{ color: "var(--text-primary)" }}>OI baja + precio sube</strong> = cierre de cortos (short covering). Movimiento puede ser temporal.
-          <br /><br />
-          <span style={{ color: "var(--text-muted)", fontSize: 11 }}>
-            Este análisis es informativo y no constituye asesoría financiera. Datos de Binance Futures (solo BTCUSDT perpetuo).
-          </span>
-        </PanelEdu>
       )}
     </div>
   );
