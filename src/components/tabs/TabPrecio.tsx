@@ -119,9 +119,10 @@ interface PrecioDataPoint {
   ts: number;
   fecha: string;
   fechaRaw: string;
-  precio: number;
+  precio: number | null;
+  esProyeccion?: boolean;
   // Rainbow bands (b0..b8 bottom, b0_top..b8_top)
-  [key: string]: number | string;
+  [key: string]: number | string | boolean | null | undefined;
 }
 
 /* ══════════════════════════════════════════════════════════════════
@@ -147,6 +148,32 @@ function generarPrecioSimulado(): PrecioDataPoint[] {
       fecha: d.toLocaleDateString("es-CL", { month: "short", year: "2-digit" }),
       fechaRaw: d.toISOString().slice(0, 10),
       precio,
+      ...bandas,
+    });
+    d.setDate(d.getDate() + 7);
+  }
+  return puntos;
+}
+
+/* ══════════════════════════════════════════════════════════════════
+   PROJECTION TO 2040
+   ══════════════════════════════════════════════════════════════════ */
+
+const PROJECTION_END = new Date("2041-01-01");
+
+function generarProyeccion(ultimoTs: number): PrecioDataPoint[] {
+  const puntos: PrecioDataPoint[] = [];
+  const d = new Date(ultimoTs);
+  d.setDate(d.getDate() + 7); // start one week after last real data
+  while (d < PROJECTION_END) {
+    const ts = d.getTime();
+    const bandas = calcularBandas(ts);
+    puntos.push({
+      ts,
+      fecha: d.toLocaleDateString("es-CL", { month: "short", year: "2-digit" }),
+      fechaRaw: d.toISOString().slice(0, 10),
+      precio: null,
+      esProyeccion: true,
       ...bandas,
     });
     d.setDate(d.getDate() + 7);
@@ -215,14 +242,19 @@ function usePrecioHistorico() {
         });
       }
 
-      setDatos(sampled);
+      // Append projection to 2040
+      const ultimoTs = sampled.length > 0 ? sampled[sampled.length - 1].ts : Date.now();
+      const proyeccion = generarProyeccion(ultimoTs);
+      setDatos([...sampled, ...proyeccion]);
       setEsSimulado(false);
-      cacheSet("obs_precio_hist", sampled);
+      cacheSet("obs_precio_hist", [...sampled, ...proyeccion]);
     } catch (err) {
       if (!mountedRef.current) return;
       setEsSimulado(true);
       setError(err instanceof Error ? err.message : "Error de conexión");
-      setDatos(generarPrecioSimulado());
+      const sim = generarPrecioSimulado();
+      const ultimoTs = sim.length > 0 ? sim[sim.length - 1].ts : Date.now();
+      setDatos([...sim, ...generarProyeccion(ultimoTs)]);
     } finally {
       if (mountedRef.current) setCargando(false);
     }
@@ -280,6 +312,7 @@ const HALVINGS = [
   { fecha: "2016-07-09", label: "2do Halving" },
   { fecha: "2020-05-11", label: "3er Halving" },
   { fecha: "2024-04-20", label: "4to Halving" },
+  { fecha: "2028-03-20", label: "5to Halving" },
 ];
 
 /* ══════════════════════════════════════════════════════════════════
@@ -319,32 +352,43 @@ export default function TabPrecio() {
     return datos.filter(d => d.ts >= corteTs);
   }, [datos, rango]);
 
+  // Only real data (not projection) for metrics
+  const datosReales = useMemo(() => datos.filter(d => !d.esProyeccion), [datos]);
+
   // Current price & band
-  const ultimo = datos.length > 0 ? datos[datos.length - 1] : null;
-  const precioActual = ultimo?.precio ?? 0;
+  const ultimo = datosReales.length > 0 ? datosReales[datosReales.length - 1] : null;
+  const precioActual = (ultimo?.precio as number) ?? 0;
   const bandaInfo = ultimo ? bandaActual(precioActual, ultimo.ts) : null;
 
   // Price change calculations
   const stats = useMemo(() => {
-    if (datos.length < 2) return null;
-    const ult = datos[datos.length - 1];
-    const hace7d = datos.find(d => d.ts >= ult.ts - 7 * 86_400_000) ?? datos[datos.length - 8];
-    const hace30d = datos.find(d => d.ts >= ult.ts - 30 * 86_400_000) ?? datos[datos.length - 5];
-    const hace1a = datos.find(d => d.ts >= ult.ts - 365 * 86_400_000);
-    const athData = Math.max(...datos.map(d => d.precio));
+    if (datosReales.length < 2) return null;
+    const ult = datosReales[datosReales.length - 1];
+    const ultPrecio = ult.precio as number;
+    const hace7d = datosReales.find(d => d.ts >= ult.ts - 7 * 86_400_000) ?? datosReales[datosReales.length - 8];
+    const hace30d = datosReales.find(d => d.ts >= ult.ts - 30 * 86_400_000) ?? datosReales[datosReales.length - 5];
+    const hace1a = datosReales.find(d => d.ts >= ult.ts - 365 * 86_400_000);
+    const athData = Math.max(...datosReales.map(d => d.precio as number));
     // blockchain.info reports daily averages which understate exchange ATHs.
     // Known ATH: $126,211 (6 Oct 2025). Update when new ATH is reached.
     const ATH_KNOWN = 126211;
     const ath = Math.max(athData, ATH_KNOWN);
 
     return {
-      cambio7d: hace7d ? ((ult.precio - hace7d.precio) / hace7d.precio * 100) : null,
-      cambio30d: hace30d ? ((ult.precio - hace30d.precio) / hace30d.precio * 100) : null,
-      cambio1a: hace1a ? ((ult.precio - hace1a.precio) / hace1a.precio * 100) : null,
+      cambio7d: hace7d ? ((ultPrecio - (hace7d.precio as number)) / (hace7d.precio as number) * 100) : null,
+      cambio30d: hace30d ? ((ultPrecio - (hace30d.precio as number)) / (hace30d.precio as number) * 100) : null,
+      cambio1a: hace1a ? ((ultPrecio - (hace1a.precio as number)) / (hace1a.precio as number) * 100) : null,
       ath,
-      distanciaAth: ((ult.precio - ath) / ath * 100),
+      distanciaAth: ((ultPrecio - ath) / ath * 100),
     };
-  }, [datos]);
+  }, [datosReales]);
+
+  // "Today" label for the projection boundary
+  const hoyLabel = useMemo(() => {
+    if (datosReales.length === 0) return null;
+    const last = datosReales[datosReales.length - 1];
+    return last.fecha;
+  }, [datosReales]);
 
   // Halvings visible in range
   const halvingsVisibles = useMemo(() => {
@@ -360,21 +404,21 @@ export default function TabPrecio() {
     });
   }, [filtrado]);
 
-  // Band distribution: % of time the price spent in each band
+  // Band distribution: % of time the price spent in each band (real data only)
   const distribucion = useMemo(() => {
-    if (datos.length < 10) return null;
+    if (datosReales.length < 10) return null;
     const counts = new Array(BANDAS_RAINBOW.length).fill(0);
-    for (const d of datos) {
-      const info = bandaActual(d.precio, d.ts);
+    for (const d of datosReales) {
+      const info = bandaActual(d.precio as number, d.ts);
       if (info) counts[info.idx]++;
     }
-    const total = datos.length;
+    const total = datosReales.length;
     return BANDAS_RAINBOW.map((b, i) => ({
       ...b,
       count: counts[i],
       pct: (counts[i] / total) * 100,
     }));
-  }, [datos]);
+  }, [datosReales]);
 
   const intTick = Math.max(1, Math.floor(filtrado.length / (isMobile ? 8 : 16)));
 
@@ -459,7 +503,7 @@ export default function TabPrecio() {
           justifyContent: "space-between", marginBottom: 12, gap: isMobile ? 8 : 0,
         }}>
           <div style={{ fontSize: 12, color: "var(--text-secondary)", letterSpacing: "0.08em" }}>
-            BITCOIN RAINBOW CHART — ESCALA LOGARÍTMICA
+            BITCOIN RAINBOW CHART — ESCALA LOGARÍTMICA — <span style={{ color: "#a855f7" }}>PROYECCIÓN A 2040</span>
           </div>
           <Btn items={RANGOS} val={rango} set={setRango} color="#f0b429" />
         </div>
@@ -482,12 +526,27 @@ export default function TabPrecio() {
             <Tooltip content={({ active, payload }) => (
               <CustomTooltip active={active} payload={payload} render={(d) => {
                 if (!d) return null;
-                const banda = bandaActual(d.precio, d.ts);
+                const esProyeccion = d.esProyeccion;
+                const base = rainbowBase(d.ts);
+                if (esProyeccion) {
+                  return (
+                    <>
+                      <div style={{ fontSize: 11, color: "var(--text-tooltip)" }}>{d.fechaRaw}</div>
+                      <div style={{ fontSize: 11, color: "#a855f7", marginTop: 4, fontWeight: 600 }}>
+                        Proyección del modelo
+                      </div>
+                      <div style={{ fontSize: 10, color: "var(--text-muted)", marginTop: 4 }}>
+                        Curva base: ${fmtNum(Math.round(base))}
+                      </div>
+                    </>
+                  );
+                }
+                const banda = bandaActual(d.precio as number, d.ts);
                 return (
                   <>
                     <div style={{ fontSize: 11, color: "var(--text-tooltip)" }}>{d.fechaRaw}</div>
                     <div style={{ fontSize: 15, color: "#f0b429", fontFamily: "monospace", fontWeight: 700, marginTop: 4 }}>
-                      ${fmtNum(Math.round(d.precio))}
+                      ${fmtNum(Math.round(d.precio as number))}
                     </div>
                     {banda && (
                       <div style={{ fontSize: 11, color: banda.color, marginTop: 4, fontWeight: 600 }}>
@@ -525,7 +584,17 @@ export default function TabPrecio() {
               />
             ))}
 
-            {/* Price line */}
+            {/* "Today" projection boundary */}
+            {hoyLabel && (
+              <ReferenceLine
+                x={hoyLabel}
+                stroke="#a855f780"
+                strokeDasharray="6 3"
+                label={{ value: "Hoy ▸ Proyección", fill: "#a855f7", fontSize: 9, position: "insideTopRight" }}
+              />
+            )}
+
+            {/* Price line — stops where real data ends (null = no line) */}
             <Line
               type="monotone"
               dataKey="precio"
@@ -533,6 +602,7 @@ export default function TabPrecio() {
               strokeWidth={2}
               dot={false}
               isAnimationActive={false}
+              connectNulls={false}
             />
           </ComposedChart>
         </ResponsiveContainer>
@@ -613,7 +683,7 @@ export default function TabPrecio() {
             })}
           </div>
           <div style={{ fontSize: 9, color: "var(--text-muted)", marginTop: 10, lineHeight: 1.5 }}>
-            Basado en {fmtNum(datos.length)} puntos semanales desde 2010.
+            Basado en {fmtNum(datosReales.length)} puntos semanales reales desde 2010.
             Los extremos (ganga y burbuja) son eventos raros — si no aparecen, el modelo necesita ajuste.
           </div>
         </div>
@@ -648,6 +718,25 @@ export default function TabPrecio() {
           />
         </div>
       )}
+
+      {/* Insight: volatility compression */}
+      <PanelEdu icono="📉" titulo="La volatilidad se comprime — pero el crecimiento continúa" color="#22c55e">
+        <strong style={{ color: "#22c55e" }}>Cada ciclo tiene oscilaciones más pequeñas.</strong> En los primeros años, el precio tocaba regularmente las bandas extremas (ganga y burbuja máxima). En los últimos ciclos, los movimientos se han concentrado cada vez más cerca de la zona central.
+        <br /><br />
+        <strong style={{ color: "var(--text-primary)" }}>¿Qué pasa si el precio simplemente sigue la curva base?</strong> Si Bitcoin dejara de oscilar y se limitara a seguir la línea de &quot;Precio justo&quot;, el rendimiento anual implícito del modelo es de <strong style={{ color: "#f0b429" }}>~{(() => {
+          const ahora = new Date();
+          const y = ahora.getFullYear();
+          const base1 = rainbowBase(new Date(y + "-07-01").getTime());
+          const base2 = rainbowBase(new Date((y + 1) + "-07-01").getTime());
+          return Math.round((base2 / base1 - 1) * 100);
+        })()}% este año</strong>, desacelerando gradualmente hasta ~17% anual hacia 2040. El promedio proyectado 2025–2040 es de <strong style={{ color: "#f0b429" }}>~24% anual</strong>.
+        <br /><br />
+        <strong style={{ color: "var(--text-primary)" }}>¿Por qué se desacelera?</strong> La regresión logarítmica refleja la adopción de cualquier red: crece rápido al inicio (pocos usuarios → muchos) y se frena a medida que la base instalada crece. Visa y Mastercard, al salir a bolsa, siguieron exactamente esta curva — su precio reflejó directamente el crecimiento logarítmico de la red de pagos. Internet y los smartphones siguieron el mismo patrón de adopción, pero al no cotizar en mercados, no se pudo observar en un precio. Bitcoin nació sin precio — al principio se regalaba y se minaba con laptops comunes. Recién después de un año apareció el primer mercado. Esa introducción inmaculada, sin IPO ni empresa detrás, es lo que hace única su curva de adopción: el precio emergió orgánicamente a medida que la red ganó usuarios.
+        <br /><br />
+        <span style={{ color: "var(--text-muted)", fontSize: 11 }}>
+          Estos números provienen del modelo matemático, no son predicciones. El rendimiento real dependerá de la oferta, demanda y adopción futura.
+        </span>
+      </PanelEdu>
 
       {/* Panel Educativo */}
       <PanelEdu icono="🌈" titulo="¿Qué es el Rainbow Chart?" color="#f0b429">
@@ -710,7 +799,7 @@ export default function TabPrecio() {
 
       {!esSimulado && (
         <div style={{ fontSize: 10, color: "var(--text-muted)", textAlign: "center", marginTop: 12 }}>
-          Fuente: blockchain.info · Precio promedio diario USD · Datos desde 2010
+          Fuente: blockchain.info · Precio promedio diario USD · Datos desde 2010 · Proyección del modelo logarítmico hasta 2040
         </div>
       )}
     </div>
