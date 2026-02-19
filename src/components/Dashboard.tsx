@@ -11,6 +11,7 @@ import TabHolders from "@/components/tabs/TabHolders";
 import TabSoberania from "@/components/tabs/TabSoberania";
 import TabDerivados from "@/components/tabs/TabDerivados";
 import TabPrecio from "@/components/tabs/TabPrecio";
+import ErrorBoundary from "@/components/ErrorBoundary";
 import { useBreakpoint } from "@/hooks/useBreakpoint";
 
 const VALID_TABS = new Set([
@@ -82,14 +83,16 @@ export default function Dashboard() {
         padding: isMobile ? "12px" : isTablet ? "16px" : "24px",
         maxWidth: 1280, margin: "0 auto",
       }}>
-        {tab === "lared" && <TabMineria />}
-        {tab === "distribucion" && <TabDistribucion />}
-        {tab === "conviccion" && <TabOndas />}
-        {tab === "flujos" && <TabFlujos />}
-        {tab === "acumuladores" && <TabHolders />}
-        {tab === "escasez" && <TabSoberania />}
-        {tab === "precio" && <TabPrecio />}
-        {tab === "derivados" && <TabDerivados />}
+        <ErrorBoundary key={tab}>
+          {tab === "lared" && <TabMineria />}
+          {tab === "distribucion" && <TabDistribucion />}
+          {tab === "conviccion" && <TabOndas />}
+          {tab === "flujos" && <TabFlujos />}
+          {tab === "acumuladores" && <TabHolders />}
+          {tab === "escasez" && <TabSoberania />}
+          {tab === "precio" && <TabPrecio />}
+          {tab === "derivados" && <TabDerivados />}
+        </ErrorBoundary>
       </div>
       <Footer />
     </div>
