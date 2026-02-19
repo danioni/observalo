@@ -18,6 +18,8 @@ export const HALVING_DATES: { date: Date; rewardAfter: number }[] = [
   { date: new Date(2028, 3, 1), rewardAfter: 1.5625 },  // ~Abr 2028 — bloque 1.050.000 (estimado)
   { date: new Date(2032, 3, 1), rewardAfter: 0.78125 }, // ~Abr 2032 — bloque 1.260.000 (estimado)
   { date: new Date(2036, 3, 1), rewardAfter: 0.390625 },// ~Abr 2036 — bloque 1.470.000 (estimado)
+  { date: new Date(2040, 3, 1), rewardAfter: 0.1953125 },// ~Abr 2040 — bloque 1.680.000 (estimado)
+  { date: new Date(2044, 3, 1), rewardAfter: 0.09765625 },// ~Abr 2044 — bloque 1.890.000 (estimado)
 ];
 
 /** Recompensa por bloque según fecha real del halving */

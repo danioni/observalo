@@ -16,7 +16,7 @@ import PanelEdu from "@/components/ui/PanelEdu";
 import Concepto from "@/components/ui/Concepto";
 import CustomTooltip from "@/components/ui/CustomTooltip";
 import { NARRATIVA } from "@/data/narrativa";
-import { RECOMPENSA_PROYECTADA } from "@/data/mineria";
+import { RECOMPENSA_PROYECTADA, SUMINISTRO_PROYECTADO } from "@/data/mineria";
 
 /* ── Inline badge for stale data ── */
 function BadgeDesactualizado({ lastSuccessAt }: { lastSuccessAt: string | null }) {
@@ -81,6 +81,8 @@ const HALVINGS_FULL = [
   { fecha: "2028-04", label: "5to Halving" },
   { fecha: "2032-04", label: "6to Halving" },
   { fecha: "2036-04", label: "7mo Halving" },
+  { fecha: "2040-04", label: "8vo Halving" },
+  { fecha: "2044-04", label: "9no Halving" },
 ];
 
 const NO_DISPONIBLE = "No disponible (reintentando)";
@@ -138,6 +140,26 @@ export default function TabMineria() {
   }, []);
 
   const intTickRecompensa = Math.max(1, Math.floor(RECOMPENSA_PROYECTADA.length / 18));
+
+  /* ── Halvings visibles en la proyección de suministro ── */
+  const halvingsSuministro = useMemo(() => {
+    const sp = SUMINISTRO_PROYECTADO;
+    if (sp.length === 0) return [];
+    const inicio = (sp[0]?.fechaRaw ?? "").slice(0, 7);
+    const fin = (sp[sp.length - 1]?.fechaRaw ?? "").slice(0, 7);
+    return HALVINGS_FULL.filter(h => h.fecha >= inicio && h.fecha <= fin).map(h => {
+      const match = sp.find(d => (d.fechaRaw ?? "").slice(0, 7) === h.fecha);
+      return match ? { ...h, fechaLabel: match.fecha } : null;
+    }).filter(Boolean) as { fecha: string; label: string; fechaLabel: string }[];
+  }, []);
+
+  const intTickSuministro = Math.max(1, Math.floor(SUMINISTRO_PROYECTADO.length / 18));
+
+  /* ── "Hoy" label for supply projection boundary ── */
+  const hoyLabelSuministro = useMemo(() => {
+    const lastReal = SUMINISTRO_PROYECTADO.filter(d => !d.proyectado);
+    return lastReal.length > 0 ? lastReal[lastReal.length - 1].fecha : null;
+  }, []);
 
   /* ── Rango dinámico del header — unambiguous format ── */
   const rangoLabel = filtrado.length > 1
@@ -209,18 +231,110 @@ export default function TabMineria() {
         {!cargandoHistorico && !errorHist && <Senal etiqueta="FUENTE" estado={esReal ? "bitcoin-data.com (datos reales)" : "Datos estimados (fallback)"} color={esReal ? "#f0b429" : "var(--text-muted)"} />}
       </div>
 
-      {/* ── Gráfico principal: SUMINISTRO ACUMULADO ── */}
+      {/* ── Gráfico principal: EMISIÓN PROGRAMADA — con proyección a 2044 ── */}
       <div style={{ marginBottom: 24 }}>
         <div style={{ display: "flex", flexDirection: isMobile ? "column" : "row", alignItems: isMobile ? "flex-start" : "center", justifyContent: "space-between", marginBottom: 12, gap: isMobile ? 8 : 0 }}>
           <div style={{ fontSize: 12, color: "var(--text-secondary)", letterSpacing: "0.08em" }}>
-            SUMINISTRO ACUMULADO — BTC MINADOS {rangoLabel && `(${rangoLabel})`}
+            EMISIÓN PROGRAMADA — SUMINISTRO ACUMULADO DE BITCOIN (2009–2044)
+          </div>
+        </div>
+        <ResponsiveContainer width="100%" height={isMobile ? 300 : 380}>
+          <AreaChart data={SUMINISTRO_PROYECTADO} margin={{ top: 10, right: 20, bottom: 10, left: isMobile ? 10 : 20 }}>
+            <defs>
+              <linearGradient id="gSReal" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stopColor="#f0b429" stopOpacity={0.35} />
+                <stop offset="100%" stopColor="#f0b429" stopOpacity={0.02} />
+              </linearGradient>
+              <linearGradient id="gSProy" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stopColor="#667788" stopOpacity={0.2} />
+                <stop offset="100%" stopColor="#667788" stopOpacity={0.02} />
+              </linearGradient>
+            </defs>
+            <CartesianGrid strokeDasharray="3 3" stroke="var(--border-grid)" />
+            <XAxis dataKey="fecha" tick={{ fill: "var(--text-muted)", fontSize: 9 }} interval={intTickSuministro} />
+            <YAxis
+              tick={{ fill: "var(--text-muted)", fontSize: 10 }}
+              tickFormatter={v => fmt(v)}
+              domain={[0, 21_000_000]}
+            />
+            <Tooltip content={({ active, payload }) => (
+              <CustomTooltip active={active} payload={payload} render={(d) => {
+                if (!d) return null;
+                const esProy = d.proyectado;
+                return (
+                  <>
+                    <div style={{ fontSize: 11, color: "var(--text-tooltip)" }}>
+                      {d.fecha} {esProy ? "(proyección)" : ""}
+                    </div>
+                    <div style={{ fontSize: 14, color: esProy ? "#667788" : "#f0b429", fontFamily: "monospace", fontWeight: 700, marginTop: 4 }}>
+                      {d.suministro?.toLocaleString("es-CL")} BTC
+                    </div>
+                    <div style={{ fontSize: 11, color: "var(--text-muted)", marginTop: 2 }}>
+                      {(((d.suministro ?? 0) / 21_000_000) * 100).toFixed(2)}% del máximo
+                    </div>
+                    <div style={{ fontSize: 11, color: "var(--text-muted)" }}>
+                      Bloque ≈ #{d.bloque?.toLocaleString("es-CL")} · Recompensa: {d.recompensa} BTC
+                    </div>
+                  </>
+                );
+              }} />
+            )} />
+            <ReferenceLine
+              y={21_000_000}
+              stroke="#f0b42950"
+              strokeDasharray="5 5"
+              label={{ value: "21M — tope absoluto", fill: "#f0b429", fontSize: 10, position: "left" }}
+            />
+            {hoyLabelSuministro && (
+              <ReferenceLine
+                x={hoyLabelSuministro}
+                stroke="#f0b429"
+                strokeDasharray="6 3"
+                strokeWidth={1.5}
+                label={{ value: "Hoy ▸ Proyección", fill: "#f0b429", fontSize: isMobile ? 8 : 10, position: "top" }}
+              />
+            )}
+            {halvingsSuministro.map((h, i) => (
+              <ReferenceLine
+                key={i}
+                x={h.fechaLabel}
+                stroke="#f0b42940"
+                strokeDasharray="4 4"
+                label={!isMobile ? { value: h.label, fill: "#f0b429", fontSize: 8, position: "top" } : undefined}
+              />
+            ))}
+            <Area type="monotone" dataKey="suministroReal" stroke="#f0b429" fill="url(#gSReal)" strokeWidth={2} dot={false} connectNulls={false} />
+            <Area type="monotone" dataKey="suministroProy" stroke="#66778880" fill="url(#gSProy)" strokeWidth={1.5} strokeDasharray="6 3" dot={false} connectNulls={false} />
+          </AreaChart>
+        </ResponsiveContainer>
+        <div style={{ display: "flex", justifyContent: "center", gap: 16, marginTop: 8, flexWrap: "wrap" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 11, color: "var(--text-secondary)" }}>
+            <div style={{ width: 10, height: 10, borderRadius: 2, background: "#f0b429" }} /> Emitidos (real)
+          </div>
+          <div style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 11, color: "var(--text-secondary)" }}>
+            <div style={{ width: 10, height: 10, borderRadius: 2, background: "#667788", opacity: 0.4 }} /> Emisión futura (proyección)
+          </div>
+          <div style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 11, color: "var(--text-secondary)" }}>
+            <div style={{ width: 10, height: 2, background: "#f0b42960", borderRadius: 1 }} /> Halving
+          </div>
+          <div style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 11, color: "var(--text-secondary)" }}>
+            <div style={{ width: 10, height: 2, background: "#f0b42950", borderRadius: 1 }} /> Cap: 21.000.000 BTC
+          </div>
+        </div>
+      </div>
+
+      {/* ── Gráfico histórico: SUMINISTRO con filtro temporal ── */}
+      <div style={{ marginBottom: 24 }}>
+        <div style={{ display: "flex", flexDirection: isMobile ? "column" : "row", alignItems: isMobile ? "flex-start" : "center", justifyContent: "space-between", marginBottom: 12, gap: isMobile ? 8 : 0 }}>
+          <div style={{ fontSize: 12, color: "var(--text-secondary)", letterSpacing: "0.08em" }}>
+            SUMINISTRO HISTÓRICO — BTC MINADOS {rangoLabel && `(${rangoLabel})`}
           </div>
           <Btn items={RANGOS} val={rango} set={setRango} color="#f0b429" />
         </div>
-        <ResponsiveContainer width="100%" height={isMobile ? 280 : 340}>
+        <ResponsiveContainer width="100%" height={isMobile ? 260 : 300}>
           <AreaChart data={filtrado} margin={{ top: 10, right: 20, bottom: 10, left: isMobile ? 10 : 20 }}>
             <defs>
-              <linearGradient id="gS" x1="0" y1="0" x2="0" y2="1">
+              <linearGradient id="gSHist" x1="0" y1="0" x2="0" y2="1">
                 <stop offset="0%" stopColor="#f0b429" stopOpacity={0.35} />
                 <stop offset="100%" stopColor="#f0b429" stopOpacity={0.02} />
               </linearGradient>
@@ -248,12 +362,6 @@ export default function TabMineria() {
                 </>
               )} />
             )} />
-            <ReferenceLine
-              y={21_000_000}
-              stroke="#f0b42950"
-              strokeDasharray="5 5"
-              label={{ value: "21M", fill: "#f0b429", fontSize: 10, position: "left" }}
-            />
             {halvingsVisibles.map((h, i) => (
               <ReferenceLine
                 key={i}
@@ -263,20 +371,9 @@ export default function TabMineria() {
                 label={{ value: h.label, fill: "#f0b429", fontSize: 8, position: "top" }}
               />
             ))}
-            <Area type="monotone" dataKey="suministro" stroke="#f0b429" fill="url(#gS)" strokeWidth={2} dot={false} />
+            <Area type="monotone" dataKey="suministro" stroke="#f0b429" fill="url(#gSHist)" strokeWidth={2} dot={false} />
           </AreaChart>
         </ResponsiveContainer>
-        <div style={{ display: "flex", justifyContent: "center", gap: 20, marginTop: 8 }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 11, color: "var(--text-secondary)" }}>
-            <div style={{ width: 10, height: 10, borderRadius: 2, background: "#f0b429" }} /> BTC emitidos acumulados
-          </div>
-          <div style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 11, color: "var(--text-secondary)" }}>
-            <div style={{ width: 10, height: 2, background: "#f0b42960", borderRadius: 1 }} /> Línea punteada = halving
-          </div>
-          <div style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 11, color: "var(--text-secondary)" }}>
-            <div style={{ width: 10, height: 2, background: "#f0b42950", borderRadius: 1 }} /> Cap: 21.000.000 BTC
-          </div>
-        </div>
       </div>
 
       {/* ── Hashrate + Dificultad ── */}

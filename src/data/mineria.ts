@@ -128,12 +128,12 @@ export const HISTORIAL_MINERIA: HistorialMineria[] = (() => {
   return datos;
 })();
 
-/** Proyección de recompensa por bloque hasta ~2036 (para chart extendido) */
+/** Proyección de recompensa por bloque hasta ~2044 (para chart extendido) */
 export const RECOMPENSA_PROYECTADA: { fecha: string; fechaRaw: string; recompensa: number; proyectado?: boolean }[] = (() => {
   const datos: { fecha: string; fechaRaw: string; recompensa: number; proyectado?: boolean }[] = [];
   const now = new Date();
   const start = new Date(2009, 0, 1);
-  const end = new Date(2037, 0, 1);
+  const end = new Date(2045, 0, 1);
 
   const d = new Date(start);
   while (d <= end) {
@@ -150,6 +150,58 @@ export const RECOMPENSA_PROYECTADA: { fecha: string; fechaRaw: string; recompens
     });
 
     d.setMonth(d.getMonth() + 1);
+  }
+
+  return datos;
+})();
+
+/** Suministro acumulado con proyección hasta ~2044 */
+export interface SuministroProyectado {
+  fecha: string;
+  fechaRaw: string;
+  suministro: number;
+  suministroReal: number | null;   // gold area (historical)
+  suministroProy: number | null;   // gray area (projection)
+  recompensa: number;
+  bloque: number;
+  proyectado: boolean;
+}
+
+export const SUMINISTRO_PROYECTADO: SuministroProyectado[] = (() => {
+  const datos: SuministroProyectado[] = [];
+  const now = new Date();
+  const start = new Date(2009, 0, 1);
+  const end = new Date(2045, 0, 1);
+
+  const d = new Date(start);
+  while (d <= end) {
+    const year = d.getFullYear();
+    const month = d.getMonth();
+    const fechaRaw = `${year}-${String(month + 1).padStart(2, "0")}-01`;
+    const fecha = d.toLocaleDateString("es-CL", { year: "2-digit", month: "short" });
+    const { supply, blockHeight, reward } = supplyAtDate(d);
+    const esProy = d > now;
+
+    datos.push({
+      fecha,
+      fechaRaw,
+      suministro: supply,
+      suministroReal: esProy ? null : supply,
+      suministroProy: esProy ? supply : null,
+      recompensa: reward,
+      bloque: blockHeight,
+      proyectado: esProy,
+    });
+
+    d.setMonth(d.getMonth() + 1);
+  }
+
+  // Bridge: set the last historical point's projection value too,
+  // so the gray area connects seamlessly to the gold area
+  const lastReal = datos.filter(d => !d.proyectado);
+  if (lastReal.length > 0) {
+    const bridge = lastReal[lastReal.length - 1];
+    bridge.suministroProy = bridge.suministro;
   }
 
   return datos;
