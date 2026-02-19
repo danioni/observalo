@@ -60,16 +60,11 @@ function rainbowBase(ts: number): number {
 }
 
 // Band multipliers (9 bands + top boundary)
-// Wide spacing to match historical cycles: peaks in hot bands, bottoms in cold bands.
-// Calibrated against 2013/2017/2021/2025 peaks, Oct-2025 ATH, and 2015/2018/2022 bottoms.
-// HODL!/¿Burbuja? boundary at 1.65× ensures recent ATH ($126k) reaches hot zone.
-const BAND_MULTIPLIERS = [0.05, 0.12, 0.28, 0.55, 0.85, 1.25, 1.65, 2.8, 5.0, 12.0];
-
-// Compressed multipliers for the volatility strip only.
-// Much tighter spacing so recent low-volatility periods still show
-// extreme colors (purple/blue at bottoms, red at peaks).
-// e.g. 2022 bottom → Compra (blue), 2025 ATH → FOMO (red)
-const STRIP_MULTIPLIERS = [0.35, 0.50, 0.62, 0.76, 0.92, 1.12, 1.40, 1.80, 2.40, 3.50];
+// Unified for both the rainbow chart and the volatility strip.
+// Tighter center spacing so recent low-volatility periods still cross bands,
+// while covering the full historical range (0.12× bottom 2011 to 5.69× ATH 2013).
+// e.g. 2022 bottom → Acumula, 2025 ATH → ¿Burbuja?, hoy $67k → Precio justo
+const BAND_MULTIPLIERS = [0.10, 0.25, 0.45, 0.65, 0.85, 1.15, 1.55, 2.20, 3.50, 6.50];
 
 function calcularBandas(ts: number) {
   const base = rainbowBase(ts);
@@ -87,18 +82,6 @@ function bandaActual(precio: number, ts: number): { idx: number; nombre: string;
   if (base <= 0) return null;
   for (let i = BANDAS_RAINBOW.length - 1; i >= 0; i--) {
     if (precio >= base * BAND_MULTIPLIERS[i]) {
-      return { idx: i, ...BANDAS_RAINBOW[i] };
-    }
-  }
-  return { idx: 0, ...BANDAS_RAINBOW[0] };
-}
-
-// Compressed version for the volatility timeline strip
-function bandaStrip(precio: number, ts: number): { idx: number; nombre: string; color: string } | null {
-  const base = rainbowBase(ts);
-  if (base <= 0) return null;
-  for (let i = BANDAS_RAINBOW.length - 1; i >= 0; i--) {
-    if (precio >= base * STRIP_MULTIPLIERS[i]) {
       return { idx: i, ...BANDAS_RAINBOW[i] };
     }
   }
@@ -740,7 +723,7 @@ export default function TabPrecio() {
             border: "1px solid var(--border-subtle)",
           }}>
             {datosReales.map((d, i) => {
-              const info = bandaStrip(d.precio as number, d.ts);
+              const info = bandaActual(d.precio as number, d.ts);
               return (
                 <div
                   key={i}
