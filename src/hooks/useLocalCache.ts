@@ -1,10 +1,10 @@
 "use client";
 
-import { useCallback } from "react";
+import { useCallback, useMemo } from "react";
 
 /**
  * Hook for localStorage caching with TTL.
- * Returns get/set/clear functions scoped to a key + TTL.
+ * Returns a stable memoized object with get/set/clear functions.
  */
 export function useLocalCache<T>(key: string, ttl: number): {
   get: () => T | null;
@@ -41,5 +41,5 @@ export function useLocalCache<T>(key: string, ttl: number): {
     localStorage.removeItem(key);
   }, [key]);
 
-  return { get, set, clear };
+  return useMemo(() => ({ get, set, clear }), [get, set, clear]);
 }
