@@ -13,6 +13,8 @@ import Senal from "@/components/ui/Senal";
 import PanelEdu from "@/components/ui/PanelEdu";
 import Concepto from "@/components/ui/Concepto";
 import CustomTooltip from "@/components/ui/CustomTooltip";
+import ShareButton from "@/components/ui/ShareButton";
+import { usePrecioSpot } from "@/hooks/usePrecioSpot";
 
 /* ══════════════════════════════════════════════════════════════════
    RAINBOW BANDS
@@ -312,6 +314,7 @@ function BadgeSimulado() {
 
 export default function TabPrecio() {
   const { datos, cargando, esSimulado, error, reintentar } = usePrecioHistorico();
+  const { precio: precioSpot } = usePrecioSpot();
   const [rango, setRango] = useState("todo");
   const { isMobile } = useBreakpoint();
 
@@ -330,10 +333,12 @@ export default function TabPrecio() {
   // Only real data (not projection) for metrics
   const datosReales = useMemo(() => datos.filter(d => !d.esProyeccion), [datos]);
 
-  // Current price & band
+  // Current price & band — prefer live spot price from Binance
   const ultimo = datosReales.length > 0 ? datosReales[datosReales.length - 1] : null;
-  const precioActual = (ultimo?.precio as number) ?? 0;
-  const bandaInfo = ultimo ? bandaActual(precioActual, ultimo.ts) : null;
+  const precioHistorico = (ultimo?.precio as number) ?? 0;
+  const precioActual = precioSpot ?? precioHistorico;
+  const esEnVivo = precioSpot != null;
+  const bandaInfo = ultimo ? bandaActual(precioActual, esEnVivo ? Date.now() : ultimo.ts) : null;
 
   // Price change calculations
   const stats = useMemo(() => {
@@ -428,7 +433,7 @@ export default function TabPrecio() {
         <Metrica
           etiqueta="Precio BTC"
           valor={precioActual ? "$" + fmtNum(Math.round(precioActual)) : "—"}
-          sub="Promedio mercados principales"
+          sub={esEnVivo ? "● Binance · en vivo" : "Promedio diario · blockchain.info"}
           acento="#f0b429"
         />
         <Metrica
@@ -451,22 +456,30 @@ export default function TabPrecio() {
         />
       </div>
 
-      {/* Señal */}
+      {/* Señal + Compartir */}
       {bandaInfo && (
         <div style={{ marginBottom: 16 }}>
-          <Senal
-            etiqueta="RAINBOW"
-            estado={
-              bandaInfo.idx <= 2
-                ? `Zona fría (${bandaInfo.nombre}) — históricamente zona de acumulación`
-                : bandaInfo.idx <= 4
-                  ? `Zona neutra (${bandaInfo.nombre}) — precio en rango medio histórico`
-                  : bandaInfo.idx <= 6
-                    ? `Zona caliente (${bandaInfo.nombre}) — precaución, acercándose a territorio de euforia`
-                    : `Zona de máxima euforia (${bandaInfo.nombre}) — históricamente insostenible`
-            }
-            color={bandaInfo.color}
-          />
+          <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <Senal
+                etiqueta="RAINBOW"
+                estado={
+                  bandaInfo.idx <= 2
+                    ? `Zona fría (${bandaInfo.nombre}) — históricamente zona de acumulación`
+                    : bandaInfo.idx <= 4
+                      ? `Zona neutra (${bandaInfo.nombre}) — precio en rango medio histórico`
+                      : bandaInfo.idx <= 6
+                        ? `Zona caliente (${bandaInfo.nombre}) — precaución, acercándose a territorio de euforia`
+                        : `Zona de máxima euforia (${bandaInfo.nombre}) — históricamente insostenible`
+                }
+                color={bandaInfo.color}
+              />
+            </div>
+            <ShareButton
+              text={`Bitcoin en zona '${bandaInfo.nombre}' según el Rainbow Chart — $${fmtNum(Math.round(precioActual))} USD\nVer análisis completo: observalo.com #Bitcoin`}
+              url="https://observalo.com/#precio"
+            />
+          </div>
         </div>
       )}
 
