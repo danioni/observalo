@@ -283,6 +283,13 @@ function useMaxPain() {
    HELPERS
    ══════════════════════════════════════════════════════════════════ */
 
+/** Format BTC amounts with 2 decimals + dot-thousands (e.g. 111.204,35 BTC) */
+function fmtBtc(n: number): string {
+  const [int, dec] = n.toFixed(2).split(".");
+  const intWithSep = int.replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+  return `${intWithSep},${dec}`;
+}
+
 function BadgeSimulado() {
   return (
     <span style={{
@@ -384,8 +391,8 @@ export default function TabDerivados() {
         />
         <Metrica
           etiqueta="OI en juego"
-          valor={oiTotal ? fmtNum(Math.round(oiTotal.calls + oiTotal.puts)) + " BTC" : "—"}
-          sub={oiTotal ? `Calls ${fmtNum(Math.round(oiTotal.calls))} · Puts ${fmtNum(Math.round(oiTotal.puts))}` : ""}
+          valor={oiTotal ? fmtBtc(oiTotal.calls + oiTotal.puts) + " BTC" : "—"}
+          sub={oiTotal ? `Calls ${fmtBtc(oiTotal.calls)} · Puts ${fmtBtc(oiTotal.puts)}` : ""}
           acento="#06b6d4"
         />
       </div>
