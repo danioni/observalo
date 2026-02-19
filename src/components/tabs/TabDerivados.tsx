@@ -6,6 +6,7 @@ import {
   Tooltip, ResponsiveContainer, ReferenceLine, BarChart,
 } from "recharts";
 import { useBreakpoint } from "@/hooks/useBreakpoint";
+import { useLocalCache } from "@/hooks/useLocalCache";
 import { fmt, fmtNum } from "@/utils/format";
 import Metrica from "@/components/ui/Metrica";
 import Senal from "@/components/ui/Senal";
@@ -44,32 +45,7 @@ interface DeribitInstrument {
   mark_price?: number;
 }
 
-/* ══════════════════════════════════════════════════════════════════
-   CACHE HELPERS (localStorage, 5 min TTL)
-   ══════════════════════════════════════════════════════════════════ */
-
-const CACHE_TTL = 5 * 60 * 1000;
-
-function cacheGet<T>(key: string): T | null {
-  if (typeof window === "undefined") return null;
-  try {
-    const raw = localStorage.getItem(key);
-    if (!raw) return null;
-    const { data, ts } = JSON.parse(raw);
-    if (Date.now() - ts > CACHE_TTL) {
-      localStorage.removeItem(key);
-      return null;
-    }
-    return data as T;
-  } catch { return null; }
-}
-
-function cacheSet<T>(key: string, data: T) {
-  if (typeof window === "undefined") return;
-  try {
-    localStorage.setItem(key, JSON.stringify({ data, ts: Date.now() }));
-  } catch { /* quota exceeded — ignore */ }
-}
+const DERIVADOS_CACHE_TTL = 5 * 60 * 1000; // 5 min
 
 /* ══════════════════════════════════════════════════════════════════
    SIMULATED DATA (fallback when APIs fail)
@@ -122,14 +98,16 @@ function useOpenInterest() {
   const [esSimulado, setEsSimulado] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const mountedRef = useRef(true);
+  const cacheHist = useLocalCache<OIHistItem[]>("obs_oi_hist", DERIVADOS_CACHE_TTL);
+  const cacheActual = useLocalCache<{ btc: number; usd: number }>("obs_oi_actual", DERIVADOS_CACHE_TTL);
 
   const fetchData = useCallback(async () => {
     setCargando(true);
     setError(null);
 
     // Check cache first
-    const cachedHist = cacheGet<OIHistItem[]>("obs_oi_hist");
-    const cachedActual = cacheGet<{ btc: number; usd: number }>("obs_oi_actual");
+    const cachedHist = cacheHist.get();
+    const cachedActual = cacheActual.get();
     if (cachedHist && cachedActual) {
       setHist(cachedHist);
       setOiActual(cachedActual);
@@ -172,8 +150,8 @@ function useOpenInterest() {
       setHist(histData);
       setOiActual(actual);
       setEsSimulado(false);
-      cacheSet("obs_oi_hist", histData);
-      cacheSet("obs_oi_actual", actual);
+      cacheHist.set(histData);
+      cacheActual.set(actual);
     } catch (err) {
       if (!mountedRef.current) return;
       setEsSimulado(true);
@@ -185,7 +163,7 @@ function useOpenInterest() {
     } finally {
       if (mountedRef.current) setCargando(false);
     }
-  }, []);
+  }, [cacheHist, cacheActual]);
 
   useEffect(() => {
     mountedRef.current = true;
@@ -194,10 +172,10 @@ function useOpenInterest() {
   }, [fetchData]);
 
   const reintentar = useCallback(() => {
-    localStorage.removeItem("obs_oi_hist");
-    localStorage.removeItem("obs_oi_actual");
+    cacheHist.clear();
+    cacheActual.clear();
     fetchData();
-  }, [fetchData]);
+  }, [cacheHist, cacheActual, fetchData]);
 
   // Cambio 24h
   const cambio24h = useMemo(() => {
@@ -220,13 +198,14 @@ function useMaxPain() {
   const [error, setError] = useState<string | null>(null);
   const mountedRef = useRef(true);
   const allInstrumentsRef = useRef<DeribitInstrument[]>([]);
+  const cacheInstruments = useLocalCache<{ instruments: DeribitInstrument[]; expiraciones: { value: string; label: string }[] }>("obs_deribit_instruments", DERIVADOS_CACHE_TTL);
 
   // Fetch all instruments once
   const fetchInstruments = useCallback(async () => {
     setCargando(true);
     setError(null);
 
-    const cached = cacheGet<{ instruments: DeribitInstrument[]; expiraciones: { value: string; label: string }[] }>("obs_deribit_instruments");
+    const cached = cacheInstruments.get();
     if (cached) {
       allInstrumentsRef.current = cached.instruments;
       setExpiraciones(cached.expiraciones);
@@ -291,7 +270,7 @@ function useMaxPain() {
       if (exps.length > 0) setExpiracionSel(exps[0].value);
       setEsSimulado(false);
 
-      cacheSet("obs_deribit_instruments", { instruments, expiraciones: exps });
+      cacheInstruments.set({ instruments, expiraciones: exps });
 
       // Get BTC price from first instrument
       const firstWithPrice = instruments.find(i => i.underlying_price && i.underlying_price > 0);
@@ -310,7 +289,7 @@ function useMaxPain() {
     } finally {
       if (mountedRef.current) setCargando(false);
     }
-  }, []);
+  }, [cacheInstruments]);
 
   // Recalculate max pain when expiration changes
   useEffect(() => {
@@ -387,9 +366,9 @@ function useMaxPain() {
   }, [fetchInstruments]);
 
   const reintentar = useCallback(() => {
-    localStorage.removeItem("obs_deribit_instruments");
+    cacheInstruments.clear();
     fetchInstruments();
-  }, [fetchInstruments]);
+  }, [cacheInstruments, fetchInstruments]);
 
   return { data, expiraciones, expiracionSel, setExpiracionSel, precioBtc, cargando, esSimulado, error, reintentar };
 }

@@ -6,6 +6,7 @@ import {
   Tooltip, ResponsiveContainer, ReferenceLine,
 } from "recharts";
 import { useBreakpoint } from "@/hooks/useBreakpoint";
+import { useLocalCache } from "@/hooks/useLocalCache";
 import { fmt, fmtNum } from "@/utils/format";
 import Metrica from "@/components/ui/Metrica";
 import Senal from "@/components/ui/Senal";
@@ -82,33 +83,6 @@ function bandaActual(precio: number, ts: number): { idx: number; nombre: string;
     }
   }
   return { idx: 0, ...BANDAS_RAINBOW[0] };
-}
-
-/* ══════════════════════════════════════════════════════════════════
-   CACHE
-   ══════════════════════════════════════════════════════════════════ */
-
-const CACHE_TTL = 30 * 60 * 1000; // 30 min for price data
-
-function cacheGet<T>(key: string): T | null {
-  if (typeof window === "undefined") return null;
-  try {
-    const raw = localStorage.getItem(key);
-    if (!raw) return null;
-    const { data, ts } = JSON.parse(raw);
-    if (Date.now() - ts > CACHE_TTL) {
-      localStorage.removeItem(key);
-      return null;
-    }
-    return data as T;
-  } catch { return null; }
-}
-
-function cacheSet<T>(key: string, data: T) {
-  if (typeof window === "undefined") return;
-  try {
-    localStorage.setItem(key, JSON.stringify({ data, ts: Date.now() }));
-  } catch { /* quota exceeded */ }
 }
 
 /* ══════════════════════════════════════════════════════════════════
@@ -191,12 +165,13 @@ function usePrecioHistorico() {
   const [esSimulado, setEsSimulado] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const mountedRef = useRef(true);
+  const cache = useLocalCache<PrecioDataPoint[]>("obs_precio_v2", 30 * 60 * 1000);
 
   const fetchData = useCallback(async () => {
     setCargando(true);
     setError(null);
 
-    const cached = cacheGet<PrecioDataPoint[]>("obs_precio_v2");
+    const cached = cache.get();
     if (cached) {
       setDatos(cached);
       setEsSimulado(false);
@@ -247,7 +222,7 @@ function usePrecioHistorico() {
       const proyeccion = generarProyeccion(ultimoTs);
       setDatos([...sampled, ...proyeccion]);
       setEsSimulado(false);
-      cacheSet("obs_precio_v2", [...sampled, ...proyeccion]);
+      cache.set([...sampled, ...proyeccion]);
     } catch (err) {
       if (!mountedRef.current) return;
       setEsSimulado(true);
@@ -258,7 +233,7 @@ function usePrecioHistorico() {
     } finally {
       if (mountedRef.current) setCargando(false);
     }
-  }, []);
+  }, [cache]);
 
   useEffect(() => {
     mountedRef.current = true;
@@ -267,9 +242,9 @@ function usePrecioHistorico() {
   }, [fetchData]);
 
   const reintentar = useCallback(() => {
-    localStorage.removeItem("obs_precio_v2");
+    cache.clear();
     fetchData();
-  }, [fetchData]);
+  }, [cache, fetchData]);
 
   return { datos, cargando, esSimulado, error, reintentar };
 }
