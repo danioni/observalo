@@ -196,7 +196,7 @@ function usePrecioHistorico() {
     setCargando(true);
     setError(null);
 
-    const cached = cacheGet<PrecioDataPoint[]>("obs_precio_hist");
+    const cached = cacheGet<PrecioDataPoint[]>("obs_precio_v2");
     if (cached) {
       setDatos(cached);
       setEsSimulado(false);
@@ -247,7 +247,7 @@ function usePrecioHistorico() {
       const proyeccion = generarProyeccion(ultimoTs);
       setDatos([...sampled, ...proyeccion]);
       setEsSimulado(false);
-      cacheSet("obs_precio_hist", [...sampled, ...proyeccion]);
+      cacheSet("obs_precio_v2", [...sampled, ...proyeccion]);
     } catch (err) {
       if (!mountedRef.current) return;
       setEsSimulado(true);
@@ -267,7 +267,7 @@ function usePrecioHistorico() {
   }, [fetchData]);
 
   const reintentar = useCallback(() => {
-    localStorage.removeItem("obs_precio_hist");
+    localStorage.removeItem("obs_precio_v2");
     fetchData();
   }, [fetchData]);
 
@@ -716,6 +716,48 @@ export default function TabPrecio() {
             sub={`ATH: $${fmtNum(Math.round(stats.ath))}`}
             acento={stats.distanciaAth >= -5 ? "#22c55e" : "#ef4444"}
           />
+        </div>
+      )}
+
+      {/* Volatility timeline — colored strip showing band over time */}
+      {datosReales.length > 20 && (
+        <div style={{
+          marginBottom: 24, padding: isMobile ? 12 : 16,
+          background: "var(--bg-surface)", borderRadius: 8,
+          border: "1px solid var(--border-subtle)",
+        }}>
+          <div style={{ fontSize: 11, color: "var(--text-secondary)", letterSpacing: "0.08em", marginBottom: 10, fontWeight: 600 }}>
+            VOLATILIDAD EN EL TIEMPO — BANDA RAINBOW DE CADA SEMANA
+          </div>
+          <div style={{
+            display: "flex", height: 18, borderRadius: 4, overflow: "hidden",
+            border: "1px solid var(--border-subtle)",
+          }}>
+            {datosReales.map((d, i) => {
+              const info = bandaActual(d.precio as number, d.ts);
+              return (
+                <div
+                  key={i}
+                  style={{
+                    flex: 1,
+                    minWidth: 0,
+                    background: info?.color ?? "var(--bg-base)",
+                  }}
+                  title={`${d.fechaRaw}: ${info?.nombre ?? "?"}`}
+                />
+              );
+            })}
+          </div>
+          <div style={{
+            display: "flex", justifyContent: "space-between",
+            fontSize: 9, color: "var(--text-muted)", marginTop: 4,
+          }}>
+            <span>{datosReales[0]?.fechaRaw?.slice(0, 4)}</span>
+            <span style={{ color: "var(--text-secondary)", fontSize: 9 }}>
+              ← extremos frecuentes · · · extremos raros →
+            </span>
+            <span>{datosReales[datosReales.length - 1]?.fechaRaw?.slice(0, 4)}</span>
+          </div>
         </div>
       )}
 
